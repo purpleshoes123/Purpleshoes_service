@@ -1,0 +1,27 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "starter_kit_viewer": {
+      "type": "starter-kit-viewer",
+      "settings": {
+        "subtitle": "Start with the essentials.\nWatch the video and read the guide at your own pace.",
+        "video_url": "https://d20yzk4unj4eg9.cloudfront.net/video/Starter%20VideoGuide_logo.mp4",
+        "pdf_url": "https://d20yzk4unj4eg9.cloudfront.net/pdf/Starter%20Guidebook.pdf",
+        "video_title": "Starter Kit Video",
+        "video_copy": "Watch the essential travel tips for your first Korea trip.",
+        "pdf_title": "Starter Kit Guidebook",
+        "pdf_copy": "Read the essential Korea travel information at your own pace.",
+        "guide_kit_url": "/products/korea-guide-kit"
+      }
+    }
+  },
+  "order": ["starter_kit_viewer"]
+}

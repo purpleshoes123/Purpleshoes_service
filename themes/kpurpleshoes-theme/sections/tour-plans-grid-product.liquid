@@ -1,0 +1,2212 @@
+{% comment %}
+  Tour Plans - Plans Grid (Product)
+  - Uses the latest DtdxpE visual layout
+  - Keeps full product-grid functionality (variant pricing, checkout flow, upsell modal, coupon discount display)
+{% endcomment %}
+{{ 'guide-extension.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'bta-theme-cart-checkout.js' | asset_url }}" defer></script>
+<script src="{{ 'guide-extension.js' | asset_url }}" defer></script>
+
+<section
+  class="tg-pricing"
+  id="choose-your-best-plan"
+  data-tg-plans
+  style="--tg-primary: {{ section.settings.primary_color | default: '#5b2bd8' }};"
+>
+  <script>
+    window.__customerId = {{ customer.id | json }};
+  </script>
+  <div class="tg-pricing__inner">
+    <header class="tg-pricing__head">
+      <h2 class="tg-pricing__title">{{ section.settings.heading }}</h2>
+      {% if section.settings.subheading != blank %}
+        <p class="tg-pricing__sub">{{ section.settings.subheading }}</p>
+      {% endif %}
+    </header>
+
+    {% if section.settings.show_discount_banner %}
+      <div class="tg-discount-banner">
+        <strong>Member savings apply automatically</strong>
+        <p>Eligible guide discounts are added automatically for signed-in customers during checkout.</p>
+      </div>
+    {% endif %}
+
+    {% assign featured_variant = null %}
+    {% assign featured_variant_price = 0 %}
+    {% for variant in product.variants %}
+      {% assign plan = variant.metafields.plan %}
+      {% if plan.is_featured.value == true %}
+        {% assign featured_variant = variant %}
+        {% break %}
+      {% endif %}
+      {% if variant.price > featured_variant_price %}
+        {% assign featured_variant = variant %}
+        {% assign featured_variant_price = variant.price %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="tg-pricing__grid" role="list">
+      {% assign card_index = 0 %}
+
+      {% for pass in (1..2) %}
+        {% for variant in product.variants %}
+          {% assign plan = variant.metafields.plan %}
+          {% assign has_sort = false %}
+          {% if plan.sort_order.value %}
+            {% assign has_sort = true %}
+          {% endif %}
+
+          {% if pass == 1 and has_sort == false %}{% continue %}{% endif %}
+          {% if pass == 2 and has_sort == true %}{% continue %}{% endif %}
+
+          {% assign card_index = card_index | plus: 1 %}
+
+          {% assign is_featured = plan.is_featured.value | default: false %}
+          {% assign badge_soft = plan.card_tag.value | default: 'BASIC' %}
+          {% assign badge_solid = plan.badge_text.value | default: 'BEST VALUE' %}
+          {% assign plan_name = plan.card_title.value | default: variant.title %}
+          {% assign plan_desc = plan.card_subtitle.value | default: '' %}
+          {% assign features = plan.features.value | default: '' %}
+          {% assign features_excluded = plan.features_excluded.value | default: '' %}
+          {% assign btn_label = plan.cta_label.value | default: 'Select plan' %}
+          {% assign display_price = variant.price | money %}
+
+          {% assign matched_block = null %}
+          {% assign bi = 0 %}
+          {% for block in section.blocks %}
+            {% if block.type == 'plan_image' %}
+              {% assign bi = bi | plus: 1 %}
+              {% if bi == card_index %}
+                {% assign matched_block = block %}
+                {% break %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+
+          {% if matched_block %}
+            {% if matched_block.settings.override_title != blank %}{% assign plan_name = matched_block.settings.override_title %}{% endif %}
+            {% if matched_block.settings.override_subtitle != blank %}{% assign plan_desc = matched_block.settings.override_subtitle %}{% endif %}
+            {% if matched_block.settings.override_tag != blank %}{% assign badge_soft = matched_block.settings.override_tag %}{% endif %}
+            {% if matched_block.settings.override_badge != blank %}{% assign badge_solid = matched_block.settings.override_badge %}{% endif %}
+            {% if matched_block.settings.override_cta != blank %}{% assign btn_label = matched_block.settings.override_cta %}{% endif %}
+            {% if matched_block.settings.override_price != blank %}{% assign display_price = matched_block.settings.override_price %}{% endif %}
+          {% endif %}
+
+          <article
+            class="tg-pricing-card{% if is_featured %} tg-pricing-card--featured{% endif %}"
+            role="listitem"
+            data-guidekit-featured="{% if is_featured %}true{% else %}false{% endif %}"
+            data-guidekit-price-cents="{{ variant.price }}"
+            {% if matched_block %}{{ matched_block.shopify_attributes }}{% endif %}
+          >
+            <div class="tg-pricing-card__badge-row">
+              {% if is_featured %}
+                <div class="tg-pricing-card__bar" aria-hidden="true">{{ badge_solid }}</div>
+              {% else %}
+                <div class="tg-pricing-card__bar tg-pricing-card__bar--ghost" aria-hidden="true"></div>
+              {% endif %}
+            </div>
+
+            <h3 class="tg-pricing-card__plan">{{ plan_name }}</h3>
+
+            <div class="tg-pricing-card__price" aria-label="Price">
+              <span class="tg-pricing-card__amount">{{ display_price }}</span>
+              <span class="tg-pricing-card__discount" data-guidekit-discounted-price style="display:none;"></span>
+              <span class="tg-pricing-card__discount-note" data-guidekit-discount-note hidden></span>
+            </div>
+
+            <p class="tg-pricing-card__pay-once">No subscription. Pay once.</p>
+
+            {% if is_featured %}
+              <div class="tg-pricing-card__countdown-wrap" data-guidekit-countdown role="status" aria-live="polite" aria-hidden="true" hidden>
+                <span class="tg-pricing-card__countdown-label" style="color: #ffffff;">Your 50% welcome offer ends in</span>
+                <span class="tg-pricing-card__countdown-num" data-guidekit-countdown-text>00:00:00</span>
+              </div>
+            {% else %}
+              <div class="tg-pricing-card__countdown-placeholder" aria-hidden="true" hidden></div>
+            {% endif %}
+
+            {% if variant.available %}
+              <a class="tg-pricing-card__btn"
+                href="#"
+                data-guide-checkout
+                data-variant-id="{{ variant.id }}"
+                data-is-featured="{% if is_featured %}true{% else %}false{% endif %}"
+                aria-label="Select plan: {{ plan_name }}">
+                {{ btn_label }}
+              </a>
+            {% else %}
+              <button class="tg-pricing-card__btn tg-pricing-card__btn--disabled" type="button" disabled>Sold out</button>
+            {% endif %}
+          </article>
+        {% endfor %}
+      {% endfor %}
+    </div>
+
+    {% if section.settings.show_compare %}
+      <div class="tg-compare" aria-label="Plan comparison">
+        <div class="tg-compare__grid">
+
+          <div class="tg-compare__col">
+            <div class="tg-compare__col-head">Guidebook ONLY</div>
+            <ul class="tg-compare__list">
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Guidebook</li>
+              <li class="tg-compare__item tg-compare__item--no">Video Guide</li>
+              <li class="tg-compare__item tg-compare__item--no">1,000+ Local Foodie Hidden Gems</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Offline Viewing</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Up to 2 devices</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>90-days access</li>
+              <li class="tg-compare__item tg-compare__item--no">15% Off Experience Tour Coupon</li>
+              <li class="tg-compare__item tg-compare__item--no">Purple Map — 1,500+ handpicked spots</li>
+            </ul>
+          </div>
+
+          <div class="tg-compare__col tg-compare__col--featured">
+            <div class="tg-compare__col-head">Korea Guide Kit</div>
+            <ul class="tg-compare__list">
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Guidebook</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Video Guide</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>1,000+ Local Foodie Hidden Gems</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Offline Viewing</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Up to 3 devices</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>180-days access</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>15% Off Experience Tour Coupon</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Purple Map — 1,500+ handpicked spots</li>
+            </ul>
+          </div>
+
+          <div class="tg-compare__col">
+            <div class="tg-compare__col-head">Video Guide ONLY</div>
+            <ul class="tg-compare__list">
+              <li class="tg-compare__item tg-compare__item--no">Guidebook</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Video Guide</li>
+              <li class="tg-compare__item tg-compare__item--no">1,000+ Local Foodie Hidden Gems</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Offline Viewing</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Up to 2 devices</li>
+              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>90-days access</li>
+              <li class="tg-compare__item tg-compare__item--no">15% Off Experience Tour Coupon</li>
+              <li class="tg-compare__item tg-compare__item--no">Purple Map — 1,500+ handpicked spots</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    {% endif %}
+
+    {% if section.settings.show_tip %}
+      <div class="tg-pricing__tip">
+        <div class="tg-pricing__tip-box">
+          <strong>{{ section.settings.tip_title }}</strong>
+          <div class="tg-pricing__tip-text rte">{{ section.settings.tip_text }}</div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% comment %} Upsell Modal — thank-you-offer style {% endcomment %}
+{% if featured_variant %}
+  {% assign featured_plan = featured_variant.metafields.plan %}
+  {% assign sale_active = false %}
+  {% if section.settings.upsell_sale_enabled and section.settings.upsell_sale_ends_at != blank %}
+    {% assign sale_active = true %}
+  {% endif %}
+  <div class="tg-upsell-modal"
+       id="tg-upsell-modal"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="tg-upsell-modal-title"
+       data-featured-variant-id="{{ featured_variant.id }}"
+       data-featured-price-cents="{{ featured_variant.price }}"
+       style="display: none;">
+    <div class="tg-upsell-modal__overlay"></div>
+    <div class="tg-upsell-modal__content" data-upsell-timer-duration="{{ section.settings.upsell_timer_duration_seconds | default: 3600 }}">
+      <button class="tg-upsell-modal__close" type="button" aria-label="Close modal">&times;</button>
+
+      <!-- ── Offer View ── -->
+      <div class="tg-upsell-modal__view tg-upsell-modal__offer tg-upsell-modal__view--active" data-upsell-view="offer">
+        <div class="tg-upsell-modal__scroll">
+
+          <!-- Flash banner -->
+          <div class="tg-upsell-modal__flash" aria-label="Limited time offer">
+            {{ section.settings.upsell_countdown_label | default: "24-Hour Flash Sale" }}
+          </div>
+
+          <!-- Header (white) -->
+          <div class="tg-upsell-modal__header">
+            <p class="tg-upsell-modal__eyebrow">{{ section.settings.eyebrow_text | default: "Wait! Upgrade to the Full Kit & Save 50%" }}</p>
+            <h3 id="tg-upsell-modal-title" class="tg-upsell-modal__title">
+              {{ featured_plan.card_title.value | default: featured_variant.title }}
+            </h3>
+            {% if featured_plan.card_subtitle.value != blank %}
+              <p class="tg-upsell-modal__subtitle">{{ featured_plan.card_subtitle.value }}</p>
+            {% endif %}
+          </div>
+
+          <!-- Offer card (dark purple) -->
+          <div class="tg-upsell-modal__offer-card">
+
+            <!-- Optional ISO-date flash sale header -->
+            {% if section.settings.upsell_sale_enabled and section.settings.upsell_sale_ends_at != blank %}
+            <div class="tg-upsell-modal__sale-header" data-sale-header>
+              <p class="tg-upsell-modal__sale-headline">{{ section.settings.upsell_headline }}</p>
+              <p class="tg-upsell-modal__sale-sub">{{ section.settings.upsell_subheadline }}</p>
+              <div class="tg-upsell-modal__timer" data-countdown-timer>
+                <span class="tg-upsell-modal__timer-cell"><span class="tg-upsell-modal__timer-num" data-timer-hours>00</span><span class="tg-upsell-modal__timer-unit">Hours</span></span>
+                <span class="tg-upsell-modal__timer-cell"><span class="tg-upsell-modal__timer-num" data-timer-minutes>00</span><span class="tg-upsell-modal__timer-unit">Minutes</span></span>
+                <span class="tg-upsell-modal__timer-cell"><span class="tg-upsell-modal__timer-num" data-timer-seconds>00</span><span class="tg-upsell-modal__timer-unit">Seconds</span></span>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Price block -->
+            <div class="tg-upsell-modal__price-block">
+              <p class="tg-upsell-modal__offer-label">Exclusive Offer: Get the Korea Guide Kit for just</p>
+              <div class="tg-upsell-modal__price-hero">
+                <span class="tg-upsell-modal__price-now">{{ featured_variant.price | money }}</span>
+                {% if featured_variant.compare_at_price > featured_variant.price %}
+                <span class="tg-upsell-modal__price-was"><s>{{ featured_variant.compare_at_price | money }}</s></span>
+                {% endif %}
+              </div>
+              <div class="tg-upsell-modal__price-discounted" data-guidekit-modal-discounted-price style="display:none;"></div>
+              <p class="tg-upsell-modal__price-note" data-guidekit-modal-discount-note hidden></p>
+            </div>
+
+            <!-- Duration countdown (guide50 timer) -->
+            <div class="tg-upsell-modal__countdown-bar" data-upsell-countdown-bar role="region" aria-live="polite">
+              <p class="tg-upsell-modal__countdown-headline" data-upsell-countdown-headline style="display:none"></p>
+              <p class="tg-upsell-modal__countdown-expired" data-upsell-countdown-expired aria-hidden="true">{{ section.settings.upsell_countdown_expired_text | default: "This offer has expired." }}</p>
+              <div class="tg-upsell-modal__countdown-timer" data-upsell-timer>
+                <span class="tg-upsell-modal__countdown-bracket">[ Time Remaining:&nbsp;</span>
+                <span class="tg-upsell-modal__countdown-num" data-upsell-timer-h>00</span>
+                <span class="tg-upsell-modal__countdown-sep">:</span>
+                <span class="tg-upsell-modal__countdown-num" data-upsell-timer-m>00</span>
+                <span class="tg-upsell-modal__countdown-sep">:</span>
+                <span class="tg-upsell-modal__countdown-num" data-upsell-timer-s>00</span>
+                <span class="tg-upsell-modal__countdown-bracket">&nbsp;]</span>
+              </div>
+            </div>
+
+            <!-- Scissors divider -->
+            <div class="tg-upsell-modal__scissors" aria-hidden="true">
+              <span class="tg-upsell-modal__scissors-line"></span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+                <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+                <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+                <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+              </svg>
+              <span class="tg-upsell-modal__scissors-line"></span>
+            </div>
+
+            <!-- CTA selection -->
+            <div class="tg-upsell-modal__selection">
+              <label class="tg-upsell-option tg-upsell-option--primary">
+                <input type="radio" name="upsell-choice" value="upgrade" data-upsell-radio="upgrade" {% if sale_active %}checked{% endif %} class="tg-upsell-option__input">
+                <span class="tg-upsell-option__label">{{ section.settings.upsell_upgrade_label | default: 'YES! Upgrade my order' }}</span>
+              </label>
+              <label class="tg-upsell-option tg-upsell-option--secondary">
+                <input type="radio" name="upsell-choice" value="pass" data-upsell-radio="pass" {% unless sale_active %}checked{% endunless %} class="tg-upsell-option__input">
+                <span class="tg-upsell-option__label">{{ section.settings.upsell_pass_label | default: 'No, I will pass' }}</span>
+              </label>
+              <div class="tg-upsell-modal__extra10" data-upsell-extra10-wrapper hidden>
+                <label class="tg-upsell-extra10">
+                  <input class="tg-upsell-extra10__input" type="checkbox" data-upsell-extra10 checked>
+                  <span class="tg-upsell-extra10__copy">
+                    <span class="tg-upsell-extra10__title" data-upsell-extra10-title>Use my extra $10 coupon</span>
+                    <span class="tg-upsell-extra10__desc" data-upsell-extra10-desc>Apply it if I keep my original plan.</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <p class="tg-upsell-modal__cta-note">{{ section.settings.upsell_footer_text | default: "Don't travel blindly. Get the full stress-free package." }}</p>
+
+          </div><!-- /offer-card -->
+
+          <!-- Checklist card (white) -->
+          <div class="tg-upsell-modal__checklist-card">
+            <h4 class="tg-upsell-modal__checklist-title">Everything You Get:</h4>
+            <ul class="tg-upsell-modal__checklist" aria-label="Benefits">
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>Guidebook</li>
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>Video Guide</li>
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>1000+ Local Foodie Hidden Gems</li>
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>Offline Viewing</li>
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>Up to 3 devices</li>
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>6 months of access</li>
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>15% Off Experience Tour Coupon</li>
+              <li class="tg-upsell-modal__checklist-item"><span class="tg-upsell-modal__check" aria-hidden="true">✅</span>Purple Map — 1,500+ handpicked spots</li>
+            </ul>
+          </div>
+
+        </div><!-- /scroll -->
+      </div><!-- /offer view -->
+
+      <!-- ── Confirm View ── -->
+      <div class="tg-upsell-modal__view tg-upsell-modal__confirm" data-upsell-view="confirm" aria-hidden="true">
+        <div class="tg-upsell-modal__confirm-inner">
+          <h3 class="tg-upsell-modal__confirm-headline">{{ section.settings.upsell_confirm_headline | default: "Are you sure you want to miss this 50% discount?" }}</h3>
+          <p class="tg-upsell-modal__confirm-sub">{{ section.settings.upsell_confirm_subtext | default: "This special upgrade offer expires soon, and you may not see this price again." }}</p>
+          <div class="tg-upsell-modal__confirm-actions">
+            <button type="button" class="tg-cta tg-upsell-modal__confirm-back" data-upsell-confirm-back>{{ section.settings.upsell_confirm_back_label | default: "Wait, add it to my order" }}</button>
+            <button type="button" class="tg-upsell-modal__confirm-decline" data-upsell-confirm-decline>{{ section.settings.upsell_confirm_decline_label | default: "No thanks, continue without the upgrade" }}</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /modal -->
+{% endif %}
+
+{% if customer %}
+  <div class="ob-extension-modal" data-tour-extension-modal hidden>
+    <div class="ob-extension-modal__backdrop" data-tour-extension-modal-close></div>
+    <div class="ob-extension-modal__card" role="dialog" aria-modal="true" aria-labelledby="TourExtensionModalTitle">
+      <div class="ob-extension-modal__header">
+        <div class="ob-extension-modal__header-content">
+          <h3 class="ob-extension-modal__heading" id="TourExtensionModalTitle" data-tour-extension-modal-title>Extend Access Period</h3>
+          <p class="ob-extension-modal__desc" data-tour-extension-modal-desc>Select how many 30-day units you want to add, then proceed to checkout.</p>
+        </div>
+        <button class="ob-extension-modal__close" type="button" aria-label="Close" data-tour-extension-modal-close>&times;</button>
+      </div>
+      <div class="ob-extension-modal__body">
+        <div id="GuideExtensionRoot" data-customer-id="{{ customer.id }}"></div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<script src="{{ 'travel-booking.js' | asset_url }}" defer></script>
+<script>
+(function() {
+  'use strict';
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGuideProduct);
+  } else {
+    initGuideProduct();
+  }
+
+  async function initGuideProduct() {
+    var releaseReservationHold = null;
+    if (window.TravelBookingHelpers && window.TravelBookingHelpers.releaseReservationHold) {
+      releaseReservationHold = window.TravelBookingHelpers.releaseReservationHold;
+    }
+    var maxWait = 50;
+    while (!releaseReservationHold && maxWait > 0) {
+      await new Promise(function(r) { setTimeout(r, 100); });
+      if (window.TravelBookingHelpers && window.TravelBookingHelpers.releaseReservationHold) {
+        releaseReservationHold = window.TravelBookingHelpers.releaseReservationHold;
+      }
+      maxWait--;
+    }
+
+    var tourExtModal = document.querySelector('[data-tour-extension-modal]');
+    var tourExtModalTitle = tourExtModal && tourExtModal.querySelector('[data-tour-extension-modal-title]');
+    var tourExtModalDesc = tourExtModal && tourExtModal.querySelector('[data-tour-extension-modal-desc]');
+
+    function typeToExtLabel(type) {
+      if (type === 'BUNDLE') return 'Korea Guide Kit';
+      if (type === 'PDF') return 'PDF Guide';
+      if (type === 'VIDEO') return 'Video Guide';
+      return '';
+    }
+
+    function openTourExtensionModal(type, label) {
+      if (tourExtModal) tourExtModal.hidden = false;
+      if (tourExtModalTitle) tourExtModalTitle.textContent = label ? 'Extend ' + label : 'Extend Access Period';
+      if (tourExtModalDesc) tourExtModalDesc.textContent = label
+        ? 'Select how many 30-day units you want to add to your ' + label + ', then proceed to checkout.'
+        : 'Select how many 30-day units you want to add, then proceed to checkout.';
+      document.dispatchEvent(new CustomEvent('guide-extension:select-type', { detail: { type: type } }));
+    }
+
+    function closeTourExtensionModal() {
+      if (tourExtModal) tourExtModal.hidden = true;
+    }
+
+    if (tourExtModal) {
+      tourExtModal.querySelectorAll('[data-tour-extension-modal-close]').forEach(function(el) {
+        el.addEventListener('click', closeTourExtensionModal);
+      });
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && tourExtModal && !tourExtModal.hidden) closeTourExtensionModal();
+    });
+
+    // Current contract is strict no-upgrade: any active guide entitlement blocks all base variants.
+    // One eligibility result is therefore enough to gate the entire guide-kit section.
+    var guideEligibilityState = {
+      status: 'idle',
+      blocked: false,
+      data: null,
+      error: null,
+      promise: null
+    };
+
+    function buildGuideLoginUrl() {
+      var returnUrl = window.location.pathname + window.location.search + window.location.hash;
+      return '/account/login?return_url=' + encodeURIComponent(returnUrl);
+    }
+
+    function fetchGuideEligibilityEnvelope(variantId) {
+      var path = '/guide-purchase/eligibility?variantId=' + encodeURIComponent(String(variantId || ''));
+      var proxyFetch = window.TravelBookingHelpers && window.TravelBookingHelpers.proxyFetch;
+      if (proxyFetch) {
+        return proxyFetch(path, { method: 'GET' });
+      }
+
+      return fetch('/apps/bta-booking' + path, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json'
+        }
+      }).then(function(response) {
+        return response.json().catch(function(error) {
+          throw {
+            code: 'PARSE_ERROR',
+            message: 'Failed to parse response JSON.',
+            correlationId: null,
+            raw: error
+          };
+        }).then(function(payload) {
+          if (!response.ok || !payload || payload.ok === false) {
+            throw {
+              code: payload && payload.error && payload.error.code ? payload.error.code : 'HTTP_ERROR',
+              message: payload && payload.error && payload.error.message ? payload.error.message : ('HTTP ' + response.status),
+              correlationId: payload && payload.meta ? payload.meta.correlationId : null,
+              raw: payload
+            };
+          }
+          return payload;
+        });
+      });
+    }
+
+    function normalizeGuideEligibilityError(error) {
+      if (!error) {
+        return {
+          code: 'UNKNOWN_ERROR',
+          message: 'An error occurred while checking your guide access.',
+          correlationId: null,
+          raw: error
+        };
+      }
+
+      if (error.code) {
+        return {
+          code: error.code,
+          message: error.message || 'An error occurred while checking your guide access.',
+          correlationId: error.correlationId || null,
+          raw: error.raw || error
+        };
+      }
+
+      if (error.error && error.error.code) {
+        return {
+          code: error.error.code,
+          message: error.error.message || 'An error occurred while checking your guide access.',
+          correlationId: error.meta && error.meta.correlationId ? error.meta.correlationId : null,
+          raw: error
+        };
+      }
+
+      return {
+        code: 'UNKNOWN_ERROR',
+        message: error.message || 'An error occurred while checking your guide access.',
+        correlationId: null,
+        raw: error
+      };
+    }
+
+    function messageForGuideEligibilityError(error) {
+      switch (error && error.code) {
+        case 'AUTH_LOGIN_REQUIRED':
+          return 'Please sign in again to verify your current guide access.';
+        case 'VALIDATION_ERROR':
+          return 'The selected guide plan could not be verified. Refresh the page and try again.';
+        case 'AUTH_PROXY_SIGNATURE_INVALID':
+          return 'Request validation failed. Refresh the page and try again.';
+        case 'RATE_LIMITED':
+          return 'Too many requests. Please wait a moment and try again.';
+        case 'TIMEOUT':
+          return 'The eligibility check timed out. Please try again.';
+        case 'NETWORK_ERROR':
+          return 'A network error occurred while checking your guide access.';
+        case 'PARSE_ERROR':
+          return 'The eligibility response could not be processed. Please try again.';
+        default:
+          return (error && error.message) || 'We could not verify your guide access. Please try again.';
+      }
+    }
+
+    function formatEligibilityDate(value) {
+      if (!value) return '';
+      var parsed = new Date(value);
+      if (isNaN(parsed.getTime())) return value;
+
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }).format(parsed);
+    }
+
+    function summarizeActiveTypes(entitlements) {
+      var seen = {};
+      var types = [];
+      if (!Array.isArray(entitlements)) return types;
+
+      entitlements.forEach(function(item) {
+        var type = item && item.type ? String(item.type) : '';
+        if (!type || seen[type]) return;
+        seen[type] = true;
+        types.push(type);
+      });
+      return types;
+    }
+
+    function buildGuideBlockedMessage(data) {
+      var activeTypes = summarizeActiveTypes(data && data.activeEntitlements);
+      var activeLabel = activeTypes.length > 0 ? activeTypes.join(', ') + ' access' : 'guide access';
+      var expiresAt = formatEligibilityDate(data && data.latestActiveExpiresAtKst);
+      var expiresText = expiresAt ? ' until ' + expiresAt + ' (KST)' : '';
+
+      return 'Your ' + activeLabel + ' is already active' + expiresText + '. Base repurchase and upgrades are unavailable. Please use Guide Extension instead.';
+    }
+
+    function setGuideEligibilityBanner(message) {
+      var banner = document.querySelector('[data-guide-eligibility-banner]');
+      var text = document.querySelector('[data-guide-eligibility-banner-text]');
+      if (!banner || !text) return;
+
+      if (message) {
+        text.textContent = message;
+        banner.hidden = false;
+      } else {
+        text.textContent = '';
+        banner.hidden = true;
+      }
+    }
+
+    function setGuideEligibilityNote(button, message) {
+      var card = button ? button.closest('.tg-pricing-card') : null;
+      var note = card ? card.querySelector('[data-guide-eligibility-note]') : null;
+      if (!note) return;
+
+      if (message) {
+        note.textContent = message;
+        note.hidden = false;
+      } else {
+        note.textContent = '';
+        note.hidden = true;
+      }
+    }
+
+    function applyGuideButtonState(button, stateName, options) {
+      if (!button) return;
+
+      var originalText = button.getAttribute('data-original-text') || button.textContent;
+      button.setAttribute('data-original-text', originalText);
+      button.setAttribute('data-guide-purchase-state', stateName);
+
+      if (stateName === 'checking') {
+        button.setAttribute('disabled', 'disabled');
+        button.classList.add('tg-pricing-card__btn--disabled');
+        button.classList.remove('tg-pricing-card__btn--extension');
+        button.setAttribute('aria-disabled', 'true');
+        button.textContent = 'Checking access...';
+        return;
+      }
+
+      if (stateName === 'blocked') {
+        button.removeAttribute('disabled');
+        button.classList.remove('tg-pricing-card__btn--disabled');
+        button.classList.add('tg-pricing-card__btn--extension');
+        button.removeAttribute('aria-disabled');
+        button.textContent = (options && options.label) || 'Extend access';
+        return;
+      }
+
+      button.removeAttribute('disabled');
+      button.classList.remove('tg-pricing-card__btn--disabled');
+      button.classList.remove('tg-pricing-card__btn--extension');
+      button.removeAttribute('aria-disabled');
+      button.textContent = originalText;
+    }
+
+    function setGuideButtonsChecking(checking) {
+      checkoutButtons.forEach(function(button) {
+        applyGuideButtonState(button, checking ? 'checking' : 'default');
+      });
+    }
+
+    function clearGuideEligibilityBlock() {
+      guideEligibilityState.blocked = false;
+      setGuideEligibilityBanner('');
+      checkoutButtons.forEach(function(button) {
+        applyGuideButtonState(button, 'default');
+        setGuideEligibilityNote(button, '');
+      });
+    }
+
+    function applyGuideEligibilityBlock(data) {
+      var message = buildGuideBlockedMessage(data);
+      guideEligibilityState.blocked = true;
+      setGuideEligibilityBanner(message);
+      checkoutButtons.forEach(function(button) {
+        applyGuideButtonState(button, 'blocked', { label: 'Extend access' });
+        setGuideEligibilityNote(button, message);
+      });
+    }
+
+    function resolveGuideEligibilityData(envelope) {
+      return envelope && typeof envelope === 'object' && 'data' in envelope ? envelope.data : envelope;
+    }
+
+    function ensureGuideEligibility(variantId, options) {
+      options = options || {};
+
+      if (!window.__customerId) {
+        return Promise.resolve(null);
+      }
+
+      if (!options.force) {
+        if (guideEligibilityState.data) {
+          return Promise.resolve(guideEligibilityState.data);
+        }
+        if (guideEligibilityState.promise) {
+          return guideEligibilityState.promise;
+        }
+      }
+
+      guideEligibilityState.status = 'loading';
+      guideEligibilityState.error = null;
+      setGuideButtonsChecking(true);
+
+      guideEligibilityState.promise = fetchGuideEligibilityEnvelope(variantId)
+        .then(function(envelope) {
+          var data = resolveGuideEligibilityData(envelope);
+          guideEligibilityState.status = 'loaded';
+          guideEligibilityState.data = data;
+          guideEligibilityState.error = null;
+
+          if (data && data.canPurchaseBase === false) {
+            applyGuideEligibilityBlock(data);
+          } else {
+            clearGuideEligibilityBlock();
+          }
+
+          return data;
+        })
+        .catch(function(error) {
+          var normalized = normalizeGuideEligibilityError(error);
+          guideEligibilityState.status = 'error';
+          guideEligibilityState.data = null;
+          guideEligibilityState.error = normalized;
+          clearGuideEligibilityBlock();
+          throw normalized;
+        })
+        .finally(function() {
+          guideEligibilityState.promise = null;
+        });
+
+      return guideEligibilityState.promise;
+    }
+
+    function setCheckoutButtonsLocked(locked, triggerButton) {
+      var ctas = document.querySelectorAll('[data-guide-checkout]');
+      ctas.forEach(function(cta) {
+        if (!cta.getAttribute('data-original-text')) {
+          cta.setAttribute('data-original-text', cta.textContent);
+        }
+        if (locked) {
+          cta.setAttribute('disabled', 'disabled');
+          cta.classList.add('tg-pricing-card__btn--disabled');
+          cta.setAttribute('aria-disabled', 'true');
+          cta.textContent = 'Processing...';
+        } else {
+          if (cta.getAttribute('data-guide-purchase-state') === 'blocked') {
+            cta.removeAttribute('disabled');
+            cta.classList.remove('tg-pricing-card__btn--disabled');
+            cta.classList.add('tg-pricing-card__btn--extension');
+            cta.removeAttribute('aria-disabled');
+            cta.textContent = 'Extend access';
+            return;
+          }
+          cta.removeAttribute('disabled');
+          cta.classList.remove('tg-pricing-card__btn--disabled');
+          cta.removeAttribute('aria-disabled');
+          cta.textContent = cta.getAttribute('data-original-text') || cta.textContent;
+        }
+      });
+      if (locked && triggerButton) {
+        triggerButton.setAttribute('data-original-text', triggerButton.getAttribute('data-original-text') || triggerButton.textContent);
+      }
+    }
+
+    async function executeCheckoutFlow(variantId, button, options) {
+      setCheckoutButtonsLocked(true, button);
+      try {
+        var cartUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root ? window.Shopify.routes.root : '/') + 'cart.js';
+        var cartRes = await fetch(cartUrl);
+        var existingHoldId = null;
+        if (cartRes.ok) {
+          var cartData = await cartRes.json();
+          if (cartData.items && cartData.items.length > 0) {
+            for (var i = 0; i < cartData.items.length; i++) {
+              var item = cartData.items[i];
+              var props = item.properties;
+              if (props) {
+                var map = Array.isArray(props) ? Object.fromEntries(props.map(function(p) { return [p.name || p.first, p.value || p.last]; })) : props;
+                existingHoldId = map.hold_id || map.holdId || null;
+                if (existingHoldId) break;
+              }
+            }
+          }
+        }
+        if (existingHoldId && releaseReservationHold) {
+          try {
+            await releaseReservationHold(existingHoldId, { productId: null, date: null, clientRequestId: null });
+          } catch (err) {
+            if (err.message && (err.message.indexOf('로그인') !== -1 || err.message.toLowerCase().indexOf('log in') !== -1)) {
+              alert('Please log in to continue.');
+              window.location.href = '/account/login?return_url=' + encodeURIComponent(window.location.pathname);
+              return;
+            }
+            alert(err.message || 'Failed to release the reservation hold. Please try again.');
+            setCheckoutButtonsLocked(false);
+            return;
+          }
+        }
+        var preparedCheckout = await prepareGuideCheckout(variantId, options);
+        var themeCartCheckout = window.BtaThemeCartCheckout;
+        if (themeCartCheckout && typeof themeCartCheckout.isThemeCartIntent === 'function' && themeCartCheckout.isThemeCartIntent(preparedCheckout.intent)) {
+          await themeCartCheckout.runIntent(preparedCheckout.intent);
+          return;
+        }
+
+        if (preparedCheckout.intent && preparedCheckout.intent.checkoutMode === 'theme_cart') {
+          throw {
+            code: 'INVALID_RESPONSE',
+            message: 'Checkout could not be prepared. Please try again.',
+            raw: preparedCheckout.intent
+          };
+        }
+
+        window.location.href = preparedCheckout.checkoutUrl;
+      } catch (err) {
+        var normalizedError = normalizeGuideCheckoutError(err);
+        console.error('[Guide Product] Checkout flow failed:', normalizedError);
+        if (normalizedError.code === 'AUTH_LOGIN_REQUIRED') {
+          window.location.href = buildGuideLoginUrl();
+          return;
+        }
+        alert(messageForGuideCheckoutError(normalizedError));
+        setCheckoutButtonsLocked(false);
+      }
+    }
+
+    var upsellTimerIntervalId = null;
+    var guide50CouponState = {
+      available: false,
+      expiresAtMs: null
+    };
+    var extra10CouponState = {
+      available: false,
+      amountCents: 0
+    };
+    var guideDiscountState = {
+      guide50: null,
+      extra10: null,
+      currency: 'USD'
+    };
+    var featuredCountdownIntervalIds = [];
+    var upsellDiscountCopy = {
+      confirmHeadline: {{ section.settings.upsell_confirm_headline | default: "Are you sure you want to miss this 50% discount?" | json }},
+      confirmSubtext: {{ section.settings.upsell_confirm_subtext | default: "This special upgrade offer expires soon, and you may not see this price again." | json }},
+      neutralConfirmHeadline: 'Are you sure you want to skip the Korea Guide Kit?',
+      neutralConfirmSubtext: 'You can continue with your selected plan or upgrade to the full kit at the listed price.'
+    };
+    /* Timer: restarts from full duration each time the modal opens. Alternative: persist remainingSeconds in data attr and resume on next open. */
+
+    function createGuideClientRequestId() {
+      return 'guide-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function postGuideProxy(path, body) {
+      var proxyFetch = window.TravelBookingHelpers && window.TravelBookingHelpers.proxyFetch;
+      if (proxyFetch) {
+        return proxyFetch(path, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: body
+        });
+      }
+
+      return fetch('/apps/bta-booking' + path, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }).then(function(response) {
+        return response.json().catch(function(error) {
+          throw {
+            code: 'PARSE_ERROR',
+            message: 'Failed to parse response JSON.',
+            correlationId: null,
+            raw: error
+          };
+        }).then(function(payload) {
+          if (!response.ok || !payload || payload.ok === false) {
+            throw {
+              code: payload && payload.error && payload.error.code ? payload.error.code : 'HTTP_ERROR',
+              message: payload && payload.error && payload.error.message ? payload.error.message : ('HTTP ' + response.status),
+              correlationId: payload && payload.meta ? payload.meta.correlationId : null,
+              raw: payload
+            };
+          }
+
+          return payload;
+        });
+      });
+    }
+
+    function normalizeGuideCheckoutError(error) {
+      if (!error) {
+        return {
+          code: 'UNKNOWN_ERROR',
+          message: 'An error occurred while preparing checkout.',
+          correlationId: null,
+          raw: error
+        };
+      }
+
+      if (error.code) {
+        return {
+          code: error.code,
+          message: error.message || 'An error occurred while preparing checkout.',
+          correlationId: error.correlationId || null,
+          raw: error.raw || error
+        };
+      }
+
+      if (error.error && error.error.code) {
+        return {
+          code: error.error.code,
+          message: error.error.message || 'An error occurred while preparing checkout.',
+          correlationId: error.meta && error.meta.correlationId ? error.meta.correlationId : null,
+          raw: error
+        };
+      }
+
+      return {
+        code: 'UNKNOWN_ERROR',
+        message: error.message || 'An error occurred while preparing checkout.',
+        correlationId: null,
+        raw: error
+      };
+    }
+
+    function messageForGuideCheckoutError(error) {
+      switch (error && error.code) {
+        case 'AUTH_LOGIN_REQUIRED':
+          return 'Please sign in again to continue to checkout.';
+        case 'VALIDATION_ERROR':
+          return 'The selected guide plan could not be prepared. Refresh the page and try again.';
+        case 'AUTH_PROXY_SIGNATURE_INVALID':
+          return 'Request validation failed. Refresh the page and try again.';
+        case 'INTERNAL_CONFLICT':
+        case 'CONFLICT':
+          return 'Another checkout is already being prepared. Please wait a moment and try again.';
+        case 'RATE_LIMITED':
+          return 'Too many requests. Please wait a moment and try again.';
+        case 'TIMEOUT':
+          return 'Checkout preparation timed out. Please try again.';
+        case 'NETWORK_ERROR':
+          return 'A network error occurred while preparing checkout.';
+        case 'PARSE_ERROR':
+        case 'INVALID_RESPONSE':
+          return 'The checkout response could not be processed. Please try again.';
+        default:
+          return (error && error.message) || 'We could not prepare checkout. Please try again.';
+      }
+    }
+
+    async function prepareGuideCheckout(variantId, options) {
+      var useExtra10 = !(options && options.useExtra10 === false);
+      var themeCartCheckout = window.BtaThemeCartCheckout;
+      var preparePath = themeCartCheckout && typeof themeCartCheckout.withCheckoutMode === 'function'
+        ? themeCartCheckout.withCheckoutMode('/guide/prepare-checkout')
+        : '/guide/prepare-checkout?checkoutMode=theme_cart';
+      var envelope = await postGuideProxy(preparePath, {
+        variantId: String(variantId),
+        quantity: 1,
+        useExtra10: useExtra10,
+        clientRequestId: createGuideClientRequestId()
+      });
+      var data = envelope && typeof envelope === 'object' && 'data' in envelope ? envelope.data : envelope || {};
+      var checkoutUrl = data.checkoutUrl || data.checkout_url || null;
+
+      if (data.checkoutMode === 'theme_cart') {
+        return {
+          intent: data,
+          checkoutMode: data.checkoutMode,
+          decision: data.decision || null,
+          appliedCodes: data.appliedCodes || null,
+          correlationId: envelope && envelope.meta ? envelope.meta.correlationId : null
+        };
+      }
+
+      if (!checkoutUrl) {
+        throw {
+          code: 'INVALID_RESPONSE',
+          message: 'No checkout URL was returned.',
+          correlationId: envelope && envelope.meta ? envelope.meta.correlationId : null,
+          raw: envelope
+        };
+      }
+
+      return {
+        checkoutUrl: checkoutUrl,
+        decision: data.decision || null,
+        appliedCodes: data.appliedCodes || null,
+        correlationId: envelope && envelope.meta ? envelope.meta.correlationId : null
+      };
+    }
+
+    function resolveExtra10AmountCents(extra10) {
+      if (!extra10 || typeof extra10.amount !== 'number' || !isFinite(extra10.amount) || extra10.amount <= 0) {
+        return 0;
+      }
+
+      return Math.round(extra10.amount * 100);
+    }
+
+    function getGuideDiscountDisplayContext(guide50, extra10, mode) {
+      var hasGuide50 = !!(guide50 && guide50.available);
+      var hasExtra10 = !!(extra10 && extra10.available);
+      var guide50Rate = hasGuide50 && typeof guide50.percentRate === 'number' ? guide50.percentRate : (hasGuide50 ? 0.5 : null);
+      var note = '';
+
+      if (!hasGuide50 && !hasExtra10) {
+        return {
+          showDiscount: false,
+          note: '',
+          guide50Rate: null,
+          extra10Cents: 0
+        };
+      }
+
+if (hasGuide50 && hasExtra10) {
+  note = 'Shown price includes your 50% new member discount and $10 sharing reward. Applied automatically at checkout.';
+} else if (hasGuide50) {
+  note = 'Shown price includes your 50% new member discount. Applied automatically at checkout.';
+} else {
+  note = 'Shown price includes your $10 sharing reward. Applied automatically at checkout.';
+}
+
+      return {
+        showDiscount: true,
+        note: note,
+        guide50Rate: guide50Rate,
+        extra10Cents: hasExtra10 ? resolveExtra10AmountCents(extra10) : 0
+      };
+    }
+
+    function calculateGuideKitDiscountedCents(priceCents, displayContext) {
+      var discountedCents = priceCents;
+      if (displayContext && typeof displayContext.guide50Rate === 'number') {
+        discountedCents = Math.round(priceCents * displayContext.guide50Rate);
+      }
+      if (displayContext && displayContext.extra10Cents > 0) {
+        discountedCents = Math.max(0, discountedCents - displayContext.extra10Cents);
+      }
+      return discountedCents;
+    }
+
+    function setDiscountNote(node, message) {
+      if (!node) return;
+
+      if (message) {
+        node.textContent = message;
+        node.hidden = false;
+      } else {
+        node.textContent = '';
+        node.hidden = true;
+      }
+    }
+
+    function formatGuideMoney(cents, currency) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(cents / 100);
+    }
+
+    function formatGuideCouponAmount(cents, currency) {
+      if ((currency || 'USD') === 'USD' && cents % 100 === 0) {
+        return '$' + String(cents / 100);
+      }
+      return formatGuideMoney(cents, currency);
+    }
+
+    function renderGuideKitDiscountElement(priceCents, discountEl, discountNoteEl, displayContext, currency) {
+      if (!discountEl || isNaN(priceCents)) return;
+      var discountedCents = calculateGuideKitDiscountedCents(priceCents, displayContext);
+      if (displayContext.showDiscount && discountedCents < priceCents && discountedCents >= 0) {
+        discountEl.textContent = formatGuideMoney(discountedCents, currency);
+        discountEl.style.display = '';
+        setDiscountNote(discountNoteEl, displayContext.note);
+        return;
+      }
+
+      discountEl.textContent = '';
+      discountEl.style.display = 'none';
+      setDiscountNote(discountNoteEl, '');
+    }
+
+    function getUpsellExtra10Input(modal) {
+      return modal ? modal.querySelector('[data-upsell-extra10]') : null;
+    }
+
+    function isUpsellExtra10Selected(modal) {
+      var input = getUpsellExtra10Input(modal);
+      return !!(extra10CouponState.available && input && input.checked);
+    }
+
+    function syncUpsellExtra10Control(modal) {
+      if (!modal) return;
+      var wrapper = modal.querySelector('[data-upsell-extra10-wrapper]');
+      var input = getUpsellExtra10Input(modal);
+      var title = modal.querySelector('[data-upsell-extra10-title]');
+      var desc = modal.querySelector('[data-upsell-extra10-desc]');
+      if (!wrapper || !input) return;
+
+      if (!extra10CouponState.available || extra10CouponState.amountCents <= 0) {
+        wrapper.hidden = true;
+        input.checked = false;
+        input.disabled = true;
+        return;
+      }
+
+      wrapper.hidden = false;
+      input.disabled = false;
+      if (!wrapper.getAttribute('data-extra10-touched')) {
+        input.checked = true;
+      }
+      if (title) {
+        title.textContent = 'Use my extra ' + formatGuideCouponAmount(extra10CouponState.amountCents, guideDiscountState.currency) + ' coupon';
+      }
+      if (desc) {
+        desc.textContent = 'Apply it if I keep my original plan.';
+      }
+    }
+
+    function syncGuideDiscountDisplays() {
+      var cardContext = getGuideDiscountDisplayContext(guideDiscountState.guide50, guideDiscountState.extra10, 'card');
+      document.querySelectorAll('[data-guidekit-featured="true"]').forEach(function(card) {
+        renderGuideKitDiscountElement(
+          parseInt(card.getAttribute('data-guidekit-price-cents'), 10),
+          card.querySelector('[data-guidekit-discounted-price]'),
+          card.querySelector('[data-guidekit-discount-note]'),
+          cardContext,
+          guideDiscountState.currency
+        );
+      });
+
+      var modal = document.getElementById('tg-upsell-modal');
+      if (modal) {
+        syncUpsellExtra10Control(modal);
+        renderGuideKitDiscountElement(
+          parseInt(modal.getAttribute('data-featured-price-cents'), 10),
+          modal.querySelector('[data-guidekit-modal-discounted-price]'),
+          modal.querySelector('[data-guidekit-modal-discount-note]'),
+          getGuideDiscountDisplayContext(
+            guideDiscountState.guide50,
+            guideDiscountState.extra10,
+            'upsell'
+          ),
+          guideDiscountState.currency
+        );
+      }
+    }
+
+    function openUpsellModal(originalVariantId, button) {
+      var modal = document.getElementById('tg-upsell-modal');
+      if (!modal) return;
+      modal.setAttribute('data-original-variant-id', originalVariantId);
+      if (button) {
+        button.setAttribute('data-upsell-button-id', 'upsell-btn-' + Date.now());
+        modal.setAttribute('data-original-button-id', button.getAttribute('data-upsell-button-id'));
+      }
+      showUpsellView(modal, 'offer');
+      syncUpsellDiscountCopy(modal);
+      syncUpsellCountdownVisibility(modal);
+      syncGuideDiscountDisplays();
+      if (hasActiveGuide50Countdown()) {
+        resetUpsellCountdown(modal);
+        startUpsellCountdown(modal);
+      }
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      var firstFocusable = modal.querySelector('input[type="radio"], button');
+      if (firstFocusable) firstFocusable.focus();
+    }
+
+    function closeUpsellModal() {
+      var modal = document.getElementById('tg-upsell-modal');
+      if (!modal) return;
+      if (upsellTimerIntervalId) {
+        clearInterval(upsellTimerIntervalId);
+        upsellTimerIntervalId = null;
+      }
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function showUpsellView(modal, viewName) {
+      var views = modal.querySelectorAll('[data-upsell-view]');
+      views.forEach(function(v) {
+        var isActive = v.getAttribute('data-upsell-view') === viewName;
+        v.classList.toggle('tg-upsell-modal__view--active', isActive);
+        v.setAttribute('aria-hidden', !isActive);
+      });
+    }
+
+    function resetUpsellCountdown(modal) {
+      var bar = modal.querySelector('[data-upsell-countdown-bar]');
+      var headline = modal.querySelector('[data-upsell-countdown-headline]');
+      var expiredEl = modal.querySelector('[data-upsell-countdown-expired]');
+      var timerWrap = modal.querySelector('[data-upsell-timer]');
+      var primaryOption = modal.querySelector('[data-upsell-radio="upgrade"]');
+      var passOption = modal.querySelector('[data-upsell-radio="pass"]');
+      if (bar) bar.classList.remove('tg-upsell-modal__countdown-bar--expired');
+      if (headline) headline.style.display = '';
+      if (expiredEl) { expiredEl.style.display = 'none'; expiredEl.setAttribute('aria-hidden', 'true'); }
+      if (timerWrap) timerWrap.style.display = '';
+      if (primaryOption) { primaryOption.disabled = false; primaryOption.closest('label').classList.remove('tg-upsell-option--disabled'); }
+      if (passOption) passOption.disabled = false;
+    }
+
+    function resolveGuide50ExpiryMs(guide50) {
+      if (!guide50 || typeof guide50 !== 'object') return null;
+      if (guide50.expiresAt) {
+        var expiresAtMs = new Date(guide50.expiresAt).getTime();
+        if (!isNaN(expiresAtMs)) return expiresAtMs;
+      }
+      if (typeof guide50.ttlSeconds === 'number' && guide50.ttlSeconds > 0) {
+        return Date.now() + (guide50.ttlSeconds * 1000);
+      }
+      return null;
+    }
+
+    function isGuide50AvailableNow(guide50, expiryMs) {
+      if (!guide50 || guide50.available !== true) return false;
+      if (typeof expiryMs === 'number' && expiryMs <= Date.now()) return false;
+      return true;
+    }
+
+    function getGuide50CountdownRemainingSeconds() {
+      if (!guide50CouponState.available || typeof guide50CouponState.expiresAtMs !== 'number') return 0;
+      return Math.max(0, Math.floor((guide50CouponState.expiresAtMs - Date.now()) / 1000));
+    }
+
+    function hasActiveGuide50Countdown() {
+      return getGuide50CountdownRemainingSeconds() > 0;
+    }
+
+    function clearFeaturedCountdownIntervals() {
+      featuredCountdownIntervalIds.forEach(function(intervalId) {
+        clearInterval(intervalId);
+      });
+      featuredCountdownIntervalIds = [];
+    }
+
+    function hideFeaturedCountdowns() {
+      featuredCountdowns.forEach(function(node) {
+        node.hidden = true;
+        node.setAttribute('aria-hidden', 'true');
+      });
+      document.querySelectorAll('[data-guidekit-countdown-placeholder]').forEach(function(el) {
+        el.hidden = true;
+      });
+    }
+
+    function clearGuideDiscountDisplays() {
+      document.querySelectorAll('[data-guidekit-discounted-price]').forEach(function(node) {
+        node.textContent = '';
+        node.style.display = 'none';
+      });
+      document.querySelectorAll('[data-guidekit-discount-note], [data-guidekit-modal-discount-note]').forEach(function(node) {
+        setDiscountNote(node, '');
+      });
+
+      var modalDisc = document.querySelector('[data-guidekit-modal-discounted-price]');
+      if (modalDisc) {
+        modalDisc.textContent = '';
+        modalDisc.style.display = 'none';
+      }
+    }
+
+    function syncUpsellCountdownVisibility(modal) {
+      if (!modal) return;
+      var bar = modal.querySelector('[data-upsell-countdown-bar]');
+      if (!bar) return;
+      bar.style.display = hasActiveGuide50Countdown() ? '' : 'none';
+    }
+
+    function syncUpsellDiscountCopy(modal) {
+      if (!modal) return;
+
+      var hasGuide50 = guide50CouponState.available === true;
+      var confirmHeadline = modal.querySelector('.tg-upsell-modal__confirm-headline');
+      var confirmSubtext = modal.querySelector('.tg-upsell-modal__confirm-sub');
+
+      if (confirmHeadline) {
+        confirmHeadline.textContent = hasGuide50 ? upsellDiscountCopy.confirmHeadline : upsellDiscountCopy.neutralConfirmHeadline;
+      }
+      if (confirmSubtext) {
+        confirmSubtext.textContent = hasGuide50 ? upsellDiscountCopy.confirmSubtext : upsellDiscountCopy.neutralConfirmSubtext;
+      }
+    }
+
+    function startUpsellCountdown(modal) {
+      if (upsellTimerIntervalId) {
+        clearInterval(upsellTimerIntervalId);
+        upsellTimerIntervalId = null;
+      }
+      if (!hasActiveGuide50Countdown()) {
+        syncUpsellCountdownVisibility(modal);
+        return;
+      }
+      var remaining = getGuide50CountdownRemainingSeconds();
+      var hEl = modal.querySelector('[data-upsell-timer-h]');
+      var mEl = modal.querySelector('[data-upsell-timer-m]');
+      var sEl = modal.querySelector('[data-upsell-timer-s]');
+      var bar = modal.querySelector('[data-upsell-countdown-bar]');
+      var headline = modal.querySelector('[data-upsell-countdown-headline]');
+      var expiredEl = modal.querySelector('[data-upsell-countdown-expired]');
+      var timerWrap = modal.querySelector('[data-upsell-timer]');
+      var primaryOption = modal.querySelector('[data-upsell-radio="upgrade"]');
+      var primaryLabel = primaryOption ? primaryOption.closest('label') : null;
+      var passOption = modal.querySelector('[data-upsell-radio="pass"]');
+
+      function pad2(n) { return String(n).padStart(2, '0'); }
+      function render() {
+        var h = Math.floor(remaining / 3600);
+        var m = Math.floor((remaining % 3600) / 60);
+        var s = remaining % 60;
+        if (hEl) hEl.textContent = pad2(h);
+        if (mEl) mEl.textContent = pad2(m);
+        if (sEl) sEl.textContent = pad2(s);
+      }
+      function setExpired() {
+        if (upsellTimerIntervalId) { clearInterval(upsellTimerIntervalId); upsellTimerIntervalId = null; }
+        if (bar) bar.classList.add('tg-upsell-modal__countdown-bar--expired');
+        if (headline) headline.style.display = 'none';
+        if (expiredEl) { expiredEl.style.display = ''; expiredEl.setAttribute('aria-hidden', 'false'); }
+        if (timerWrap) timerWrap.style.display = 'none';
+        if (primaryOption) { primaryOption.disabled = true; primaryOption.checked = false; }
+        if (primaryLabel) primaryLabel.classList.add('tg-upsell-option--disabled');
+        if (passOption) { passOption.checked = true; passOption.disabled = false; }
+      }
+      render();
+      if (remaining <= 0) { setExpired(); return; }
+      upsellTimerIntervalId = setInterval(function() {
+        if (typeof guide50CouponState.expiresAtMs === 'number') {
+          remaining = Math.max(0, Math.floor((guide50CouponState.expiresAtMs - Date.now()) / 1000));
+        } else {
+          remaining--;
+        }
+        if (remaining <= 0) { setExpired(); return; }
+        render();
+      }, 1000);
+    }
+
+    var checkoutButtons = document.querySelectorAll('[data-guide-checkout]');
+    var featuredCountdowns = document.querySelectorAll('[data-guidekit-countdown]');
+
+    function startFeaturedCountdowns() {
+      if (!featuredCountdowns.length) return;
+      clearFeaturedCountdownIntervals();
+      hideFeaturedCountdowns();
+      if (!hasActiveGuide50Countdown()) return;
+
+      featuredCountdowns.forEach(function(node) {
+        var textEl = node.querySelector('[data-guidekit-countdown-text]');
+        var hoursEl = node.querySelector('[data-guidekit-countdown-hours]');
+        var minutesEl = node.querySelector('[data-guidekit-countdown-minutes]');
+        var secondsEl = node.querySelector('[data-guidekit-countdown-seconds]');
+        if (!textEl && !(hoursEl && minutesEl && secondsEl)) return;
+
+        node.hidden = false;
+        node.setAttribute('aria-hidden', 'false');
+        document.querySelectorAll('[data-guidekit-countdown-placeholder]').forEach(function(el) {
+          el.hidden = false;
+        });
+
+        function render() {
+          var remaining = getGuide50CountdownRemainingSeconds();
+          if (remaining <= 0) {
+            node.hidden = true;
+            node.setAttribute('aria-hidden', 'true');
+            document.querySelectorAll('[data-guidekit-countdown-placeholder]').forEach(function(el) {
+              el.hidden = true;
+            });
+            guide50CouponState.available = false;
+            if (guideDiscountState.guide50) {
+              guideDiscountState.guide50 = Object.assign({}, guideDiscountState.guide50, { available: false });
+            }
+            clearFeaturedCountdownIntervals();
+            syncGuideDiscountDisplays();
+            syncUpsellDiscountCopy(document.getElementById('tg-upsell-modal'));
+            syncUpsellCountdownVisibility(document.getElementById('tg-upsell-modal'));
+            return;
+          }
+          var hours = Math.floor(remaining / 3600);
+          var minutes = Math.floor((remaining % 3600) / 60);
+          var seconds = remaining % 60;
+          if (textEl) {
+            textEl.textContent = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+          }
+          if (hoursEl && minutesEl && secondsEl) {
+            hoursEl.textContent = String(hours).padStart(2, '0');
+            minutesEl.textContent = String(minutes).padStart(2, '0');
+            secondsEl.textContent = String(seconds).padStart(2, '0');
+          }
+        }
+
+        render();
+        featuredCountdownIntervalIds.push(setInterval(function() {
+          render();
+        }, 1000));
+      });
+    }
+    checkoutButtons.forEach(function(btn) {
+      btn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        var variantId = this.getAttribute('data-variant-id');
+        var isFeatured = this.getAttribute('data-is-featured') === 'true';
+        var upsellEnabled = {{ section.settings.upsell_enabled | json }};
+
+        if (!window.__customerId) {
+          window.location.href = buildGuideLoginUrl();
+          return;
+        }
+
+        try {
+          var eligibility = await ensureGuideEligibility(variantId);
+          if (eligibility && eligibility.canPurchaseBase === false) {
+            var firstEnt = eligibility.activeEntitlements && eligibility.activeEntitlements[0];
+            var extType = firstEnt ? String(firstEnt.type || '') : '';
+            openTourExtensionModal(extType, typeToExtLabel(extType));
+            return;
+          }
+        } catch (error) {
+          if (error && error.code === 'AUTH_LOGIN_REQUIRED') {
+            window.location.href = buildGuideLoginUrl();
+            return;
+          }
+          alert(messageForGuideEligibilityError(error));
+          return;
+        }
+
+        if (isFeatured) {
+          executeCheckoutFlow(variantId, this, { useExtra10: true });
+          return;
+        }
+        if (!upsellEnabled) {
+          executeCheckoutFlow(variantId, this, { useExtra10: false });
+          return;
+        }
+        openUpsellModal(variantId, this);
+      });
+    });
+
+    if (window.__customerId && checkoutButtons.length > 0) {
+      ensureGuideEligibility(checkoutButtons[0].getAttribute('data-variant-id')).catch(function(error) {
+        console.warn('[Guide Product] Eligibility precheck failed:', error);
+      });
+    }
+
+    startFeaturedCountdowns();
+
+    var modal = document.getElementById('tg-upsell-modal');
+    if (modal) {
+      syncUpsellDiscountCopy(modal);
+      syncUpsellCountdownVisibility(modal);
+      var closeBtn = modal.querySelector('.tg-upsell-modal__close');
+      var overlay = modal.querySelector('.tg-upsell-modal__overlay');
+      if (closeBtn) closeBtn.addEventListener('click', closeUpsellModal);
+      if (overlay) overlay.addEventListener('click', closeUpsellModal);
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+          var confirmView = modal.querySelector('[data-upsell-view="confirm"]');
+          if (confirmView && confirmView.classList.contains('tg-upsell-modal__view--active')) {
+            showUpsellView(modal, 'offer');
+            modal.querySelector('[data-upsell-radio="upgrade"]').checked = true;
+          } else {
+            closeUpsellModal();
+          }
+        }
+      });
+      var declineOption = modal.querySelector('.tg-upsell-option--secondary');
+      if (declineOption) {
+        declineOption.addEventListener('click', function(e) {
+          e.preventDefault();
+          var passRadio = modal.querySelector('[data-upsell-radio="pass"]');
+          if (passRadio) passRadio.checked = true;
+          showUpsellView(modal, 'confirm');
+        });
+      }
+      var confirmBack = modal.querySelector('[data-upsell-confirm-back]');
+      if (confirmBack) {
+        confirmBack.addEventListener('click', function() {
+          showUpsellView(modal, 'offer');
+          var up = modal.querySelector('[data-upsell-radio="upgrade"]');
+          if (up) up.checked = true;
+        });
+      }
+      var confirmDecline = modal.querySelector('[data-upsell-confirm-decline]');
+      if (confirmDecline) {
+        confirmDecline.addEventListener('click', async function() {
+          var originalVariantId = modal.getAttribute('data-original-variant-id');
+          var originalButtonId = modal.getAttribute('data-original-button-id');
+          var originalButton = originalButtonId ? document.querySelector('[data-upsell-button-id="' + originalButtonId + '"]') : null;
+          var useExtra10 = isUpsellExtra10Selected(modal);
+          closeUpsellModal();
+          await executeCheckoutFlow(originalVariantId, originalButton, { useExtra10: useExtra10 });
+        });
+      }
+      var isUpsellSubmitting = false;
+      async function proceedUpsellSelection() {
+        if (isUpsellSubmitting) return;
+        var selected = modal.querySelector('input[name="upsell-choice"]:checked');
+        if (!selected) { alert('Please select an option'); return; }
+        isUpsellSubmitting = true;
+        try {
+          var originalVariantId = modal.getAttribute('data-original-variant-id');
+          var originalButtonId = modal.getAttribute('data-original-button-id');
+          var featuredVariantId = modal.getAttribute('data-featured-variant-id');
+          var targetVariantId = selected.value === 'upgrade' ? featuredVariantId : originalVariantId;
+          var originalButton = originalButtonId ? document.querySelector('[data-upsell-button-id="' + originalButtonId + '"]') : null;
+          var useExtra10 = selected.value === 'upgrade' ? true : isUpsellExtra10Selected(modal);
+          if (selected.value === 'upgrade' && typeof gtag === 'function') {
+            gtag('event', 'upsell_upgrade_accepted', {
+              event_category: 'purchase_flow',
+              original_variant_id: originalVariantId,
+              upgraded_to_variant_id: featuredVariantId
+            });
+          }
+          closeUpsellModal();
+          await executeCheckoutFlow(targetVariantId, originalButton, { useExtra10: useExtra10 });
+        } finally {
+          isUpsellSubmitting = false;
+        }
+      }
+
+      var continueBtn = modal.querySelector('[data-upsell-continue]');
+      if (continueBtn) {
+        continueBtn.addEventListener('click', function() {
+          proceedUpsellSelection();
+        });
+      }
+      var extra10Input = getUpsellExtra10Input(modal);
+      var extra10Wrapper = modal.querySelector('[data-upsell-extra10-wrapper]');
+      if (extra10Input) {
+        extra10Input.addEventListener('change', function() {
+          if (extra10Wrapper) extra10Wrapper.setAttribute('data-extra10-touched', 'true');
+          syncGuideDiscountDisplays();
+        });
+      }
+
+      var primaryUpsellOption = modal.querySelector('.tg-upsell-option--primary');
+      if (primaryUpsellOption) {
+        primaryUpsellOption.addEventListener('click', function(e) {
+          var upgradeRadio = modal.querySelector('[data-upsell-radio="upgrade"]');
+          if (upgradeRadio && upgradeRadio.disabled) return;
+          if (e.target && e.target.closest('input[type="radio"]')) return;
+          if (upgradeRadio) upgradeRadio.checked = true;
+          proceedUpsellSelection();
+        });
+      }
+
+      var saleHeader = modal.querySelector('[data-sale-header]');
+      var timer = modal.querySelector('[data-countdown-timer]');
+      var endsAt = {{ section.settings.upsell_sale_ends_at | json }};
+      if (saleHeader && timer && endsAt) {
+        var endTime = new Date(endsAt).getTime();
+        if (!isNaN(endTime) && endTime > Date.now()) {
+          function updateSaleTimer() {
+            var diff = endTime - Date.now();
+            if (diff <= 0) {
+              saleHeader.style.display = 'none';
+              var up = modal.querySelector('[data-upsell-radio="upgrade"]');
+              var pass = modal.querySelector('[data-upsell-radio="pass"]');
+              if (up && pass) { up.checked = false; pass.checked = true; }
+              return;
+            }
+            var hours = Math.floor(diff / 3600000);
+            var minutes = Math.floor((diff % 3600000) / 60000);
+            var seconds = Math.floor((diff % 60000) / 1000);
+            var hEl = modal.querySelector('[data-timer-hours]');
+            var mEl = modal.querySelector('[data-timer-minutes]');
+            var sEl = modal.querySelector('[data-timer-seconds]');
+            if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+            if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
+            if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
+          }
+          updateSaleTimer();
+          setInterval(updateSaleTimer, 1000);
+        } else {
+          saleHeader.style.display = 'none';
+        }
+      }
+    }
+
+    if (window.__customerId) {
+      try {
+        var proxyFetch = window.TravelBookingHelpers && window.TravelBookingHelpers.proxyFetch;
+        if (window.psWelcomeOfferReady) await window.psWelcomeOfferReady;
+        var summary = proxyFetch ? await proxyFetch('/coupons/summary', { method: 'GET' }) : await fetch('/apps/bta-booking/coupons/summary', { method: 'GET' }).then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('summary failed')); });
+        var data = summary && (summary.data !== undefined ? summary.data : summary);
+        var guide50 = data && data.coupons && data.coupons.guide50;
+        var extra10 = data && data.coupons && data.coupons.extra10;
+        var currency = (data && data.currency) || 'USD';
+        var guide50ExpiryMs = resolveGuide50ExpiryMs(guide50);
+        var guide50Available = isGuide50AvailableNow(guide50, guide50ExpiryMs);
+        var guide50ForDisplay = guide50 ? Object.assign({}, guide50, { available: guide50Available }) : guide50;
+        guideDiscountState.guide50 = guide50ForDisplay;
+        guideDiscountState.extra10 = extra10;
+        guideDiscountState.currency = currency;
+        guide50CouponState.available = guide50Available;
+        guide50CouponState.expiresAtMs = guide50ExpiryMs;
+        extra10CouponState.available = !!(extra10 && extra10.available === true);
+        extra10CouponState.amountCents = resolveExtra10AmountCents(extra10);
+        startFeaturedCountdowns();
+        var upsellModal = document.getElementById('tg-upsell-modal');
+        if (upsellModal) {
+          syncUpsellDiscountCopy(upsellModal);
+          syncUpsellCountdownVisibility(upsellModal);
+          if (upsellModal.style.display === 'flex' && hasActiveGuide50Countdown()) {
+            resetUpsellCountdown(upsellModal);
+            startUpsellCountdown(upsellModal);
+          }
+        }
+        syncGuideDiscountDisplays();
+      } catch (e) {
+        console.warn('[Guide Product] Coupon summary failed:', e);
+      }
+    }
+  }
+})();
+</script>
+
+<style>
+  .tg-pricing{
+    padding: clamp(48px, 6vw, 72px) 24px;
+    background: #f5f5f7;
+  }
+  .tg-pricing__inner{
+    max-width: 1160px;
+    margin: 0 auto;
+  }
+  .tg-pricing__head{
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .tg-pricing__title{
+    margin: 0 0 10px;
+    font-size: clamp(20px, 2.2vw, 28px);
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+  }
+  .tg-pricing__sub{
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(0,0,0,.6);
+  }
+  .tg-pricing__grid{
+    display: grid;
+    grid-template-columns: 1fr 1.12fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  /* Card */
+  .tg-pricing-card{
+    background: #fff;
+    border-radius: 20px;
+    border: 1.5px solid rgba(0,0,0,.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,.07);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 24px 32px;
+    transition: box-shadow 0.2s ease;
+  }
+  .tg-pricing-card:hover{
+    box-shadow: 0 8px 28px rgba(0,0,0,.1);
+  }
+  .tg-pricing-card--featured{
+    border: 2px solid #7c3aed;
+    box-shadow: 0 8px 32px rgba(124,58,237,.18);
+  }
+  .tg-pricing-card--featured:hover{
+    box-shadow: 0 14px 48px rgba(124,58,237,.24);
+  }
+
+  /* Badge row */
+  .tg-pricing-card__badge-row{
+    min-height: 28px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .tg-pricing-card__bar{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(90deg, #7c3aed, #6d28d9);
+  }
+  .tg-pricing-card__bar--soft{
+    background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+  }
+  .tg-pricing-card__bar--ghost{
+    visibility: hidden;
+  }
+
+  /* Plan name */
+  .tg-pricing-card__plan{
+    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #374151;
+    text-align: center;
+  }
+
+  /* Price */
+  .tg-pricing-card__price{
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .tg-pricing-card__amount{
+    font-size: clamp(40px, 3.5vw, 52px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #1a1a1a;
+    line-height: 1;
+  }
+  .tg-pricing-card__price:has([data-guidekit-discounted-price]:not(:empty)) .tg-pricing-card__amount{
+    font-size: 20px;
+    font-weight: 600;
+    text-decoration: line-through;
+    color: #9ca3af;
+  }
+  .tg-pricing-card__discount{
+    font-size: clamp(36px, 3.5vw, 48px);
+    font-weight: 900;
+    color: #16a34a;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .tg-pricing-card__discount-note{
+    width: 100%;
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(0,0,0,.55);
+    text-align: center;
+  }
+
+  /* Pay once */
+  .tg-pricing-card__pay-once{
+    margin: 0 0 24px;
+    font-size: 13px;
+    color: #6b7280;
+    text-align: center;
+  }
+
+  /* Countdown inside card */
+  .tg-pricing-card__countdown-placeholder{
+    margin: 0 0 24px;
+    padding: 14px 20px;
+  }
+  .tg-pricing-card__countdown-wrap{
+    margin: 0 0 24px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%);
+    border-radius: 14px;
+    text-align: center;
+  }
+  .tg-pricing-card__countdown-num{
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    color: #fff;
+    letter-spacing: .06em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* CTA button */
+  .tg-pricing-card__btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 15px 24px;
+    border-radius: 12px;
+    background: #4c1d95;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    transition: background 0.2s ease, transform 0.15s ease;
+    border: 0;
+    cursor: pointer;
+    margin-top: auto;
+  }
+  .tg-pricing-card--featured .tg-pricing-card__btn{
+    background: linear-gradient(135deg, #7c3aed, #4c1d95);
+    box-shadow: 0 6px 20px rgba(124,58,237,.35);
+  }
+  .tg-pricing-card__btn:hover{
+    background: #3b1575;
+    transform: translateY(-1px);
+    color: #fff;
+  }
+  .tg-pricing-card--featured .tg-pricing-card__btn:hover{
+    background: linear-gradient(135deg, #6d28d9, #3b1575);
+  }
+  .tg-pricing-card__btn--extension{
+    background: var(--tg-primary);
+    color: #fff;
+    border: 1px solid transparent;
+  }
+  .tg-pricing-card__btn--extension:hover{
+    opacity: 1;
+    background: rgba(91,43,216,.85);
+    transform: none;
+  }
+  .tg-pricing-card__btn--disabled,
+  .tg-pricing-card__btn[disabled]{
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .tg-pricing-card__eligibility{
+    margin: 12px 0 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #6b7280;
+    text-align: center;
+  }
+
+  /* Comparison grid */
+  .tg-compare{
+    margin-top: 52px;
+  }
+  .tg-compare__grid{
+    display: grid;
+    grid-template-columns: 1fr 1.12fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .tg-compare__col{
+    background: #fff;
+    border-radius: 20px;
+    border: 1.5px solid rgba(0,0,0,.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,.07);
+    overflow: hidden;
+  }
+  .tg-compare__col--featured{
+    border: 2px solid #7c3aed;
+    box-shadow: 0 8px 32px rgba(124,58,237,.18);
+  }
+  .tg-compare__col-head{
+    padding: 16px 20px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    color: #374151;
+    background: rgba(0,0,0,.02);
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+  .tg-compare__col--featured .tg-compare__col-head{
+    color: #7c3aed;
+    background: rgba(124,58,237,.05);
+    border-bottom-color: rgba(124,58,237,.12);
+  }
+  .tg-compare__list{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tg-compare__item{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #374151;
+    border-bottom: 1px solid rgba(0,0,0,.05);
+  }
+  .tg-compare__item:last-child{
+    border-bottom: 0;
+  }
+  .tg-compare__item--no{
+    color: #9ca3af;
+    padding-left: 46px;
+  }
+  .tg-compare__icon{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #7c3aed;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .tg-discount-banner{
+    margin: 0 0 24px;
+    padding: 14px 16px;
+    background: #fff9db;
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .tg-discount-banner strong{
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #92400e;
+  }
+  .tg-discount-banner p{
+    margin: 0;
+    font-size: 13px;
+    color: #7c2d12;
+  }
+  .tg-discount-banner code{
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    padding: 2px 8px;
+  }
+  .tg-eligibility-banner{
+    margin: 0 0 24px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(224,231,255,.7), rgba(238,242,255,.95));
+    border: 1px solid rgba(99,102,241,.18);
+  }
+  .tg-eligibility-banner__body{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .tg-eligibility-banner__text{
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #312e81;
+  }
+  .tg-pricing__tip{ margin-top: 40px; }
+  .tg-pricing__tip-box{
+    border: 1px dashed rgba(0,0,0,.15);
+    background: rgba(0,0,0,.02);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .tg-pricing__tip-box strong{ display: block; margin-bottom: 8px; }
+  .tg-pricing__tip-text.rte p{ margin: 0 0 6px; }
+  .tg-pricing__tip-text.rte p:last-child{ margin-bottom: 0; }
+
+  :root{ --tg-accent: #7c3aed; }
+
+  /* ── Upsell Modal: thank-you-offer style ── */
+  .tg-upsell-modal{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .tg-upsell-modal__overlay{ position:absolute; inset:0; background:rgba(10,5,25,.75); backdrop-filter:blur(6px); }
+  .tg-upsell-modal__content{
+    position:relative;
+    background:#fff;
+    border-radius:24px; max-width:480px; width:100%;
+    max-height:92vh; overflow:hidden;
+    box-shadow:0 40px 80px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.06);
+    display:flex; flex-direction:column;
+  }
+  .tg-upsell-modal__close{
+    position:absolute; top:14px; right:14px; z-index:2;
+    width:36px; height:36px;
+    border:1px solid rgba(0,0,0,.12); border-radius:50%;
+    font-size:20px; line-height:1; cursor:pointer;
+    color:rgba(0,0,0,.45); background:rgba(0,0,0,.04);
+    display:flex; align-items:center; justify-content:center; padding:0;
+    transition:background .2s,color .2s,transform .15s;
+  }
+  .tg-upsell-modal__close:hover{ background:rgba(0,0,0,.1); color:#000; transform:scale(1.05); }
+  .tg-upsell-modal__close:focus{ outline:2px solid rgba(109,40,217,.5); outline-offset:2px; }
+
+  /* View system */
+  .tg-upsell-modal__view{ display:none; flex:1; overflow:hidden; flex-direction:column; opacity:0; transition:opacity .25s ease; }
+  .tg-upsell-modal__view--active{ display:flex; opacity:1; }
+  .tg-upsell-modal__scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+
+  /* Flash banner */
+  .tg-upsell-modal__flash{
+    background:linear-gradient(90deg,#7c3aed 0%,#6d28d9 50%,#7c3aed 100%);
+    color:#fff; font-size:11px; font-weight:800;
+    letter-spacing:.14em; text-transform:uppercase;
+    text-align:center; padding:10px 20px;
+  }
+
+  /* Header */
+  .tg-upsell-modal__header{ padding:20px 24px 14px; text-align:center; }
+  .tg-upsell-modal__eyebrow{ margin:0 0 8px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#7c3aed; }
+  .tg-upsell-modal__title{ margin:0 0 6px; font-size:22px; font-weight:800; line-height:1.25; color:#1e1b4b; letter-spacing:-0.02em; }
+  .tg-upsell-modal__subtitle{ margin:0; font-size:14px; line-height:1.5; color:#4b5563; }
+
+  /* Offer card (purple) */
+  .tg-upsell-modal__offer-card{
+    margin:0 16px 14px; padding:20px;
+    background:linear-gradient(135deg,#3d1b9e 0%,#6d28d9 55%,#5b2bd8 100%);
+    border:1px solid rgba(255,255,255,.15); border-radius:18px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 32px rgba(0,0,0,.3);
+  }
+
+  /* ISO-date sale header */
+  .tg-upsell-modal__sale-header{ margin-bottom:14px; padding:12px 14px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; text-align:center; }
+  .tg-upsell-modal__sale-headline{ margin:0 0 4px; font-size:13px; font-weight:700; color:#fff; }
+  .tg-upsell-modal__sale-sub{ margin:0 0 10px; font-size:12px; color:rgba(255,255,255,.6); }
+  .tg-upsell-modal__timer{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .tg-upsell-modal__timer-cell{ display:flex; flex-direction:column; align-items:center; min-width:48px; padding:8px 6px; background:rgba(255,255,255,.1); border-radius:8px; }
+  .tg-upsell-modal__timer-num{ font-size:18px; font-weight:800; line-height:1; color:#f87171; letter-spacing:.02em; }
+  .tg-upsell-modal__timer-unit{ font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:rgba(255,255,255,.5); margin-top:3px; }
+
+  /* Price block */
+  .tg-upsell-modal__price-block{ text-align:center; margin-bottom:14px; }
+  .tg-upsell-modal__offer-label{ margin:0 0 6px; font-size:13px; font-weight:500; line-height:1.5; color:rgba(255,255,255,.85); }
+  .tg-upsell-modal__price-hero{ display:flex; align-items:baseline; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:4px; }
+  .tg-upsell-modal__price-now{ font-size:54px; font-weight:900; color:#fde047; letter-spacing:-0.02em; line-height:1; }
+  .tg-upsell-modal__price-was{ font-size:24px; font-weight:700; color:rgba(255,255,255,.55); }
+  .tg-upsell-modal__price-was s{ text-decoration:line-through; text-decoration-color:rgba(255,255,255,.75); text-decoration-thickness:3px; }
+  .tg-upsell-modal__price-discounted{ font-size:42px; font-weight:900; line-height:1; color:#fde047; letter-spacing:-0.03em; }
+  .tg-upsell-modal__price-note{ margin-top:6px; font-size:12px; line-height:1.5; color:rgba(255,255,255,.55); }
+  .tg-upsell-modal__extra10{ margin:0; }
+  .tg-upsell-extra10{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    width:100%;
+    max-width:340px;
+    margin:0 auto;
+    padding:10px 12px;
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:10px;
+    background:rgba(255,255,255,.06);
+    color:#fff;
+    text-align:left;
+    cursor:pointer;
+  }
+  .tg-upsell-extra10__input{
+    flex:0 0 auto;
+    width:16px;
+    height:16px;
+    margin:2px 0 0;
+    accent-color:#16a34a;
+  }
+  .tg-upsell-extra10__copy{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .tg-upsell-extra10__title{ font-size:12px; font-weight:800; line-height:1.35; color:#fff; }
+  .tg-upsell-extra10__desc{ font-size:11px; line-height:1.4; color:rgba(255,255,255,.55); }
+  .tg-upsell-extra10:has(.tg-upsell-extra10__input:focus-visible){ outline:2px solid rgba(255,255,255,.5); outline-offset:2px; }
+
+  /* Duration countdown (guide50 timer) */
+  .tg-upsell-modal__countdown-bar{ padding:12px 16px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:12px; text-align:center; margin-bottom:14px; }
+  .tg-upsell-modal__countdown-bar--expired{ background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.1); }
+  .tg-upsell-modal__countdown-headline{ margin:0 0 8px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,.75); }
+  .tg-upsell-modal__countdown-expired{ margin:0; font-size:13px; font-weight:600; color:rgba(255,255,255,.55); display:none; }
+  .tg-upsell-modal__countdown-timer{ display:flex; align-items:baseline; gap:2px; flex-wrap:nowrap; justify-content:center; }
+  .tg-upsell-modal__countdown-bracket{ font-size:16px; font-weight:900; color:#fff; white-space:nowrap; line-height:1; }
+  .tg-upsell-modal__countdown-num{ font-size:26px; font-weight:800; line-height:1; color:#fff; letter-spacing:.04em; font-variant-numeric:tabular-nums; }
+  .tg-upsell-modal__countdown-sep{ font-size:22px; font-weight:800; color:#fff; align-self:baseline; line-height:1; }
+
+  /* Scissors divider */
+  .tg-upsell-modal__scissors{ display:flex; align-items:center; gap:8px; margin:14px 0; color:rgba(255,255,255,.25); }
+  .tg-upsell-modal__scissors-line{ flex:1; height:1px; border-top:1px dashed rgba(255,255,255,.2); }
+
+  /* CTA selection */
+  .tg-upsell-modal__selection{ display:flex; flex-direction:column; gap:10px; margin-bottom:10px; }
+  .tg-upsell-option{ cursor:pointer; margin:0; display:block; }
+  .tg-upsell-option__input{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+  .tg-upsell-option__label{ display:block; }
+  .tg-upsell-option--primary .tg-upsell-option__label{
+    display:flex; align-items:center; justify-content:center;
+    padding:16px 24px; min-height:52px; text-align:center;
+    font-size:16px; font-weight:800;
+    background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);
+    color:#fff; border-radius:12px;
+    box-shadow:0 4px 16px rgba(22,163,74,.4);
+    transition:background .2s,transform .05s,box-shadow .2s;
+  }
+  .tg-upsell-option--primary:hover .tg-upsell-option__label{ background:linear-gradient(135deg,#15803d 0%,#166534 100%); box-shadow:0 6px 20px rgba(22,163,74,.5); transform:translateY(-1px); }
+  .tg-upsell-option--primary .tg-upsell-option__input:focus-visible + .tg-upsell-option__label{ outline:2px solid #fff; outline-offset:2px; }
+  .tg-upsell-option--primary .tg-upsell-option__input:checked + .tg-upsell-option__label{ box-shadow:0 0 0 2px #fde047,0 4px 16px rgba(22,163,74,.4); }
+  .tg-upsell-option--secondary .tg-upsell-option__label{ display:block; padding:10px 0; text-align:center; font-size:13px; color:rgba(255,255,255,.45); text-decoration:underline; text-underline-offset:3px; transition:color .2s; }
+  .tg-upsell-option--secondary:hover .tg-upsell-option__label{ color:rgba(255,255,255,.7); }
+  .tg-upsell-option--secondary .tg-upsell-option__input:focus-visible + .tg-upsell-option__label{ outline:2px solid rgba(255,255,255,.4); outline-offset:2px; }
+  .tg-upsell-option--disabled{ pointer-events:none; cursor:default; }
+  .tg-upsell-option--disabled .tg-upsell-option__label{ opacity:.55; }
+  .tg-upsell-modal__cta-note{ margin:0; text-align:center; font-size:11px; color:rgba(255,255,255,.35); }
+
+  /* Checklist card (white) */
+  .tg-upsell-modal__checklist-card{ margin:0 16px 20px; padding:18px 20px; background:#fff; border-radius:16px; border:1px solid rgba(91,43,216,.15); box-shadow:0 4px 16px rgba(0,0,0,.08); }
+  .tg-upsell-modal__checklist-title{ margin:0 0 12px; font-size:15px; font-weight:800; line-height:1.3; color:#1e1b4b; }
+  .tg-upsell-modal__checklist{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
+  .tg-upsell-modal__checklist-item{ display:flex; align-items:flex-start; gap:10px; padding:8px 12px; background:linear-gradient(135deg,#f3e8ff 0%,#ede9fe 100%); border-radius:10px; font-size:13px; line-height:1.4; color:#1e1b4b; }
+  .tg-upsell-modal__check{ flex-shrink:0; font-size:14px; margin-top:1px; }
+
+  /* Confirm view */
+  .tg-upsell-modal__confirm{ padding:32px 28px 40px; overflow-y:auto; justify-content:center; }
+  .tg-upsell-modal__confirm-inner{ max-width:380px; margin:0 auto; }
+  .tg-upsell-modal__confirm-headline{ margin:0 0 14px; font-size:22px; font-weight:800; line-height:1.3; color:#1e1b4b; letter-spacing:-0.02em; }
+  .tg-upsell-modal__confirm-sub{ margin:0 0 28px; font-size:15px; line-height:1.5; color:#4b5563; }
+  .tg-upsell-modal__confirm-actions{ display:flex; flex-direction:column; gap:14px; }
+  .tg-upsell-modal__confirm-back{ width:100%; padding:16px 24px; min-height:52px; font-size:16px; font-weight:700; border-radius:12px; background:linear-gradient(135deg,#16a34a 0%,#15803d 100%); color:#fff; border:0; cursor:pointer; transition:background .2s,opacity .2s; }
+  .tg-upsell-modal__confirm-back:hover{ background:linear-gradient(135deg,#15803d 0%,#166534 100%); }
+  .tg-upsell-modal__confirm-back:focus{ outline:2px solid rgba(255,255,255,.5); outline-offset:2px; }
+  .tg-upsell-modal__confirm-decline{ width:100%; padding:12px 16px; font-size:14px; font-weight:500; color:rgba(0,0,0,.4); background:transparent; border:0; cursor:pointer; text-decoration:underline; text-underline-offset:3px; transition:color .2s; }
+  .tg-upsell-modal__confirm-decline:hover{ color:rgba(0,0,0,.7); }
+  .tg-upsell-modal__confirm-decline:focus{ outline:2px solid rgba(109,40,217,.4); outline-offset:2px; }
+
+  .tg-upsell-modal__continue{ width:100%; padding:14px 24px; font-size:15px; font-weight:700; border-radius:12px; min-height:48px; }
+  .tg-upsell-modal__continue:focus{ outline:2px solid rgba(255,255,255,.5); outline-offset:2px; }
+
+  @media (max-width:640px){
+    .tg-eligibility-banner{ padding:16px; }
+    .tg-upsell-modal__content{ max-height:95vh; border-radius:20px; }
+    .tg-upsell-modal__close{ top:12px; right:12px; width:32px; height:32px; font-size:18px; }
+    .tg-upsell-modal__title{ font-size:19px; }
+    .tg-upsell-modal__price-discounted{ font-size:34px; }
+    .tg-upsell-modal__price-now{ font-size:40px; }
+    .tg-upsell-modal__price-was{ font-size:19px; }
+    .tg-upsell-modal__countdown-num{ font-size:20px; }
+    .tg-upsell-modal__offer-card{ margin:0 12px 12px; padding:16px; }
+    .tg-upsell-modal__checklist-card{ margin:0 12px 16px; padding:14px 16px; }
+    .tg-upsell-option--primary .tg-upsell-option__label{ font-size:15px; padding:14px 20px; }
+    .tg-upsell-modal__confirm{ padding:24px 20px 32px; }
+    .tg-upsell-modal__confirm-headline{ font-size:20px; }
+  }
+
+  @media (max-width: 900px){
+    .tg-pricing__grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tg-compare__grid{ grid-template-columns: 1fr; gap: 16px; }
+  }
+  @media (max-width: 600px){
+    .tg-pricing__grid{ grid-template-columns: 1fr; gap: 20px; }
+    .tg-pricing-card{ padding: 24px 20px 28px; }
+    .tg-pricing-card__countdown-wrap{ margin: 0 0 20px; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Tour Plans - Plans Grid",
+  "settings": [
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "background_color_1", "label": "Background (top)", "default": "#1e3a5f" },
+    { "type": "color", "id": "background_color_2", "label": "Background (middle)", "default": "#1e1b4b" },
+    { "type": "color", "id": "background_color_3", "label": "Background (bottom)", "default": "#2e1065" },
+    { "type": "color", "id": "heading_color", "label": "Heading / brand color", "default": "#ffffff" },
+    { "type": "color", "id": "text_color", "label": "Subheading / text color", "default": "#bfbfbf" },
+    { "type": "color", "id": "primary_color", "label": "Primary color (buttons/badges)", "default": "#5b2bd8" },
+    { "type": "header", "content": "Content" },
+    { "type": "text", "id": "section_label", "label": "Top / bottom brand", "default": "Purple Shoes" },
+    { "type": "text", "id": "section_badge", "label": "Section badge", "default": "PLANS AND PRICING" },
+    { "type": "text", "id": "heading", "label": "Section heading", "default": "You Already Know the Secret: Next-Level Korea Starts Here." },
+    { "type": "text", "id": "subheading", "label": "Section subheading" },
+    { "type": "checkbox", "id": "show_compare", "label": "Show comparison table", "default": true },
+    { "type": "text", "id": "compare_title", "label": "Comparison table title", "default": "Compare Plans" },
+    { "type": "text", "id": "price_unit", "label": "Price unit (e.g. Monthly)", "default": "No subscription. Pay once." },
+
+    { "type": "text", "id": "default_discount_code", "label": "Legacy discount code (deprecated)", "info": "Ignored by guide prepare-checkout. Kept only for backward compatibility." },
+    { "type": "checkbox", "id": "show_discount_banner", "label": "Show automatic member discount banner", "default": false },
+    { "type": "checkbox", "id": "auto_apply_discount", "label": "Legacy auto-apply toggle (deprecated)", "default": false, "info": "Ignored by guide prepare-checkout. Kept only for backward compatibility." },
+
+    { "type": "header", "content": "Upsell Modal Settings" },
+    { "type": "checkbox", "id": "upsell_enabled", "label": "Enable upsell modal", "default": true },
+    { "type": "image_picker", "id": "upsell_modal_image", "label": "Modal left image (travel/guide visual)" },
+    { "type": "header", "content": "Countdown timer (top bar)" },
+    { "type": "number", "id": "upsell_timer_duration_seconds", "label": "Timer duration (seconds)", "default": 3600, "info": "3600 = 1 hour, 1800 = 30 min, 86400 = 24 hours" },
+    { "type": "text", "id": "upsell_countdown_label", "label": "Countdown bar label", "default": "24-Hour Flash Sale" },
+    { "type": "text", "id": "upsell_countdown_headline", "label": "Countdown headline (hidden)", "default": "Your 50% upgrade offer expires in" },
+    { "type": "text", "id": "upsell_countdown_expired_text", "label": "Expired message", "default": "This offer has expired." },
+    { "type": "header", "content": "Decline confirm step" },
+    { "type": "text", "id": "upsell_confirm_headline", "label": "Confirm headline", "default": "Are you sure you want to miss this 50% discount?" },
+    { "type": "textarea", "id": "upsell_confirm_subtext", "label": "Confirm subtext", "default": "This special upgrade offer expires soon, and you may not see this price again." },
+    { "type": "text", "id": "upsell_confirm_back_label", "label": "Confirm back button", "default": "Wait, add it to my order" },
+    { "type": "text", "id": "upsell_confirm_decline_label", "label": "Confirm final decline", "default": "No thanks, continue without the upgrade" },
+    { "type": "checkbox", "id": "upsell_sale_enabled", "label": "Enable flash sale (ISO date timer)", "default": false },
+    { "type": "text", "id": "upsell_sale_ends_at", "label": "Sale ends at (ISO8601)", "info": "Example: 2026-01-08T23:59:59+09:00" },
+    { "type": "text", "id": "upsell_headline", "label": "Sale headline", "default": "24-Hour Flash Sale" },
+    { "type": "text", "id": "upsell_subheadline", "label": "Sale subheadline", "default": "Wait! Upgrade to the Full Kit & Save 50%" },
+    { "type": "text", "id": "upsell_timer_label", "label": "Timer label", "default": "Time Remaining" },
+    { "type": "text", "id": "upsell_upgrade_label", "label": "Upgrade option label", "default": "YES! Upgrade my order for just $75" },
+    { "type": "text", "id": "upsell_pass_label", "label": "Pass option label", "default": "No, I'll pass on this 50% discount." },
+    { "type": "text", "id": "upsell_continue_label", "label": "Continue button label", "default": "Continue to checkout" },
+    { "type": "text", "id": "upsell_footer_text", "label": "Modal footer text", "default": "Don't travel blindly. Get the full stress-free package." },
+
+    { "type": "checkbox", "id": "show_tip", "label": "Show tip box", "default": true },
+    { "type": "text", "id": "tip_title", "label": "Tip title", "default": "Tip" },
+    { "type": "richtext", "id": "tip_text", "label": "Tip text", "default": "<p>Update the button links to your real sales page.</p>" }
+  ],
+  "blocks": [
+    {
+      "type": "plan_image",
+      "name": "Card Image (by order)",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Card top image" },
+
+        { "type": "header", "content": "Optional text overrides (optional)" },
+        { "type": "text", "id": "override_title", "label": "Override title" },
+        { "type": "text", "id": "override_subtitle", "label": "Override subtitle" },
+        { "type": "text", "id": "override_tag", "label": "Override tag" },
+        { "type": "text", "id": "override_badge", "label": "Override badge" },
+        { "type": "text", "id": "override_cta", "label": "Override CTA label" },
+        { "type": "text", "id": "override_price", "label": "Override display price (e.g. $75)" }
+      ]
+    }
+  ],
+  "presets": [
+    { "name": "Tour Plans - Plans Grid (Product)" }
+  ]
+}
+{% endschema %}

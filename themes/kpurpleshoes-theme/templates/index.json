@@ -1,0 +1,336 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "ps_hero_signup_iiLfH3": {
+      "type": "ps-hero-signup",
+      "name": "PS Hero (Signup)",
+      "settings": {
+        "image": "shopify://shop_images/938207a5477970309a67488f9a0400dc.png",
+        "title_line1": "You’ll arrive in Korea",
+        "title_line2": "knowing exactly where to start",
+        "subtext": "",
+        "form_label": "Sign up to get your free sample guide",
+        "email_placeholder": "Enter your Email Address",
+        "button_label": "Get My Free Guide",
+        "signup_step1_url": "/customer_authentication/login?return_to=%2Fpages%2Fstarter-kit-viewer",
+        "guidebook_url": "/collections/experience-tour",
+        "logged_in_button_label": "Explore Now",
+        "fine_text": "<p>What do you get for free?</p>",
+        "fine_link": "",
+        "fine_link_label": "Learn More"
+      }
+    },
+    "ps_tabs_video_iGTKe6": {
+      "type": "ps-tabs-video",
+      "name": "PS Tabs (Video Card)",
+      "settings": {
+        "tab1_label": "Plan Your Korea Trip",
+        "tab1_image": "shopify://shop_images/1781598416950.jpg",
+        "tab1_video": "shopify://files/videos/가이드북_수정.mp4",
+        "tab1_heading": "FIRST TIME IN KOREA?",
+        "tab1_subheading": "Made Simple",
+        "tab1_desc": "Purple Shoes helps you plan your first Korea trip with practical travel guides, video guides, and the Purple Map with 1,500+ food and landmark spots selected by locals.",
+        "tab1_cta_label": "Explore Guide Plans",
+        "tab1_cta_link": "/pages/guide-plans",
+        "tab2_label": "Meet Your Local Mate",
+        "tab2_image": "shopify://shop_images/1781598416950.jpg",
+        "tab2_video": "shopify://files/videos/투어_수정(속도).mp4",
+        "tab2_heading": "Explore Korea with a Local Mate",
+        "tab2_subheading": "Real Local Experiences, Made Personal",
+        "tab2_desc": "Join thoughtfully designed experiences\nand discover Korea beyond the usual tourist spots.",
+        "tab2_cta_label": "Explore Tours",
+        "tab2_cta_link": "/collections/experience-tour"
+      }
+    },
+    "ps_testimonials_VRiX76": {
+      "type": "ps-testimonials",
+      "blocks": {
+        "testimonial_01": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "I was planning my first trip to Korea and felt overwhelmed by all the information online. This guide kit made everything feel more organized and less stressful.",
+            "name": "Emily R. (USA)"
+          }
+        },
+        "testimonial_02": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "With my work schedule, I didn’t have hours to dig through travel blogs. This guide kit saved me a ton of time and gave me a clear starting point for my first Korea trip.",
+            "name": "Daniel M. (USA)"
+          }
+        },
+        "testimonial_03": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "I was planning my first solo trip to Korea and didn’t want to overplan every day. Purple Map made it easy to group spots by area and keep my route flexible.",
+            "name": "Jake T. (USA)"
+          }
+        },
+        "testimonial_04": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "We were in Korea for our honeymoon and used Purple Map a lot to find food nearby. The directions were super helpful and made getting around feel easy.",
+            "name": "Sophie W. (UK)"
+          }
+        },
+        "testimonial_05": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "Honestly, I’m pretty picky when traveling with my family, but this tour felt really well handled. It was just our family, the guide and the driver, so the day felt safe and personal.",
+            "name": "Anna K. (Germany)"
+          }
+        },
+        "testimonial_06": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "My first Korea trip was just a quick Seoul stop, but I knew I’d be back. The Korea Guide Kit made Busan and Gyeongju with my friend way easier.",
+            "name": "Ryan C. (Canada)"
+          }
+        },
+        "testimonial_07": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "My friend and I came to Korea mainly for the food and Purple Map led us to local restaurants we never would’ve found alone. That meal honestly made the trip feel real.",
+            "name": "Mia L. (Australia)"
+          }
+        },
+        "testimonial_08": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "I thought I knew what to eat in Korea, but the Korea Guide Kit put grilled eel on my list. My partner and I tried it and it felt like Korea’s hidden BBQ. So good.",
+            "name": "Jason M. (USA)"
+          }
+        },
+        "testimonial_09": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "The Korea Guide Kit showed us a night view spot I never saw in regular travel posts. We used Purple Map to get there, and honestly it became one of the best moments of our trip.",
+            "name": "Rachel B. (USA)"
+          }
+        },
+        "testimonial_10": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "I downloaded the apps from the Guide Kit before I flew out. My first day in Korea felt way less stressful, and I could just wander instead of figuring everything out.",
+            "name": "Liam T. (New Zealand)"
+          }
+        },
+        "testimonial_11": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "We booked this tour for our first day in Korea, and honestly it was perfect. Airport pickup, hotel drop-off, and a guide who was kind without hovering. Best start to our honeymoon.",
+            "name": "Claire M. (Canada)"
+          }
+        },
+        "testimonial_12": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "I spent a month in Korea solo and wanted more than Seoul. The Korea Guide Kit made transport less scary, and driving the Jeju coast was the best part.",
+            "name": "Emma R. (USA)"
+          }
+        },
+        "testimonial_13": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "The moment our guide mixed somaek at BBQ, our whole table lost it. It was loud, funny, and somehow one of the most Korean moments of our trip.",
+            "name": "Tyler J. (USA)"
+          }
+        },
+        "testimonial_14": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "The amount of food in the Korean set meal honestly shocked my mum, dad and me. Our guide explained the dishes and little stories behind them, which made dinner way more fun.",
+            "name": "Olivia H. (UK)"
+          }
+        },
+        "testimonial_15": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "I’m the planner in my friend group, so the Korea Guide Kit was perfect for me. The server smiled and said we wrapped ssam right, and for a second we felt less like tourists.",
+            "name": "Nathan B. (USA)"
+          }
+        },
+        "testimonial_16": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "Midway through our Korea trip, my boyfriend and I needed a slow day. The Korean spa was perfect, and our guide made us sheep-head towels for photos. So cute.",
+            "name": "Madison L. (USA)"
+          }
+        },
+        "testimonial_17": {
+          "type": "testimonial",
+          "settings": {
+            "stars": 5,
+            "quote": "So glad we booked this on day one. Our guide checked our plans, looked things up for us, and made us feel like a local had our back.",
+            "name": "Luke M. (Australia)"
+          }
+        }
+      },
+      "block_order": [
+        "testimonial_01",
+        "testimonial_02",
+        "testimonial_03",
+        "testimonial_04",
+        "testimonial_05",
+        "testimonial_06",
+        "testimonial_07",
+        "testimonial_08",
+        "testimonial_09",
+        "testimonial_10",
+        "testimonial_11",
+        "testimonial_12",
+        "testimonial_13",
+        "testimonial_14",
+        "testimonial_15",
+        "testimonial_16",
+        "testimonial_17"
+      ],
+      "name": "PS Testimonials",
+      "settings": {
+        "review_limit": 10,
+        "proxy_prefix": "bta-booking",
+        "empty_text": "No reviews yet.",
+        "use_curated_blocks": true
+      }
+    },
+    "ps_instagram_grid_wjMFJj": {
+      "type": "ps-instagram-grid",
+      "blocks": {
+        "instagram_image_BzgJnj": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_194956.jpg"
+          }
+        },
+        "instagram_image_64iLJi": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_185959.jpg"
+          }
+        },
+        "instagram_image_gpm6hM": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_170947.jpg"
+          }
+        },
+        "instagram_image_PnrcTD": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/1781590714896.jpg"
+          }
+        },
+        "instagram_image_WHEXMp": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_210545.jpg"
+          }
+        },
+        "instagram_image_DQTrV4": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_162614.jpg"
+          }
+        },
+        "instagram_image_LQQ7Tg": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_122012.jpg"
+          }
+        },
+        "instagram_image_XAQd3E": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_141923.jpg"
+          }
+        },
+        "instagram_image_tQHi4D": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_120659.jpg"
+          }
+        },
+        "instagram_image_i4Ubxg": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_131343.jpg"
+          }
+        },
+        "instagram_image_9fzXwG": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_144123.jpg"
+          }
+        },
+        "instagram_image_eTqaDg": {
+          "type": "instagram_image",
+          "settings": {
+            "image": "shopify://shop_images/20260616_103252.jpg"
+          }
+        }
+      },
+      "block_order": [
+        "instagram_image_BzgJnj",
+        "instagram_image_64iLJi",
+        "instagram_image_gpm6hM",
+        "instagram_image_PnrcTD",
+        "instagram_image_WHEXMp",
+        "instagram_image_DQTrV4",
+        "instagram_image_LQQ7Tg",
+        "instagram_image_XAQd3E",
+        "instagram_image_tQHi4D",
+        "instagram_image_i4Ubxg",
+        "instagram_image_9fzXwG",
+        "instagram_image_eTqaDg"
+      ],
+      "name": "PS Instagram Grid",
+      "settings": {
+        "heading": "",
+        "button_label": "Follow",
+        "button_link": ""
+      }
+    },
+    "ps_big_cta_4eM9QM": {
+      "type": "ps-big-cta",
+      "name": "PS Big CTA (Newsletter)",
+      "settings": {
+        "heading": "Make your first Korea trip easier — start with a free guide.",
+        "guest_button_label": "Get My Free Guide",
+        "guest_button_link": "/customer_authentication/login?return_to=%2Fpages%2Fstarter-kit-viewer",
+        "customer_button_label": "Open My Free Guide",
+        "customer_button_link": "/pages/starter-kit-viewer"
+      }
+    }
+  },
+  "order": [
+    "ps_hero_signup_iiLfH3",
+    "ps_tabs_video_iGTKe6",
+    "ps_testimonials_VRiX76",
+    "ps_instagram_grid_wjMFJj",
+    "ps_big_cta_4eM9QM"
+  ]
+}

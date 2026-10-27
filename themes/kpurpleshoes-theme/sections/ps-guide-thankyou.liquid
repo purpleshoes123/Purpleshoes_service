@@ -1,0 +1,892 @@
+{% comment %}
+  ps-guide-thankyou.liquid
+  Thank-you page after free Korea guide sign-up.
+  Sections: hero steps → feature grid (image-uploadable cards) → CTA
+{% endcomment %}
+
+<style>
+  .gty {
+    font-family: 'Poppins', sans-serif;
+    background: var(--ps-surface, #f5f6f8);
+    min-height: 100vh;
+    padding-bottom: 0;
+  }
+
+  /* ── Hero ── */
+  .gty__hero {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 52px 24px 48px;
+  }
+  .gty__headline {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    color: var(--ps-text, #111827);
+    margin: 0 0 10px;
+    line-height: 1.15;
+  }
+  .gty__headline em {
+    font-style: normal;
+    color: var(--ps-purple, #5b2bd8);
+  }
+  .gty__sub {
+    font-size: clamp(14px, 1.4vw, 17px);
+    color: var(--ps-muted, #6b7280);
+    margin: 0 0 40px;
+    line-height: 1.7;
+  }
+
+  /* Steps */
+  .gty__steps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .gty__step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .gty__step-num {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    background: var(--ps-purple, #5b2bd8);
+    color: #fff;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800;
+    letter-spacing: .04em;
+  }
+  .gty__step-body {
+    padding-top: 4px;
+  }
+  .gty__step-title {
+    font-size: 15px; font-weight: 700;
+    color: var(--ps-text, #111827);
+    margin: 0 0 4px;
+  }
+  .gty__step-desc {
+    font-size: 13px;
+    color: var(--ps-muted, #6b7280);
+    line-height: 1.65;
+    margin: 0;
+  }
+  .gty__step-desc + .gty__step-desc {
+    margin-top: 4px;
+  }
+  .gty__step-note {
+    font-size: 12px;
+    color: #ef4444;
+    margin: 6px 0 0;
+  }
+
+
+  /* Checklist */
+  .gty__checklist {
+    list-style: none;
+    margin: 28px 0 0;
+    padding: 20px 0 0;
+    border-top: 1px solid rgba(91,43,216,0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .gty__checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--ps-text, #111827);
+    line-height: 1.6;
+  }
+  .gty__checklist-icon {
+    flex-shrink: 0;
+    width: 22px;
+    text-align: center;
+    line-height: 1.6;
+  }
+  /* ── Feature section ── */
+  .gty__feature {
+    background: #fff;
+    border-top: 1px solid rgba(17,24,39,0.07);
+    padding: 64px 24px 72px;
+  }
+  .gty__feature-inner {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  .gty__feature-head {
+    margin-bottom: 40px;
+  }
+  .gty__feature-eyebrow {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ps-purple, #5b2bd8);
+    background: rgba(91,43,216,0.08);
+    border-radius: 999px;
+    padding: 5px 14px;
+    margin-bottom: 16px;
+  }
+  .gty__feature-title {
+    font-size: clamp(22px, 3vw, 34px);
+    font-weight: 800;
+    color: var(--ps-text, #111827);
+    margin: 0 0 12px;
+    line-height: 1.25;
+  }
+  .gty__feature-desc {
+    font-size: clamp(14px, 1.3vw, 16px);
+    color: var(--ps-muted, #6b7280);
+    line-height: 1.7;
+    max-width: 640px;
+    margin: 0;
+  }
+
+  /* Card grid */
+  .gty__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 700px) {
+    .gty__grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  }
+  @media (max-width: 440px) {
+    .gty__grid { grid-template-columns: 1fr; }
+  }
+
+  .gty__card {
+    background: var(--ps-surface, #f5f6f8);
+    border-radius: var(--ps-radius-md, 16px);
+    overflow: hidden;
+    border: 1px solid rgba(17,24,39,0.06);
+    transition: box-shadow .2s, transform .2s;
+  }
+  .gty__card:hover {
+    box-shadow: 0 8px 28px rgba(91,43,216,0.12);
+    transform: translateY(-2px);
+  }
+  .gty__card-img {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--ps-purple-800, #35107f);
+    overflow: hidden;
+  }
+  .gty__card-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .gty__card-img-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #2a0b6b, #5b2bd8);
+  }
+  .gty__card-img-placeholder span {
+    font-size: 36px;
+    opacity: .6;
+  }
+  .gty__card-body {
+    padding: 18px 18px 20px;
+  }
+  .gty__card-title {
+    font-size: 14px; font-weight: 700;
+    color: var(--ps-text, #111827);
+    margin: 0 0 6px;
+    line-height: 1.35;
+  }
+  .gty__card-desc {
+    font-size: 12px;
+    color: var(--ps-muted, #6b7280);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── CTA bar ── */
+  .gty__cta-bar {
+    background: var(--ps-purple, #5b2bd8);
+    padding: 52px 24px 56px;
+    text-align: center;
+  }
+  .gty__cta-title {
+    font-size: clamp(20px, 2.8vw, 30px);
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 28px;
+    line-height: 1.25;
+  }
+  .gty__cta-btn {
+    display: inline-block;
+    height: 58px;
+    line-height: 58px;
+    padding: 0 48px;
+    background: var(--ps-yellow, #ffd400);
+    color: #1a0060;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 16px; font-weight: 800;
+    letter-spacing: .03em;
+    text-decoration: none;
+    transition: background .18s, box-shadow .18s, transform .12s;
+    box-shadow: 0 8px 28px rgba(255,212,0,0.35);
+  }
+  .gty__cta-btn:hover {
+    background: #ffe033;
+    box-shadow: 0 12px 36px rgba(255,212,0,0.5);
+    transform: translateY(-1px);
+  }
+  .gty__cta-btn:active { transform: scale(0.98); }
+
+  /* ── Starter Kit video ── */
+  .gty__starter-video {
+    margin: 0 auto;
+    padding: 28px 24px;
+    max-width: 760px;
+    text-align: center;
+    border: 1px solid rgba(91, 43, 216, 0.18);
+    border-radius: 16px;
+    background: #faf8ff;
+  }
+  .gty__starter-video-title {
+    margin: 0 0 8px;
+    color: var(--ps-purple, #5b2bd8);
+    font-size: 20px;
+    font-weight: 800;
+  }
+  .gty__starter-video-desc {
+    margin: 0 0 18px;
+    color: var(--ps-muted, #6b7280);
+    line-height: 1.55;
+  }
+  .gty__starter-video-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: var(--ps-purple, #5b2bd8);
+    color: #fff;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .gty__starter-video-link:hover { background: #4720ad; }
+
+  /* ── App download ── */
+  .gty__app-install {
+    max-width: 760px;
+    margin: 24px auto 0;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 22px;
+    background: #fff;
+    border: 1px solid rgba(91, 43, 216, 0.18);
+    border-radius: 16px;
+  }
+  .gty__app-copy { min-width: 0; }
+  .gty__app-title {
+    margin: 0 0 6px;
+    color: var(--ps-text, #111827);
+    font-size: 19px;
+    font-weight: 800;
+  }
+  .gty__app-desc {
+    margin: 0 0 16px;
+    color: var(--ps-muted, #6b7280);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .gty__app-link {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: var(--ps-purple, #5b2bd8);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .gty__app-link:hover { background: #4720ad; }
+  .gty__app-visual { display: flex; align-items: center; gap: 12px; }
+  .gty__app-icon {
+    width: 58px;
+    height: 58px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--ps-purple, #5b2bd8);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .gty__app-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .gty__app-qr { width: 96px; height: 96px; display: block; border-radius: 8px; }
+  @media (max-width: 560px) {
+    .gty__app-install { grid-template-columns: 1fr; text-align: center; }
+    .gty__app-visual { justify-content: center; order: -1; }
+  }
+</style>
+
+<div class="gty" data-section-id="{{ section.id }}">
+
+  {%- comment -%} ── Hero + Steps ── {%- endcomment -%}
+  <div class="gty__hero">
+    <h1 class="gty__headline">{{ section.settings.headline | default: "You're in. Your free Korea guide has been sent to your email." }}</h1>
+    <p class="gty__sub">{{ section.settings.sub | default: "Check your inbox in a minute. (Don't forget spam!)" }}</p>
+
+    <div class="gty__steps">
+      <div class="gty__step">
+        <div class="gty__step-num">1</div>
+        <div class="gty__step-body">
+          <p class="gty__step-title">{{ section.settings.step1_title | default: "Check Your Email" }}</p>
+          <p class="gty__step-desc">{{ section.settings.step1_desc | default: "Your free Korea travel info is on its way." }}</p>
+        </div>
+      </div>
+      <div class="gty__step">
+        <div class="gty__step-num">2</div>
+        <div class="gty__step-body">
+          <p class="gty__step-title">{{ section.settings.step2_title | default: "Download Your Government-Certified Korea Guide" }}</p>
+          <p class="gty__step-desc">{{ section.settings.step2_desc | default: "The attached guide is provided exclusively for you. Please do not share it externally." }}</p>
+          {%- if section.settings.step2_note != blank -%}
+            <p class="gty__step-note">⚠ {{ section.settings.step2_note }}</p>
+          {%- endif -%}
+        </div>
+      </div>
+
+    <ul class="gty__checklist">
+      <li>
+        <span class="gty__checklist-icon" aria-hidden="true">✅</span>
+        <span>{{ section.settings.check1_text | default: "Your free guide is in your inbox — check spam if you don't see it." }}</span>
+      </li>
+      <li>
+        <span class="gty__checklist-icon" aria-hidden="true">✅</span>
+        <span>{{ section.settings.check2_text | default: "Government-certified content, curated exclusively for you." }}</span>
+      </li>
+      <li>
+        <span class="gty__checklist-icon" aria-hidden="true">✅</span>
+        <span>{{ section.settings.check3_text | default: "This guide is for personal use only — please do not share externally." }}</span>
+      </li>
+    </ul>
+    </div>
+  </div>
+
+  {%- if section.settings.starter_video_url != blank -%}
+    <section class="gty__starter-video" aria-label="Starter Kit video">
+      <h2 class="gty__starter-video-title">{{ section.settings.starter_video_title | default: "Watch the Starter Kit Video" }}</h2>
+      <p class="gty__starter-video-desc">{{ section.settings.starter_video_desc | default: "Open the video viewer to watch your Starter Kit." }}</p>
+      <a class="gty__starter-video-link" href="{{ section.settings.starter_video_url }}" target="_blank" rel="noopener">
+        {{ section.settings.starter_video_label | default: "Watch video" }}
+      </a>
+    </section>
+  {%- endif -%}
+
+  {%- if section.settings.app_download_url != blank -%}
+    {%- assign app_qr_url = section.settings.app_download_url | url_encode -%}
+    <section class="gty__app-install" aria-label="Purple Shoes app download">
+      <div class="gty__app-copy">
+        <h2 class="gty__app-title">{{ section.settings.app_title | default: "Take your guides with you" }}</h2>
+        <p class="gty__app-desc">{{ section.settings.app_desc | default: "Scan the QR code to open the Purple Shoes app and access your guides on the go." }}</p>
+        <a class="gty__app-link" href="{{ section.settings.app_download_url }}" target="_blank" rel="noopener">
+          {{ section.settings.app_link_label | default: "Open Purple Shoes App" }}
+        </a>
+      </div>
+      <div class="gty__app-visual">
+        <div class="gty__app-icon" aria-hidden="true">
+          {%- if section.settings.app_image != blank -%}
+            <img src="{{ section.settings.app_image | image_url: width: 160 }}" alt="" width="80" height="80" loading="lazy">
+          {%- else -%}
+            APP
+          {%- endif -%}
+        </div>
+        {%- if section.settings.qr_image != blank -%}
+          <img class="gty__app-qr" src="{{ section.settings.qr_image | image_url: width: 200 }}" alt="QR code for the Purple Shoes app" width="96" height="96" loading="lazy">
+        {%- else -%}
+          <img class="gty__app-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ app_qr_url }}" alt="QR code for the Purple Shoes app" width="96" height="96" loading="lazy">
+        {%- endif -%}
+      </div>
+    </section>
+  {%- endif -%}
+
+  {%- comment -%} ── Feature grid ── {%- endcomment -%}
+  <div class="gty__feature">
+    <div class="gty__feature-inner">
+
+      <div class="gty__feature-head">
+        <span class="gty__feature-eyebrow">{{ section.settings.feature_eyebrow | default: "Explore the Full Korea Guide Kit" }}</span>
+        <h2 class="gty__feature-title">{{ section.settings.feature_title | default: "You've got the basics — now let's do it right." }}</h2>
+        <p class="gty__feature-desc">{{ section.settings.feature_desc | default: "Inside the full Korea Guide Kit:" }}</p>
+      </div>
+
+      <div class="gty__grid">
+        {%- for i in (1..8) -%}
+          {%- liquid
+            assign title_key = 'card' | append: i | append: '_title'
+            assign desc_key  = 'card' | append: i | append: '_desc'
+            assign img_key   = 'card' | append: i | append: '_image'
+            assign emoji_key = 'card' | append: i | append: '_emoji'
+            assign card_title = section.settings[title_key]
+            assign card_desc  = section.settings[desc_key]
+            assign card_image = section.settings[img_key]
+            assign card_emoji = section.settings[emoji_key]
+          -%}
+          {%- if card_title != blank -%}
+            <div class="gty__card">
+              <div class="gty__card-img">
+                {%- if card_image != blank -%}
+                  <img
+                    src="{{ card_image | image_url: width: 600 }}"
+                    alt="{{ card_image.alt | default: card_title | escape }}"
+                    loading="lazy"
+                    width="600"
+                    height="450"
+                  >
+                {%- else -%}
+                  <div class="gty__card-img-placeholder">
+                    <span>{{ card_emoji | default: "🇰🇷" }}</span>
+                  </div>
+                {%- endif -%}
+              </div>
+              <div class="gty__card-body">
+                <p class="gty__card-title">{{ card_title }}</p>
+                {%- if card_desc != blank -%}
+                  <p class="gty__card-desc">{{ card_desc }}</p>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+
+    </div>
+  </div>
+
+  {%- comment -%} ── CTA bar ── {%- endcomment -%}
+  <div class="gty__cta-bar">
+    <h2 class="gty__cta-title">{{ section.settings.cta_title | default: "Create Your Account to Unlock Everything" }}</h2>
+    <a href="{{ section.settings.cta_url | default: '/' }}" class="gty__cta-btn">
+      {{ section.settings.cta_label | default: "Create Account →" }}
+    </a>
+  </div>
+
+</div>
+
+{%- if customer -%}
+<script>
+  /* Mark this customer as welcomed so theme.liquid won't redirect again */
+  (function () {
+    var key = 'ps_welcomed_{{ customer.id }}';
+    if (!localStorage.getItem(key)) localStorage.setItem(key, '1');
+  })();
+</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "PS Guide Thank You",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Hero"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "You're in. Your free Korea guide has been sent to your email."
+    },
+    {
+      "type": "textarea",
+      "id": "sub",
+      "label": "Sub-text",
+      "default": "Check your inbox in a minute. (Don't forget spam!)"
+    },
+    {
+      "type": "header",
+      "content": "Step 1"
+    },
+    {
+      "type": "text",
+      "id": "step1_title",
+      "label": "Step 1 title",
+      "default": "Check Your Email"
+    },
+    {
+      "type": "textarea",
+      "id": "step1_desc",
+      "label": "Step 1 description",
+      "default": "Your free Korea travel info is on its way."
+    },
+    {
+      "type": "header",
+      "content": "Step 2"
+    },
+    {
+      "type": "text",
+      "id": "step2_title",
+      "label": "Step 2 title",
+      "default": "Download Your Government-Certified Korea Guide"
+    },
+    {
+      "type": "textarea",
+      "id": "step2_desc",
+      "label": "Step 2 description",
+      "default": "The attached guide is provided exclusively for you. Please do not share it externally."
+    },
+    {
+      "type": "text",
+      "id": "step2_note",
+      "label": "Step 2 warning note (optional)",
+      "info": "Shown in red below the description"
+    },
+    {
+      "type": "header",
+      "content": "Feature Section"
+    },
+    {
+      "type": "text",
+      "id": "feature_eyebrow",
+      "label": "Eyebrow label",
+      "default": "Explore the Full Korea Guide Kit"
+    },
+    {
+      "type": "text",
+      "id": "feature_title",
+      "label": "Section title",
+      "default": "You've got the basics — now let's do it right."
+    },
+    {
+      "type": "textarea",
+      "id": "feature_desc",
+      "label": "Section description",
+      "default": "Inside the full Korea Guide Kit:"
+    },
+    {
+      "type": "header",
+      "content": "Card 1"
+    },
+    {
+      "type": "image_picker",
+      "id": "card1_image",
+      "label": "Card 1 image"
+    },
+    {
+      "type": "text",
+      "id": "card1_emoji",
+      "label": "Card 1 fallback emoji",
+      "default": "📖"
+    },
+    {
+      "type": "text",
+      "id": "card1_title",
+      "label": "Card 1 title",
+      "default": "Full Guidebook"
+    },
+    {
+      "type": "textarea",
+      "id": "card1_desc",
+      "label": "Card 1 description"
+    },
+    {
+      "type": "header",
+      "content": "Card 2"
+    },
+    {
+      "type": "image_picker",
+      "id": "card2_image",
+      "label": "Card 2 image"
+    },
+    {
+      "type": "text",
+      "id": "card2_emoji",
+      "label": "Card 2 fallback emoji",
+      "default": "🎬"
+    },
+    {
+      "type": "text",
+      "id": "card2_title",
+      "label": "Card 2 title",
+      "default": "Video Guide"
+    },
+    {
+      "type": "textarea",
+      "id": "card2_desc",
+      "label": "Card 2 description"
+    },
+    {
+      "type": "header",
+      "content": "Card 3"
+    },
+    {
+      "type": "image_picker",
+      "id": "card3_image",
+      "label": "Card 3 image"
+    },
+    {
+      "type": "text",
+      "id": "card3_emoji",
+      "label": "Card 3 fallback emoji",
+      "default": "📍"
+    },
+    {
+      "type": "text",
+      "id": "card3_title",
+      "label": "Card 3 title",
+      "default": "1,000+ handpicked spots"
+    },
+    {
+      "type": "textarea",
+      "id": "card3_desc",
+      "label": "Card 3 description"
+    },
+    {
+      "type": "header",
+      "content": "Card 4"
+    },
+    {
+      "type": "image_picker",
+      "id": "card4_image",
+      "label": "Card 4 image"
+    },
+    {
+      "type": "text",
+      "id": "card4_emoji",
+      "label": "Card 4 fallback emoji",
+      "default": "🗺️"
+    },
+    {
+      "type": "text",
+      "id": "card4_title",
+      "label": "Card 4 title",
+      "default": "Routes ready to use"
+    },
+    {
+      "type": "textarea",
+      "id": "card4_desc",
+      "label": "Card 4 description"
+    },
+    {
+      "type": "header",
+      "content": "Card 5"
+    },
+    {
+      "type": "image_picker",
+      "id": "card5_image",
+      "label": "Card 5 image"
+    },
+    {
+      "type": "text",
+      "id": "card5_emoji",
+      "label": "Card 5 fallback emoji",
+      "default": "🗺️"
+    },
+    {
+      "type": "text",
+      "id": "card5_title",
+      "label": "Card 5 title"
+    },
+    {
+      "type": "textarea",
+      "id": "card5_desc",
+      "label": "Card 5 description"
+    },
+    {
+      "type": "header",
+      "content": "Card 6"
+    },
+    {
+      "type": "image_picker",
+      "id": "card6_image",
+      "label": "Card 6 image"
+    },
+    {
+      "type": "text",
+      "id": "card6_emoji",
+      "label": "Card 6 fallback emoji",
+      "default": "🎤"
+    },
+    {
+      "type": "text",
+      "id": "card6_title",
+      "label": "Card 6 title"
+    },
+    {
+      "type": "textarea",
+      "id": "card6_desc",
+      "label": "Card 6 description"
+    },
+    {
+      "type": "header",
+      "content": "Card 7"
+    },
+    {
+      "type": "image_picker",
+      "id": "card7_image",
+      "label": "Card 7 image"
+    },
+    {
+      "type": "text",
+      "id": "card7_emoji",
+      "label": "Card 7 fallback emoji",
+      "default": "⛩️"
+    },
+    {
+      "type": "text",
+      "id": "card7_title",
+      "label": "Card 7 title"
+    },
+    {
+      "type": "textarea",
+      "id": "card7_desc",
+      "label": "Card 7 description"
+    },
+    {
+      "type": "header",
+      "content": "Card 8"
+    },
+    {
+      "type": "image_picker",
+      "id": "card8_image",
+      "label": "Card 8 image"
+    },
+    {
+      "type": "text",
+      "id": "card8_emoji",
+      "label": "Card 8 fallback emoji",
+      "default": "🧘"
+    },
+    {
+      "type": "text",
+      "id": "card8_title",
+      "label": "Card 8 title"
+    },
+    {
+      "type": "textarea",
+      "id": "card8_desc",
+      "label": "Card 8 description"
+    },
+    {
+      "type": "header",
+      "content": "Checklist"
+    },
+    {
+      "type": "text",
+      "id": "check1_text",
+      "label": "Item 1",
+      "default": "Your free guide is in your inbox — check spam if you don't see it."
+    },
+    {
+      "type": "text",
+      "id": "check2_text",
+      "label": "Item 2",
+      "default": "Government-certified content, curated exclusively for you."
+    },
+    {
+      "type": "text",
+      "id": "check3_text",
+      "label": "Item 3",
+      "default": "This guide is for personal use only — please do not share externally."
+    },
+    {
+      "type": "header",
+      "content": "Starter Kit video"
+    },
+    {
+      "type": "text",
+      "id": "starter_video_title",
+      "label": "Video title",
+      "default": "Watch the Starter Kit Video"
+    },
+    {
+      "type": "textarea",
+      "id": "starter_video_desc",
+      "label": "Video description",
+      "default": "Open the video viewer to watch your Starter Kit."
+    },
+    {
+      "type": "text",
+      "id": "starter_video_label",
+      "label": "Video link label",
+      "default": "Watch video"
+    },
+    {
+      "type": "url",
+      "id": "starter_video_url",
+      "label": "Video viewer URL",
+      "info": "The video link appears only when this URL is set."
+    },
+    {
+      "type": "header",
+      "content": "App download (shown only when the URL is set)"
+    },
+    {
+      "type": "text",
+      "id": "app_title",
+      "label": "App heading",
+      "default": "Take your guides with you"
+    },
+    {
+      "type": "textarea",
+      "id": "app_desc",
+      "label": "App description",
+      "default": "Scan the QR code to open the Purple Shoes app and access your guides on the go."
+    },
+    {
+      "type": "text",
+      "id": "app_link_label",
+      "label": "App button label",
+      "default": "Open Purple Shoes App"
+    },
+    {
+      "type": "url",
+      "id": "app_download_url",
+      "label": "App download URL",
+      "info": "The button and QR code both use this link."
+    },
+    {
+      "type": "image_picker",
+      "id": "app_image",
+      "label": "App icon image"
+    },
+    {
+      "type": "image_picker",
+      "id": "qr_image",
+      "label": "QR code image",
+      "info": "Leave blank to automatically create a QR code from the app download URL."
+    },
+    {
+      "type": "header",
+      "content": "CTA Bar"
+    },
+    {
+      "type": "text",
+      "id": "cta_title",
+      "label": "CTA title",
+      "default": "Create Your Account to Unlock Everything"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Button label",
+      "default": "Create Account →"
+    },
+    {
+      "type": "url",
+      "id": "cta_url",
+      "label": "Button URL"
+    }
+  ],
+  "presets": [
+    {
+      "name": "PS Guide Thank You"
+    }
+  ]
+}
+{% endschema %}

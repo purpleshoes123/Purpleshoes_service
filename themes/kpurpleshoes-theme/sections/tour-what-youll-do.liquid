@@ -1,0 +1,109 @@
+<section class="tgwyd" style="
+  --t: {{ section.settings.text }};
+  --m: {{ section.settings.muted }};
+  --b: rgba(0,0,0,.10);
+">
+  <div class="page-width tgwyd__inner">
+    <div class="ps-section-heading tgwyd__title-wrap">
+      <h2 class="ps-section-heading__title tgwyd__h">{{ section.settings.heading }}</h2>
+      <div class="ps-section-heading__rule"></div>
+    </div>
+
+    <div class="tgwyd__grid">
+      <div class="tgwyd__list">
+        {% for block in section.blocks %}
+          <div class="tgwyd__item" {{ block.shopify_attributes }}>
+            <div class="tgwyd__thumb">
+              {% if block.settings.image != blank %}
+                {{ block.settings.image | image_url: width: 240 | image_tag: loading: 'lazy', class: 'tgwyd__img', alt: block.settings.title }}
+              {% else %}
+                <div class="tgwyd__ph"></div>
+              {% endif %}
+            </div>
+            <div class="tgwyd__txt">
+              <div class="tgwyd__title">{{ block.settings.title }}</div>
+              <div class="tgwyd__desc">{{ block.settings.desc }}</div>
+            </div>
+          </div>
+        {% endfor %}
+
+        {% if section.settings.footer_note != blank %}
+          <p class="tgwyd__note">{{ section.settings.footer_note }}</p>
+        {% endif %}
+      </div>
+
+      <div class="tgwyd__aside">
+        {% if section.settings.aside_title != blank %}
+          <div class="tgwyd__asideBox">
+            <div class="tgwyd__asideTitle">{{ section.settings.aside_title }}</div>
+            <div class="tgwyd__asideDesc">{{ section.settings.aside_desc }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tgwyd{ padding: clamp(48px, 8vw, 124px) 0; color: var(--t); }
+  .tgwyd__h{ margin: 0 0 14px; font-size: 22px; letter-spacing:-0.02em; }
+  .tgwyd__grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap: 24px; align-items:start; }
+  .tgwyd__item{ display:flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--b); }
+  .tgwyd__thumb{ width: 62px; height: 62px; border-radius: 14px; overflow:hidden; background: rgba(0,0,0,.05); flex: 0 0 auto; }
+  .tgwyd__img{ width:100%; height:100%; object-fit: cover; display:block; }
+  .tgwyd__ph{ width:100%; height:100%; background: linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.02)); }
+  .tgwyd__title{ font-weight: 750; font-size: 14px; }
+  .tgwyd__desc{ margin-top: 4px; color: var(--m); font-size: 13px; line-height: 1.6; }
+  .tgwyd__note{ margin: 12px 0 0; color: var(--m); font-size: 12px; }
+
+  .tgwyd__asideBox{
+    border: 1px solid var(--b);
+    border-radius: 16px;
+    padding: 16px;
+    background: rgba(0,0,0,.02);
+  }
+  .tgwyd__asideTitle{ font-weight: 800; }
+  .tgwyd__asideDesc{ margin-top: 6px; color: var(--m); line-height: 1.6; font-size: 13px; }
+
+  @media (max-width: 990px){
+    .tgwyd__grid{ grid-template-columns: 1fr; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "What you'll do",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "What you’ll do" },
+    { "type": "textarea", "id": "footer_note", "label": "Footer note", "default": "This experience is hosted in English. (Sample copy)" },
+
+    { "type": "text", "id": "aside_title", "label": "Right box title", "default": "Quick info" },
+    { "type": "textarea", "id": "aside_desc", "label": "Right box description", "default": "Add a summary here for duration, language, difficulty, inclusions, and more." },
+
+    { "type": "color", "id": "text", "label": "Text", "default": "#111111" },
+    { "type": "color", "id": "muted", "label": "Muted", "default": "#6b6b6b" }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "List item",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Thumbnail" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Explore the market" },
+        { "type": "textarea", "id": "desc", "label": "Description", "default": "Enter a short description." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "What you'll do",
+      "blocks": [
+        { "type": "item", "settings": { "title": "Explore night market", "desc": "Wander through the vibrant energy of the night market." } },
+        { "type": "item", "settings": { "title": "Taste local dishes", "desc": "Enjoy a diverse selection of cuisine and beverages." } },
+        { "type": "item", "settings": { "title": "Learn local tips", "desc": "Get practical tips for moving around and ordering food." } },
+        { "type": "item", "settings": { "title": "Leave with memories", "desc": "Capture moments and take home a story to tell." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

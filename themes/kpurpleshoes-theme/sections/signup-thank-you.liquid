@@ -1,0 +1,702 @@
+{% comment %}
+  signup-thank-you.liquid — Thank you page after signup
+  CSS namespace: .sgty__
+{% endcomment %}
+
+{%- assign referral_url = section.settings.referral_link -%}
+{%- if referral_url == blank -%}
+  {%- assign referral_url = request.origin | append: '/pages/freeguideoptin' -%}
+{%- endif -%}
+
+{%- if customer -%}
+<script>
+  (function () {
+    var key = 'ps_welcomed_{{ customer.id }}';
+    if (!localStorage.getItem(key)) localStorage.setItem(key, '1');
+  })();
+</script>
+{%- endif -%}
+
+<div
+  class="sgty"
+  data-ty-offer
+  data-section-id="{{ section.id }}"
+  data-customer-id="{{ customer.id | default: '' }}"
+  data-summary-endpoint="/apps/bta-booking/coupons/summary"
+  data-share-activate-endpoint="/apps/bta-booking/coupons/extra10/activate-share"
+  data-referral-url="{{ referral_url | escape }}"
+  data-share-title="{{ section.settings.referral_headline | default: 'Get an Extra $10 OFF Coupon' | escape }}"
+  data-share-text="{{ section.settings.referral_desc | default: 'Share the free Korea travel info page with a friend and unlock your extra $10 off coupon.' | escape }}"
+  data-referral-copy-success="Link copied! Share it with a friend planning a trip to Korea."
+>
+
+  <!-- ── Section 1: Header + Email Notice ── -->
+  <div class="sgty__sec1">
+    <div class="sgty__inner">
+
+      <h1 class="sgty__headline">{{ section.settings.headline | default: 'Thanks for signing up!' }}</h1>
+      <p class="sgty__sub">{{ section.settings.sub | default: "Your Purple Shoes account is ready." | newline_to_br }}</p>
+
+      <div class="sgty__email-block">
+        <p class="sgty__email-title">{{ section.settings.email_title | default: 'Your free Starter Kit is ready to open now.' }}</p>
+        <p class="sgty__email-body">{{ section.settings.email_body | default: 'You can also use your 24-hour 50% welcome offer for the Korea Guide Kit.' | newline_to_br }}</p>
+        <a class="sgty__cta" href="/pages/starter-kit-viewer">Open My Free Starter Kit</a>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- ── Section 2: Special Gift ── -->
+  <div class="sgty__sec2">
+    <div class="sgty__inner">
+
+      <h2 class="sgty__gift-heading">{{ section.settings.gift_heading | default: 'Your 50% Welcome Offer Is Ready' }}</h2>
+      <p class="sgty__gift-sub">{{ section.settings.gift_sub | default: 'Valid for 24 hours after sign-up' }}</p>
+
+      <!-- Two-column: coupon card + kit details -->
+      <div class="sgty__cols">
+
+        <!-- LEFT: Coupon card -->
+        <div class="sgty__coupon-card">
+          <div class="sgty__coupon-main">
+          <p class="sgty__coupon-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 11h16v10H4zM3 7h18v4H3zM12 7v14"/><path d="M12 7H8.5A2.5 2.5 0 1 1 11 4.5L12 7Zm0 0h3.5A2.5 2.5 0 1 0 13 4.5L12 7Z"/></svg>
+            {{ 'signup_ticket.welcome_gift' | t }}
+          </p>
+          <p class="sgty__coupon-name">{{ section.settings.coupon_name | default: 'Korea Guide Kit' }}</p>
+          {%- assign coupon_discount = section.settings.coupon_pct | default: '50% OFF' -%}
+          <p class="sgty__coupon-pct">
+            {%- if coupon_discount == '50% OFF' -%}
+              <span class="sgty__coupon-amount">50<span class="sgty__coupon-percent">%</span></span><span class="sgty__coupon-off"> OFF</span>
+            {%- else -%}
+              {{ coupon_discount }}
+            {%- endif -%}
+          </p>
+          <p class="sgty__coupon-tagline"><em>{{ section.settings.coupon_tagline | default: '*Get Everything for Half Price!' }}</em></p>
+          </div>
+
+          <!-- Timer: hidden until thank-you-offer.js activates -->
+          <div class="sgty__timer-wrap" data-guide50-timer data-legacy-end-time="{{ section.settings.countdown_end_time | default: '' }}" hidden>
+            <p class="sgty__timer-text" data-guide50-urgency>
+              <span class="sgty__timer-label">{{ 'signup_ticket.time_remaining' | t }}</span>
+              <span class="sgty__timer-val" data-sgty-timer-val>23:59:59</span>
+            </p>
+            <span data-guide50-timer-display style="display:none" aria-live="polite"></span>
+            <p class="sgty__timer-expired" data-guide50-timer-expired hidden>This offer has expired.</p>
+            <p data-guide50-timer-note hidden></p>
+          </div>
+        </div>
+
+        <!-- RIGHT: Kit details -->
+        <div class="sgty__kit-details">
+          <p class="sgty__kit-title">{{ section.settings.kit_title | default: 'Kit Includes' }}</p>
+          <ul class="sgty__kit-list">
+            <li>{{ section.settings.kit_item1 | default: '• Full Guidebook' }}</li>
+            <li>{{ section.settings.kit_item2 | default: '• Full Video Guide' }}</li>
+          </ul>
+
+          <p class="sgty__bonus-title">{{ section.settings.bonus_title | default: 'EXCLUSIVE BONUS' }}</p>
+          <ul class="sgty__kit-list">
+            <li>{{ section.settings.bonus_item1 | default: '• 1,500+ handpicked spots across Korea — NO Extra Charge!' }}</li>
+          </ul>
+          <p class="sgty__bonus-desc">{{ section.settings.bonus_desc | default: 'Local restaurants, cafés, landmarks, and hidden gems, personally curated by a local Korean — all in one map.' }}</p>
+        </div>
+
+      </div><!-- /sgty__cols -->
+
+      <!-- CTA Button -->
+<!-- CTA Button -->
+<div class="sgty__cta-wrap">
+  <a
+    href="{{ section.settings.cta_url | default: '/products/korea-guide-kit' }}"
+    class="sgty__cta"
+    id="ty-offer-cta"
+  >
+    <span class="sgty__cta-active">{{ section.settings.cta_label | default: 'Use My 50% Welcome Offer' }}</span>
+    <span class="sgty__cta-inactive">{{ 'signup_ticket.explore_kit' | t }}</span>
+    <svg class="sgty__cta-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+  </a>
+
+  <div class="sgty__coupon-notes">
+    <p>
+      ✅ <strong>Auto-Applied:</strong>
+      The discount is automatically applied at checkout for the Korea Guide Kit.
+    </p>
+
+    <p>
+      ✅ <strong>24-Hour Exclusive:</strong>
+      Valid only for 24 hours after signing up.
+    </p>
+
+    <p>
+      ✅ You can find your coupon in
+      <strong>My Page &gt; My Coupons</strong>
+    </p>
+  </div>
+</div>
+    </div>
+  </div>
+
+  <!-- ── Section 3: Referral ── -->
+  <div class="sgty__sec3">
+    <div class="sgty__inner">
+
+      <h2 class="sgty__referral-heading">{{ section.settings.referral_headline | default: 'Get an Extra $10 OFF Coupon' }}</h2>
+      <p class="sgty__referral-desc" data-referral-section>
+        <strong>{{ section.settings.referral_share_label | default: 'Share &amp; Save!' }}</strong>
+        {{ section.settings.referral_desc | default: 'Share this link with a friend. Your coupon unlocks when they click it.' }}
+      </p>
+
+      <div class="sgty__referral-actions">
+        <button type="button" class="sgty__referral-btn" data-referral-share-button>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          {{ section.settings.referral_btn_label | default: 'Share & Unlock $10 Coupon' }}
+        </button>
+        <button type="button" class="sgty__referral-btn sgty__referral-btn--copy" data-referral-copy-button hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          {{ section.settings.referral_copy_label | default: 'Copy free guide link' }}
+        </button>
+      </div>
+
+      <p class="sgty__referral-status" data-referral-status aria-live="polite" hidden></p>
+
+      <ul class="sgty__checklist">
+        <li>✅ No expiration date</li>
+        <li>✅ <strong>Stackable</strong> — combine it with other coupons for extra savings</li>
+        <li>✅ {{ section.settings.check3_text | default: 'You can find your coupon in' }} <strong>{{ section.settings.check3_bold | default: 'My Page > My Coupons.' }}</strong></li>
+      </ul>
+
+      <p class="sgty__referral-link-preview" data-referral-link-preview>{{ referral_url }}</p>
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+  .sgty {
+    --sgty-purple:  #5b2bd8;
+    --sgty-text:    #111827;
+    --sgty-muted:   #4b5563;
+    --sgty-light:   #6b7280;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .sgty__inner {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Section 1: white ── */
+  .sgty__sec1 {
+    background: #fff;
+    padding: 48px 0 40px;
+  }
+
+  .sgty__logo {
+    font-size: 13px;
+    color: var(--sgty-light);
+    margin: 0 0 28px;
+  }
+
+  .sgty__headline {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800;
+    color: var(--sgty-text);
+    text-align: center;
+    margin: 0 0 12px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .sgty__sub {
+    font-size: 16px;
+    color: var(--sgty-muted);
+    text-align: center;
+    margin: 0 0 36px;
+    line-height: 1.55;
+  }
+
+  .sgty__email-block {
+    margin-bottom: 28px;
+  }
+
+  .sgty__email-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--sgty-text);
+    margin: 0 0 10px;
+  }
+
+  .sgty__email-body {
+    font-size: 14px;
+    color: var(--sgty-muted);
+    margin: 0 0 8px;
+    line-height: 1.65;
+  }
+
+  .sgty__email-body strong {
+    color: var(--sgty-text);
+  }
+
+  .sgty__happy-block { margin: 0; }
+
+  .sgty__happy-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--sgty-text);
+    margin: 0 0 6px;
+  }
+
+  .sgty__happy-note {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--sgty-muted);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* ── Section 2: light gray ── */
+  .sgty__sec2 {
+    background: #f7f7f7;
+    padding: 48px 0 44px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .sgty__gift-heading {
+    font-size: clamp(24px, 4vw, 34px);
+    font-weight: 800;
+    color: var(--sgty-text);
+    text-align: center;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .sgty__gift-sub {
+    font-size: 16px;
+    font-style: italic;
+    color: var(--sgty-muted);
+    text-align: center;
+    margin: 0 0 28px;
+  }
+
+  /* Two-column layout */
+  .sgty__cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-bottom: 24px;
+    align-items: stretch;
+  }
+
+  /* LEFT: coupon card */
+  .sgty__coupon-card {
+    position: relative;
+    isolation: isolate;
+    min-width: 0;
+    background: radial-gradient(ellipse at 100% 0, #9361f3 0, transparent 58%), linear-gradient(145deg, #351078, #6830cf 65%, #8048e0);
+    border-radius: 22px;
+    color: #fff;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 16px 32px -12px rgba(64, 27, 133, .4), inset 0 0 0 1px rgba(255,255,255,.24);
+  }
+  .sgty__coupon-card::before {
+    content: '';
+    position: absolute;
+    inset: 9px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 15px;
+    pointer-events: none;
+  }
+  .sgty__coupon-card > * { position: relative; z-index: 1; }
+  .sgty__coupon-main {
+    flex: 1;
+    padding: 26px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .sgty__coupon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 21px;
+    padding: 7px 11px;
+    border: 1px solid rgba(242,225,255,.32);
+    border-radius: 30px;
+    background: rgba(255,255,255,.09);
+    color: #fff1d2;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .sgty__coupon-name {
+    font-size: 12px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: #eee3ff;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+
+  .sgty__coupon-pct {
+    font-size: clamp(40px, 7vw, 64px);
+    font-weight: 900;
+    margin: 0 0 13px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+    color: #fff;
+  }
+  .sgty__coupon-amount { font-size: 88px; letter-spacing: -.065em; }
+  .sgty__coupon-percent { font-size: .48em; vertical-align: .25em; margin-left: 2px; letter-spacing: -.04em; }
+  .sgty__coupon-off { display: block; font-size: 22px; letter-spacing: .24em; margin: 4px 0 0 .24em; }
+
+  .sgty__coupon-tagline {
+    font-size: 13px;
+    color: #f2eaff;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* Timer in coupon card */
+  .sgty__timer-wrap[hidden] { display: none !important; }
+  .sgty__timer-wrap {
+    margin: 0;
+    padding: 19px 20px 22px;
+    border-top: 1px dashed rgba(255,255,255,.45);
+    border-radius: 0 0 22px 22px;
+    background: rgba(24,6,63,.24);
+  }
+  .sgty__timer-wrap::before,
+  .sgty__timer-wrap::after {
+    content: '';
+    position: absolute;
+    top: -11px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f7f7f7;
+  }
+  .sgty__timer-wrap::before { left: -11px; }
+  .sgty__timer-wrap::after { right: -11px; }
+  .sgty__timer-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; }
+
+  .sgty__timer-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .sgty__timer-val {
+    display: inline-block;
+    padding: 7px 14px;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 9px;
+    font-size: 24px;
+    letter-spacing: .1em;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sgty__timer-expired[hidden] { display: none !important; }
+  .sgty__timer-expired {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+  }
+  .sgty__timer-wrap.is-expired [data-guide50-urgency] { display: none; }
+  .sgty__coupon-card:has(.is-expired:not([hidden])) { background: linear-gradient(145deg, #45345f, #6c548a); }
+  .sgty__cta-inactive { display: none; }
+  .sgty__sec2:has(.is-expired:not([hidden])) .sgty__cta-active { display: none; }
+  .sgty__sec2:has(.is-expired:not([hidden])) .sgty__cta-inactive { display: inline; }
+
+  /* RIGHT: kit details */
+  .sgty__kit-details {
+    padding: 16px 0;
+    align-self: center;
+    min-width: 0;
+  }
+
+  .sgty__kit-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--sgty-text);
+    margin: 0 0 8px;
+  }
+
+  .sgty__kit-list {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sgty__kit-list li {
+    font-size: 14px;
+    color: var(--sgty-muted);
+    line-height: 1.5;
+  }
+
+  .sgty__bonus-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--sgty-text);
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+  }
+
+  .sgty__bonus-desc {
+    font-size: 13px;
+    color: var(--sgty-muted);
+    line-height: 1.65;
+    margin: 8px 0 0;
+  }
+
+  /* CTA */
+  .sgty__cta-wrap { margin-bottom: 24px; }
+
+  .sgty__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 100%;
+    background: linear-gradient(110deg, #5420be, #7239ed);
+    color: #fff;
+    font-size: clamp(15px, 2.5vw, 18px);
+    font-weight: 800;
+    padding: 20px 28px;
+    border-radius: 14px;
+    text-decoration: none;
+    text-align: center;
+    line-height: 1.3;
+    transition: background 0.15s, transform 0.12s;
+    box-shadow: 0 4px 16px rgba(91,43,216,0.35);
+  }
+
+  .sgty__cta:hover {
+    background: #4a22b5;
+    transform: translateY(-2px);
+  }
+  .sgty__cta-arrow { flex-shrink: 0; }
+  .sgty__cta:focus-visible { outline: 3px solid #351078; outline-offset: 4px; }
+  @media (prefers-reduced-motion: reduce) {
+    .sgty__cta { transition: none; }
+    .sgty__cta:hover { transform: none; }
+  }
+
+  /* Checklist */
+  .sgty__checklist {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .sgty__checklist li {
+    font-size: 14px;
+    color: var(--sgty-text);
+    line-height: 1.55;
+  }
+
+  .sgty__checklist li strong {
+    font-weight: 700;
+  }
+
+  /* ── Section 3: Referral ── */
+  .sgty__sec3 {
+    background: #fff;
+    padding: 48px 0 56px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+  }
+
+  .sgty__referral-heading {
+    font-size: clamp(22px, 4vw, 30px);
+    font-weight: 800;
+    color: var(--sgty-text);
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .sgty__referral-desc {
+    font-size: 14px;
+    color: var(--sgty-muted);
+    margin: 0 0 20px;
+    line-height: 1.65;
+  }
+
+  .sgty__referral-desc strong {
+    color: var(--sgty-text);
+  }
+
+  .sgty__referral-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .sgty__referral-btn {
+    appearance: none;
+    border: 0;
+    border-radius: 10px;
+    background: var(--sgty-purple);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 13px 22px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    transition: opacity 0.15s, transform 0.12s;
+  }
+
+  .sgty__referral-btn:hover    { opacity: 0.88; transform: translateY(-1px); }
+  .sgty__referral-btn[disabled]{ opacity: 0.5; cursor: wait; }
+  .sgty__referral-btn--copy {
+    background: #f1e7ff;
+    color: var(--sgty-purple);
+  }
+  .sgty__referral-btn[hidden]    { display: none !important; }
+  .sgty__referral-status[hidden] { display: none !important; }
+
+  .sgty__referral-status {
+    font-size: 14px;
+    font-weight: 600;
+    color: #16a34a;
+    margin: 0 0 10px;
+    line-height: 1.5;
+  }
+  .sgty__referral-status.is-error { color: #b91c1c; }
+
+  .sgty__referral-link-preview {
+    font-size: 12px;
+    color: var(--sgty-light);
+    margin: 20px 0 0;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 560px) {
+    .sgty__cols {
+      grid-template-columns: 1fr;
+    }
+    .sgty__coupon-main { padding: 26px 20px 24px; }
+    .sgty__kit-details { padding: 0 4px; }
+    .sgty__inner { padding: 0 16px; }
+    .sgty__sec1  { padding: 36px 0 32px; }
+    .sgty__sec2  { padding: 36px 0 36px; }
+    .sgty__sec3  { padding: 36px 0 48px; }
+  }
+</style>
+
+<script src="{{ 'thank-you-offer.js' | asset_url }}" defer="defer"></script>
+
+<script>
+  /* Sync [data-guide50-timer-display] text → visible [data-sgty-timer-val] span */
+  (function () {
+    function init() {
+      var hidden = document.querySelector('[data-guide50-timer-display]');
+      var valEl  = document.querySelector('[data-sgty-timer-val]');
+      if (!hidden || !valEl) return;
+      function sync() {
+        var t = (hidden.textContent || '').trim();
+        if (t) valEl.textContent = t;
+      }
+      new MutationObserver(sync).observe(hidden, { childList: true, characterData: true, subtree: true });
+      sync();
+    }
+    document.readyState === 'loading'
+      ? document.addEventListener('DOMContentLoaded', init)
+      : init();
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Signup Thank You",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "header", "content": "Section 1 — Header" },
+    { "type": "text",     "id": "logo_text",   "label": "Logo text",   "default": "Logo / PurpleShoes" },
+    { "type": "text",     "id": "headline",    "label": "Headline",    "default": "Thanks for signing up!" },
+    { "type": "textarea", "id": "sub",         "label": "Sub-text",    "default": "Your Purple Shoes account is ready." },
+    { "type": "header", "content": "Email Notice" },
+    { "type": "text",     "id": "email_title",        "label": "Starter Kit title",    "default": "Your free Starter Kit is ready to open now." },
+    { "type": "textarea", "id": "email_body",         "label": "Starter Kit description",    "default": "You can also use your 24-hour 50% welcome offer for the Korea Guide Kit." },
+    { "type": "text",     "id": "email_hint_prefix",  "label": "Email hint prefix",    "default": "Keep an eye out for an email titled" },
+    { "type": "text",     "id": "email_subject",      "label": "Email subject (bold)", "default": "'Welcome, Smart Traveler — Your Korea Trip Just Got Easier'" },
+    { "type": "header", "content": "Happy Traveling" },
+    { "type": "text",     "id": "happy_title", "label": "Happy title", "default": "Happy Traveling!" },
+    { "type": "textarea", "id": "happy_note",  "label": "Happy note",  "default": "* We hope this exclusive information helps you enjoy Korea more deeply than anyone else." },
+    { "type": "header", "content": "Section 2 — Special Gift" },
+    { "type": "text",     "id": "gift_heading", "label": "Gift heading", "default": "Your 50% Welcome Offer Is Ready" },
+    { "type": "text",     "id": "gift_sub",     "label": "Gift sub",     "default": "Valid for 24 hours after sign-up" },
+    { "type": "header", "content": "Coupon Card (left)" },
+    { "type": "text", "id": "coupon_name",    "label": "Product name", "default": "Korea Guide Kit" },
+    { "type": "text", "id": "coupon_pct",     "label": "Discount",     "default": "50% OFF" },
+    { "type": "text", "id": "coupon_tagline", "label": "Tagline",      "default": "*Get Everything for Half Price!" },
+    { "type": "text", "id": "countdown_end_time", "label": "Countdown end (Unix ts)", "info": "Leave blank — live timer uses the coupon summary API." },
+    { "type": "header", "content": "Kit Details (right)" },
+    { "type": "text", "id": "kit_title",   "label": "Kit title",    "default": "Kit Includes" },
+    { "type": "text", "id": "kit_item1",   "label": "Kit item 1",   "default": "• Full Guidebook" },
+    { "type": "text", "id": "kit_item2",   "label": "Kit item 2",   "default": "• Full Video Guide" },
+    { "type": "text", "id": "bonus_title", "label": "Bonus title",  "default": "EXCLUSIVE BONUS" },
+    { "type": "text", "id": "bonus_item1", "label": "Bonus item 1", "default": "• 1,500+ handpicked spots across Korea — NO Extra Charge!" },
+    { "type": "textarea", "id": "bonus_desc", "label": "Bonus description", "default": "Local restaurants, cafés, landmarks, and hidden gems, personally curated by a local Korean — all in one map." },
+    { "type": "header", "content": "CTA Button" },
+    { "type": "text", "id": "cta_label", "label": "Button text", "default": "Use My 50% Welcome Offer" },
+    { "type": "url",  "id": "cta_url",   "label": "Button URL" },
+    { "type": "header", "content": "Checklist" },
+    { "type": "text", "id": "check1_bold", "label": "Item 1 bold",  "default": "Auto-Applied:" },
+    { "type": "text", "id": "check1_text", "label": "Item 1 text",  "default": "The discount is automatically applied at checkout." },
+    { "type": "text", "id": "check2_bold", "label": "Item 2 bold",  "default": "24-Hour Exclusive:" },
+    { "type": "text", "id": "check2_text", "label": "Item 2 text",  "default": "Valid only for 24 hours after signing up." },
+    { "type": "text", "id": "check3_text", "label": "Item 3 prefix","default": "You can find your coupon in" },
+    { "type": "text", "id": "check3_bold", "label": "Item 3 bold",  "default": "My Page > My Coupons." },
+    { "type": "header", "content": "Section 3 — Referral" },
+    { "type": "text",     "id": "referral_headline",   "label": "Heading",       "default": "Get an Extra $10 OFF Coupon" },
+    { "type": "text",     "id": "referral_share_label","label": "Share label",   "default": "Share & Save!" },
+    { "type": "textarea", "id": "referral_desc",       "label": "Description",   "default": "Share this link with a friend. Your coupon unlocks when they click it." },
+    { "type": "url",      "id": "referral_link",       "label": "Squeeze page URL override" },
+    { "type": "text",     "id": "referral_btn_label",  "label": "Share button",  "default": "Share & Unlock $10 Coupon" },
+    { "type": "text",     "id": "referral_copy_label", "label": "Copy button",   "default": "Copy free guide link" }
+  ],
+  "presets": [
+    { "name": "Signup Thank You" }
+  ]
+}
+{% endschema %}

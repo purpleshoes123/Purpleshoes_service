@@ -1,0 +1,1056 @@
+{% comment %}
+  Section: Tour Experiences Grid
+  - 3-column cards with image + overlaid texts + title/desc + button
+{% endcomment %}
+
+<section class="tg-exp" style="
+  --tg-bg: {{ section.settings.bg }};
+  --tg-title: {{ section.settings.title_color }};
+  --tg-text: {{ section.settings.text_color }};
+  --tg-muted: {{ section.settings.muted_color }};
+  --tg-btn: {{ section.settings.btn_bg }};
+  --tg-btn-text: {{ section.settings.btn_text }};
+  --tg-radius: {{ section.settings.radius }}px;
+  --tg-gap: {{ section.settings.gap }}px;
+  --tg-hero-h: {{ section.settings.hero_height | default: 360 }}px;
+  --tg-overlay-top: {{ section.settings.overlay_top | default: 0.8 }};
+  --tg-overlay-mid: {{ section.settings.overlay_mid | default: 0.6 }};
+  --tg-overlay-bot: {{ section.settings.overlay_bottom | default: 0.3 }};
+  --tg-title-size: {{ section.settings.hero_title_size | default: 44 }}px;
+  --tg-title-weight: {{ section.settings.hero_title_weight | default: 700 }};
+  --tg-title-letter: {{ section.settings.hero_title_letter_spacing | default: 0 }}em;
+  --tg-title-transform: {{ section.settings.hero_title_transform | default: 'none' }};
+  --tg-title-max: {{ section.settings.hero_title_max_width | default: 22 }}ch;
+  --tg-title-align: {{ section.settings.hero_title_align | default: 'center' }};
+  --tg-title-pad-y: {{ section.settings.hero_title_pad_y | default: 12 }}px;
+  --tg-title-pad-x: {{ section.settings.hero_title_pad_x | default: 20 }}px;
+  --tg-title-bg-opacity: {{ section.settings.hero_title_bg_opacity | default: 0.6 }};
+  --tg-title-bg-radius: {{ section.settings.hero_title_bg_radius | default: 12 }}px;
+  --tg-title-font: {% if section.settings.hero_title_font == 'heading' %}var(--font-heading-family){% elsif section.settings.hero_title_font == 'body' %}var(--font-body-family){% else %}inherit{% endif %};
+">
+  {% if section.settings.show_hero %}
+    <section class="tg-hero" aria-label="Experience hero">
+      <div class="tg-hero__media{% if section.settings.hero_image == blank %} tg-hero__media--fallback{% endif %}">
+        {% if section.settings.hero_image != blank %}
+          <img
+            src="{{ section.settings.hero_image | image_url: width: 2400 }}"
+            alt="{{ section.settings.hero_image.alt | default: 'Experience hero image' | escape }}"
+            loading="lazy"
+            width="{{ section.settings.hero_image.width }}"
+            height="{{ section.settings.hero_image.height }}"
+          >
+        {% endif %}
+
+        <div class="tg-hero__overlay" aria-hidden="true"></div>
+
+        <div class="tg-hero__content page-width">
+          <h1 class="tg-title">
+            {% if section.settings.hero_title_bg_enable %}
+              <span class="tg-title__bg" aria-hidden="true"></span>
+            {% endif %}
+            <span class="tg-title__text">
+              {% if section.settings.hero_heading != blank %}
+                {{ section.settings.hero_heading | escape | newline_to_br }}
+              {% elsif section.settings.hero_use_page_title %}
+                {% if page and page.title != blank %}
+                  {{ page.title | escape }}
+                {% elsif collection and collection.title != blank %}
+                  {{ collection.title | escape }}
+                {% elsif section.settings.heading != blank %}
+                  {{ section.settings.heading | escape }}
+                {% else %}
+                  Experiences
+                {% endif %}
+              {% elsif section.settings.heading != blank %}
+                {{ section.settings.heading | escape }}
+              {% else %}
+                Experiences
+              {% endif %}
+            </span>
+          </h1>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="tg-exp__inner page-width">
+    <h2 class="tg-exp__section-title">{{ section.settings.heading | default: 'Daily Experiences' }}</h2>
+    {% if section.settings.subheading != blank %}
+      <p class="tg-exp__sub">{{ section.settings.subheading }}</p>
+    {% endif %}
+
+    {% liquid
+      assign source_collection = section.settings.collection
+      if collection and collection.handle != blank
+        assign source_collection = collection
+      endif
+      assign products_limit = section.settings.products_to_show | default: 2
+      assign has_products = false
+      if source_collection != blank and source_collection.products_count > 0 and collection.handle != 'experience-tour'
+        assign has_products = true
+      endif
+    %}
+
+    <div class="tg-exp__grid tg-exp__grid--daily" role="list">
+      {% if has_products %}
+        {% assign has_coming_soon_product = false %}
+        {% for product in source_collection.products limit: products_limit %}
+          {% liquid
+            assign meta = product.metafields.custom
+            assign tag = meta.days.value | default: meta.days
+            assign title = meta.tg_title.value | default: product.title
+            assign raw_desc = meta.tg_desc.value | default: product.description
+            assign desc = raw_desc | strip_html | strip | truncate: 140
+            assign btn_label = 'Explore Journey'
+            assign img = product.featured_image
+            assign link = product.url | default: '#'
+            assign features_str = meta.tg_features.value | default: ''
+            assign gallery_images = meta.travel_gallery.value
+            assign gallery_count = 0
+            if gallery_images != blank
+              assign gallery_count = gallery_images.size
+            endif
+            assign is_coming_soon = meta.coming_soon.value | default: false
+            assign normalized_product_title = product.title | downcase
+            if normalized_product_title contains 'korean folk village'
+              assign is_coming_soon = true
+            endif
+            if is_coming_soon
+              assign has_coming_soon_product = true
+            endif
+          %}
+          <article class="tg-card tg-card--daily{% if is_coming_soon %} tg-card--coming-soon{% endif %}" role="listitem">
+            <div class="tg-card__media-wrap">
+              {% if is_coming_soon %}<div class="tg-card__media">{% else %}<a class="tg-card__media" href="{{ link }}" aria-label="{{ product.title | escape }}">{% endif %}
+                {% if gallery_count > 1 %}
+                  <div class="tg-card__media-slider" data-tg-card-slider>
+                    <div class="tg-card__media-track" data-tg-card-track>
+                      {% for gallery_image in gallery_images %}
+                        <div class="tg-card__media-slide" data-tg-card-slide>
+                          {{
+                            gallery_image
+                            | image_url: width: 1200
+                            | image_tag:
+                              loading: 'lazy',
+                              class: 'tg-card__img',
+                              alt: gallery_image.alt | default: product.title
+                          }}
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="tg-card__media-dots" data-tg-card-dots aria-hidden="true">
+                      {% for gallery_image in gallery_images %}
+                        <span class="tg-card__media-dot{% if forloop.first %} is-active{% endif %}"></span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% elsif gallery_count == 1 %}
+                  {{
+                    gallery_images.first
+                    | image_url: width: 1200
+                    | image_tag:
+                      loading: 'lazy',
+                      class: 'tg-card__img',
+                      alt: gallery_images.first.alt | default: product.title
+                  }}
+                {% elsif img != blank %}
+                  {{ img | image_url: width: 1200 | image_tag: loading: 'lazy', class: 'tg-card__img', alt: img.alt | default: product.title }}
+                {% else %}
+                  <div class="tg-card__img tg-card__img--ph" aria-hidden="true"></div>
+                {% endif %}
+                <div class="tg-card__media-overlay" aria-hidden="true"></div>
+                {% if is_coming_soon %}
+                  <div class="tg-card__coming-soon-overlay">
+                    <span class="tg-card__coming-soon-badge">Preparing</span>
+                  </div>
+                {% endif %}
+                <div class="tg-card__media-content">
+                  {% if tag != blank %}
+                    <p class="tg-card__meta">{{ tag }}</p>
+                  {% endif %}
+                  {% if title != blank %}
+                    <h3 class="tg-card__title">{{ title }}</h3>
+                  {% endif %}
+                  {% if meta.list_summary != blank %}
+                    <div class="tg-card__media-desc">{{ meta.list_summary | metafield_tag }}</div>
+                  {% endif %}
+                </div>
+              {% if is_coming_soon %}</div>{% else %}</a>{% endif %}
+            </div>
+            <div class="tg-card__body">
+              <h3 class="tg-card__body-title">{{ title | escape }}</h3>
+              {% if meta.list_summary != blank %}
+                <div class="tg-card__body-description">{{ meta.list_summary | metafield_tag }}</div>
+              {% endif %}
+              {% if meta.travel_summary != blank %}
+                <div class="tg-card__summary rte">{{ meta.travel_summary | metafield_tag }}</div>
+              {% endif %}
+              {% if features_str != blank %}
+                {% assign features_list = features_str | strip | newline_to_br | replace: '<br>', '<br />' | split: '<br />' %}
+                <ul class="tg-card__features">
+                  {% for f in features_list %}
+                    {% assign item = f | strip %}
+                    {% if item != blank %}<li>{{ item }}</li>{% endif %}
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              {% unless is_coming_soon %}
+                <a class="tg-card__btn" href="{{ link }}">{{ btn_label }} <span aria-hidden="true">→</span></a>
+              {% else %}
+                <p class="tg-card__availability">Coming Soon</p>
+              {% endunless %}
+            </div>
+          </article>
+        {% endfor %}
+        {% for block in section.blocks %}
+          {% if block.settings.coming_soon and has_coming_soon_product == false %}
+            {% liquid
+              assign img = block.settings.image
+              assign tag = block.settings.tag
+              assign title = block.settings.title
+              assign desc = block.settings.desc
+              assign features_str = block.settings.features
+            %}
+            <article class="tg-card tg-card--daily tg-card--coming-soon" role="listitem" {{ block.shopify_attributes }}>
+              <div class="tg-card__media-wrap">
+                <div class="tg-card__media">
+                  {% if img != blank %}
+                    {{ img | image_url: width: 1200 | image_tag: loading: 'lazy', class: 'tg-card__img', alt: title }}
+                  {% else %}
+                    <div class="tg-card__img tg-card__img--ph" aria-hidden="true"></div>
+                  {% endif %}
+                  <div class="tg-card__media-overlay" aria-hidden="true"></div>
+                  <div class="tg-card__coming-soon-overlay">
+                    <span class="tg-card__coming-soon-badge">Coming Soon</span>
+                  </div>
+                  <div class="tg-card__media-content">
+                    {% if tag != blank %}<p class="tg-card__meta">{{ tag }}</p>{% endif %}
+                    {% if title != blank %}<h3 class="tg-card__title">{{ title }}</h3>{% endif %}
+                    {% if desc != blank %}<p class="tg-card__media-desc">{{ desc }}</p>{% endif %}
+                  </div>
+                </div>
+              </div>
+              <div class="tg-card__body">
+                <h3 class="tg-card__body-title">{{ title | escape }}</h3>
+                {% if desc != blank %}<p class="tg-card__desc">{{ desc }}</p>{% endif %}
+                {% if features_str != blank %}
+                  {% assign features_list = features_str | strip | newline_to_br | replace: '<br>', '<br />' | split: '<br />' %}
+                  <ul class="tg-card__features">
+                    {% for f in features_list %}
+                      {% assign item = f | strip %}
+                      {% if item != blank %}<li>{{ item }}</li>{% endif %}
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                <p class="tg-card__availability">Coming Soon</p>
+              </div>
+            </article>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {% for block in section.blocks %}
+          {% liquid
+            assign img = block.settings.image
+            assign tag = block.settings.tag
+            assign title = block.settings.title
+            assign desc = block.settings.desc
+            assign body_desc = desc
+            assign features_str = block.settings.features
+            assign btn_label = 'Explore Journey'
+            assign btn_link = block.settings.btn_link
+            assign is_coming_soon = block.settings.coming_soon
+          %}
+          <article class="tg-card tg-card--daily{% if is_coming_soon %} tg-card--coming-soon{% endif %}" role="listitem" {{ block.shopify_attributes }}>
+            <div class="tg-card__media-wrap">
+              {% if is_coming_soon %}<div class="tg-card__media">{% else %}<a class="tg-card__media" href="{{ btn_link | default: '#' }}" aria-label="{{ title | escape }}">{% endif %}
+                {% if img != blank %}
+                  {{ img | image_url: width: 1200 | image_tag: loading: 'lazy', class: 'tg-card__img', alt: title }}
+                {% else %}
+                  <div class="tg-card__img tg-card__img--ph" aria-hidden="true"></div>
+                {% endif %}
+                <div class="tg-card__media-overlay" aria-hidden="true"></div>
+                {% if is_coming_soon %}
+                  <div class="tg-card__coming-soon-overlay">
+                    <span class="tg-card__coming-soon-badge">Coming Soon</span>
+                  </div>
+                {% endif %}
+                <div class="tg-card__media-content">
+                  {% if tag != blank %}
+                    <p class="tg-card__meta">{{ tag }}</p>
+                  {% endif %}
+                  {% if title != blank %}
+                    <h3 class="tg-card__title">{{ title }}</h3>
+                  {% endif %}
+                  {% if desc != blank %}
+                    <p class="tg-card__media-desc">{{ desc }}</p>
+                  {% endif %}
+                </div>
+              {% if is_coming_soon %}</div>{% else %}</a>{% endif %}
+            </div>
+            <div class="tg-card__body">
+              <h3 class="tg-card__body-title">{{ title | escape }}</h3>
+              {% if body_desc != blank %}
+                <p class="tg-card__desc">{{ body_desc }}</p>
+              {% endif %}
+              {% if features_str != blank %}
+                {% assign features_list = features_str | strip | newline_to_br | replace: '<br>', '<br />' | split: '<br />' %}
+                <ul class="tg-card__features">
+                  {% for f in features_list %}
+                    {% assign item = f | strip %}
+                    {% if item != blank %}<li>{{ item }}</li>{% endif %}
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              {% unless is_coming_soon %}
+                <a class="tg-card__btn" href="{{ btn_link | default: '#' }}">{{ btn_label }} <span aria-hidden="true">→</span></a>
+              {% else %}
+                <p class="tg-card__availability">Coming Soon</p>
+              {% endunless %}
+            </div>
+          </article>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<style>
+  .tg-exp{
+    background: var(--tg-bg);
+    padding: 0;
+  }
+  .tg-exp__inner{
+    padding-top: clamp(124px, 5vw, 86px);
+    padding-bottom: clamp(124px, 5vw, 86px);
+  }
+
+  .tg-exp .tg-hero{ position: relative; }
+  .tg-exp .tg-hero__media{
+    position: relative;
+    height: var(--tg-hero-h);
+    max-height: 399px;
+    overflow: hidden;
+    background: #0b0b0c;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+  .tg-exp .tg-hero__media img{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.02);
+    opacity: .95;
+  }
+  .tg-exp .tg-hero__media--fallback{
+    background:
+      radial-gradient(900px 420px at 20% 30%, rgba(255,255,255,.10), transparent 60%),
+      radial-gradient(720px 380px at 70% 20%, rgba(255,255,255,.08), transparent 55%),
+      linear-gradient(135deg, #0b0b0c, #15121b);
+  }
+  .tg-exp .tg-hero__overlay{
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(0,0,0,var(--tg-overlay-top)) 0%,
+      rgba(0,0,0,var(--tg-overlay-mid)) 55%,
+      rgba(0,0,0,var(--tg-overlay-bot)) 100%
+    );
+  }
+  .tg-exp .tg-hero__content{
+    position: relative;
+    z-index: 3;
+    height: var(--tg-hero-h);
+    max-height: 399px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tg-exp .tg-title{
+    position: relative;
+    margin: 0;
+    max-width: var(--tg-title-max);
+    text-align: var(--tg-title-align);
+    font-family: var(--font-heading-family);
+    font-style: var(--font-heading-style);
+    font-size: clamp(38px, 4vw, 52px);
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.12;
+    color: #fff;
+  }
+  .tg-exp .tg-title__text{
+    position: relative;
+    z-index: 2;
+    display: inline-block;
+  }
+  .tg-exp .tg-title__bg{
+    position: absolute;
+    z-index: 1;
+    left: calc(-1 * var(--tg-title-pad-x));
+    right: calc(-1 * var(--tg-title-pad-x));
+    top: calc(-1 * var(--tg-title-pad-y));
+    bottom: calc(-1 * var(--tg-title-pad-y));
+    border-radius: var(--tg-title-bg-radius);
+    background: linear-gradient(
+      90deg,
+      rgba(0,0,0,var(--tg-title-bg-opacity)) 0%,
+      rgba(0,0,0,0) 92%
+    );
+  }
+
+  .tg-exp__section-title{
+    font-size: clamp(22px, 2.2vw, 28px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--tg-title);
+    margin: 0 0 8px;
+    text-align: center;
+  }
+  .tg-exp__sub{
+    margin: 0 0 32px;
+    text-align: center;
+    color: var(--tg-muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 50ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .tg-exp__grid{
+    margin-top: clamp(22px, 3vw, 36px);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: var(--tg-gap);
+  }
+  .tg-exp__grid--daily{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(24px, 3vw, 40px);
+  }
+
+  .tg-card{
+    border-radius: var(--tg-radius);
+    overflow: hidden;
+    background: transparent;
+  }
+  .tg-card--daily{
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 0 1px 12px rgba(0,0,0,.06);
+    border-radius: var(--tg-radius);
+    overflow: hidden;
+    transition: box-shadow 0.25s ease;
+  }
+  .tg-card--daily:hover{
+    box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  }
+  .tg-card--coming-soon{
+    pointer-events: none;
+    opacity: 0.72;
+  }
+  .tg-card--coming-soon .tg-card__media{
+    cursor: default;
+  }
+  .tg-card__coming-soon-overlay{
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.42);
+  }
+  .tg-card__coming-soon-badge{
+    display: inline-block;
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.55);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+  }
+
+  .tg-card__media-wrap{
+    position: relative;
+    flex-shrink: 0;
+    background: #000;
+  }
+  .tg-card__media-wrap::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.15);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .tg-card__media{
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background: #000;
+  }
+  .tg-card--daily .tg-card__media{
+    aspect-ratio: 4 / 5;
+  }
+  .tg-card__media-slider{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+  .tg-card__media-track{
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .tg-card__media-slide{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+    pointer-events: none;
+  }
+  .tg-card__media-slide.is-active{
+    opacity: 1;
+  }
+  .tg-card__img{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+    vertical-align: middle;
+  }
+  .tg-card__media-dots{
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    right: 16px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0;
+  }
+  .tg-card__media-dot{
+    flex: 1 1 0;
+    min-width: 0;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.35);
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+  }
+  .tg-card__media-dot.is-active{
+    background: #fff;
+    opacity: 1;
+  }
+  .tg-card--daily .tg-card__media-overlay{
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: rgba(0,0,0,0.1);
+  }
+  .tg-card--daily .tg-card__media-content{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    padding: 36px 20px 24px;
+    text-align: center;
+  }
+  .tg-card--daily .tg-card__media-content .tg-card__meta{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #ffd400;
+    color: #1f1f1f;
+    margin: 0 auto 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 1;
+  }
+  .tg-card--daily .tg-card__media-content .tg-card__title{
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.22;
+    letter-spacing: 0.02em;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,.22);
+    text-align: center;
+  }
+  .tg-card--daily .tg-card__media-desc{
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: -12px;
+    margin: 0;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.45;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0,0,0,.28);
+    z-index: 3;
+  }
+  .tg-card__img--ph{
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(800px 400px at 20% 25%, rgba(0,0,0,.08), transparent 60%),
+      linear-gradient(135deg, rgba(0,0,0,.06), rgba(0,0,0,.02));
+  }
+
+  .tg-card__overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px;
+    color: #fff;
+    background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.55));
+  }
+  .tg-card--daily .tg-card__overlay{ display: none; }
+  .tg-card__tag{
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    opacity: .85;
+  }
+  .tg-card__overlayTitle{
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 650;
+    line-height: 1.15;
+    text-shadow: 0 2px 10px rgba(0,0,0,.25);
+  }
+  .tg-card__overlaySub{
+    margin-top: 4px;
+    font-size: 14px;
+    opacity: .92;
+    text-shadow: 0 2px 10px rgba(0,0,0,.25);
+  }
+  .tg-card__location{
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    opacity: .9;
+  }
+
+  .tg-card__body{
+    padding: 14px 6px 0;
+    text-align: center;
+    display: block;
+  }
+  .tg-card--daily .tg-card__body{
+    flex: 1;
+    display: flex !important;
+    flex-direction: column;
+    padding: 24px 24px 28px;
+    text-align: left;
+  }
+  .tg-card__meta{
+    display: none;
+  }
+  .tg-card--daily .tg-card__meta{
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--tg-muted);
+    margin: 0 0 10px;
+    font-weight: 600;
+  }
+  .tg-card__title{
+    margin: 0;
+    color: var(--tg-text);
+    font-size: 15px;
+    font-weight: 650;
+  }
+  .tg-card--daily .tg-card__title{
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 10px;
+  }
+  .tg-card__desc{
+    margin: 10px auto 0;
+    color: var(--tg-muted);
+    font-size: 13px;
+    line-height: 1.65;
+    max-width: 40ch;
+    min-height: 3.2em;
+  }
+  .tg-card--daily .tg-card__desc{
+    margin: 0 0 16px;
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: none;
+    min-height: 0;
+  }
+  .tg-card__summary{
+    margin: 0 0 16px;
+    color: var(--tg-muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .tg-card__summary .metafield-rich_text_field{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  .tg-card__summary > *:first-child{
+    margin-top: 0;
+  }
+  .tg-card__summary > *:last-child{
+    margin-bottom: 0;
+  }
+  .tg-card__summary .metafield-rich_text_field p{
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(91, 43, 216, 0.12);
+    color: #5b2bd8;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .tg-card__summary .metafield-rich_text_field p::before{
+    content: "#";
+    margin-right: 2px;
+    font-weight: 700;
+  }
+  .tg-card__summary strong{
+    color: #5b2bd8;
+    font-weight: 700;
+  }
+  .tg-card__features{
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--tg-muted);
+    line-height: 1.7;
+    flex: 1;
+  }
+  .tg-card__features li{
+    position: relative;
+    padding-left: 1em;
+  }
+  .tg-card__features li::before{
+    content: "·";
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: var(--tg-title);
+  }
+  .tg-card__btn{
+    display: none;
+  }
+  .tg-card--daily .tg-card__btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: auto;
+    align-self: flex-end;
+    padding: 12px 24px;
+    border-radius: 999px;
+    background: var(--tg-btn);
+    color: var(--tg-btn-text);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    transition: opacity 0.2s ease;
+  }
+  .tg-card--daily .tg-card__btn:hover{ opacity: 0.92; }
+  .tg-card--daily .tg-card__btn--media{
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    z-index: 4;
+    transform: translateX(-50%);
+    margin-top: 0;
+    min-width: 180px;
+    padding: 12px 24px;
+  }
+
+  .tg-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 14px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--tg-btn);
+    color: var(--tg-btn-text);
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: .04em;
+    font-size: 12px;
+  }
+  .tg-card--daily .tg-btn{ display: none; }
+
+  @media (max-width: 990px){
+    .tg-exp__grid{ grid-template-columns: 1fr; }
+    .tg-exp__grid--daily{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tg-card__body{ padding-left: 0; padding-right: 0; }
+    .tg-card__desc{ min-height: auto; }
+    .tg-card--daily .tg-card__body{ padding: 20px 20px 24px; }
+  }
+  @media (max-width: 600px){
+    .tg-exp__grid--daily{ grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px){
+    .tg-exp .tg-title{ max-width: 22ch; }
+  }
+  .tg-exp__inner { padding-top: clamp(48px, 6vw, 80px); padding-bottom: clamp(48px, 6vw, 80px); }
+  .tg-exp__section-title { font-size: clamp(28px, 3vw, 38px); letter-spacing: -.02em; }
+  .tg-exp__section-title::after { content: ''; display: block; width: 64px; height: 3px; margin: 18px auto; background: #6c32dc; }
+  .tg-exp__grid--daily { grid-template-columns: minmax(0, 1fr); max-width: 1080px; margin-inline: auto; gap: 28px; }
+  .tg-exp .tg-card--daily { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); border: 1px solid #e9e3f1; border-radius: 22px; box-shadow: 0 8px 28px rgba(48, 22, 80, .08); }
+  .tg-exp .tg-card__media-wrap { background: #eee7f7; min-height: 340px; }
+  .tg-exp .tg-card__media-wrap::after { display: none; }
+  .tg-exp .tg-card--daily .tg-card__media { height: 100%; min-height: 340px; aspect-ratio: auto; }
+  .tg-exp .tg-card--daily .tg-card__media-overlay { background: linear-gradient(180deg, rgba(21, 10, 35, .18), transparent 55%); }
+  .tg-exp .tg-card--daily .tg-card__media-content { padding: 24px; text-align: left; }
+  .tg-exp .tg-card--daily .tg-card__media-content .tg-card__meta { background: #6c32dc; color: #fff; margin: 0; font-size: 11px; }
+  .tg-exp .tg-card__media-content .tg-card__title,
+  .tg-exp .tg-card__media-content .tg-card__media-desc { display: none; }
+  .tg-exp .tg-card__media-dots { top: auto; bottom: 14px; }
+  .tg-exp .tg-card--daily .tg-card__body { padding: clamp(24px, 3vw, 40px); gap: 18px; justify-content: center; }
+  .tg-exp .tg-card__body-title { margin: 0; font-family: var(--font-heading-family); font-size: clamp(24px, 2.4vw, 32px); line-height: 1.2; font-weight: 700; color: #21172f; }
+  .tg-exp .tg-card__body-description { color: #655b70; font-size: 15px; line-height: 1.65; }
+  .tg-exp .tg-card__body-description p { margin: 0; }
+  .tg-exp .tg-card__summary { margin: 0; padding-top: 18px; border-top: 1px solid #eee8f4; }
+  .tg-exp .tg-card__summary .metafield-rich_text_field { gap: 9px; }
+  .tg-exp .tg-card__summary .metafield-rich_text_field p { border-radius: 8px; background: #f3eefb; padding: 9px 12px; font-weight: 600; white-space: normal; }
+  .tg-exp .tg-card__summary .metafield-rich_text_field p::before { content: '✓'; margin-right: 7px; }
+  .tg-exp .tg-card__features { display: flex; flex-wrap: wrap; gap: 9px; flex: none; margin: 0; }
+  .tg-exp .tg-card__features li { background: #f3eefb; color: #6632a5; border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+  .tg-exp .tg-card__features li::before { display: none; }
+  .tg-exp .tg-card--daily .tg-card__desc { margin: 0; }
+  .tg-exp .tg-card--daily .tg-card__btn { align-self: stretch; gap: 16px; margin: auto 0 0; min-height: 48px; background: linear-gradient(110deg, #5825b6, #9f38e8); border-radius: 10px; box-shadow: 0 5px 12px rgba(101, 38, 181, .18); }
+  .tg-exp .tg-card__btn:focus-visible, .tg-exp .tg-card__media:focus-visible { outline: 3px solid #b680f0; outline-offset: -4px; }
+  .tg-exp .tg-card--coming-soon { opacity: 1; pointer-events: auto; }
+  .tg-exp .tg-card--coming-soon .tg-card__media { cursor: default; background: radial-gradient(ellipse at 30% 30%, #bfa8e0, transparent 65%), linear-gradient(145deg, #4d3373, #9070b0); }
+  .tg-exp .tg-card--coming-soon .tg-card__media-content .tg-card__meta { display: none; }
+  .tg-exp .tg-card__img--ph { background: radial-gradient(ellipse at 30% 30%, #bfa8e0, transparent 65%), linear-gradient(145deg, #4d3373, #9070b0); }
+  .tg-exp .tg-card__coming-soon-overlay { background: rgba(41, 21, 65, .22); }
+  .tg-exp .tg-card__availability { margin: auto 0 0; border: 1px solid #dcd2e9; border-radius: 10px; padding: 12px 18px; text-align: center; color: #70627e; background: #f5f2f9; font-weight: 600; }
+  @media (max-width: 749px) {
+    .tg-exp__grid--daily { max-width: 480px; gap: 24px; }
+    .tg-exp .tg-card--daily { grid-template-columns: minmax(0, 1fr); }
+    .tg-exp .tg-card--daily .tg-card__media { min-height: 0; aspect-ratio: 4 / 4.5; }
+    .tg-exp .tg-card__media-wrap { min-height: 0; }
+    .tg-exp .tg-card--daily .tg-card__media-overlay { background: linear-gradient(180deg, rgba(21, 10, 35, .12) 25%, rgba(21, 10, 35, .78)); }
+    .tg-exp .tg-card--daily .tg-card__media-content { inset: 0; display: flex; flex-direction: column; align-items: flex-start; padding: 24px 24px 36px; }
+    .tg-exp .tg-card--daily .tg-card__media-content .tg-card__meta { margin-bottom: auto; }
+    .tg-exp .tg-card--daily .tg-card__media-content .tg-card__title { display: block; font-size: 30px; font-weight: 700; text-align: left; max-width: 12ch; }
+    .tg-exp .tg-card--daily .tg-card__media-desc { display: block; position: static; margin-top: 10px; text-align: left; font-size: 15px; font-weight: 400; }
+    .tg-exp .tg-card__media-desc p { margin: 0; }
+    .tg-exp .tg-card__body-title, .tg-exp .tg-card__body-description { display: none; }
+    .tg-exp .tg-card__body > .tg-card__desc { display: none; }
+    .tg-exp .tg-card--daily .tg-card__body { padding: 22px; }
+    .tg-exp .tg-card__summary { padding: 0; border: 0; }
+    .tg-exp .tg-card--coming-soon .tg-card__coming-soon-overlay { align-items: flex-start; padding-top: 90px; }
+  }
+</style>
+
+<script>
+  (function() {
+    var sliders = document.querySelectorAll('[data-tg-card-slider]');
+    if (!sliders.length) return;
+
+    sliders.forEach(function(slider) {
+      var track = slider.querySelector('[data-tg-card-track]');
+      var slides = slider.querySelectorAll('[data-tg-card-slide]');
+      var dots = slider.querySelectorAll('.tg-card__media-dot');
+      var currentIndex = 0;
+      var intervalId = null;
+      var startX = 0;
+      var deltaX = 0;
+
+      if (!track || slides.length <= 1) return;
+
+      function update() {
+        slides.forEach(function(slide, index) {
+          slide.classList.toggle('is-active', index === currentIndex);
+        });
+        dots.forEach(function(dot, index) {
+          dot.classList.toggle('is-active', index === currentIndex);
+        });
+      }
+
+      function goTo(index) {
+        currentIndex = (index + slides.length) % slides.length;
+        update();
+      }
+
+      function startAuto() {
+        stopAuto();
+        intervalId = window.setInterval(function() {
+          goTo(currentIndex + 1);
+        }, 6000);
+      }
+
+      function stopAuto() {
+        if (intervalId) {
+          window.clearInterval(intervalId);
+          intervalId = null;
+        }
+      }
+
+      slider.addEventListener('mouseenter', stopAuto);
+      slider.addEventListener('mouseleave', startAuto);
+
+      slider.addEventListener('touchstart', function(event) {
+        stopAuto();
+        startX = event.touches[0].clientX;
+        deltaX = 0;
+      }, { passive: true });
+
+      slider.addEventListener('touchmove', function(event) {
+        deltaX = event.touches[0].clientX - startX;
+      }, { passive: true });
+
+      slider.addEventListener('touchend', function() {
+        if (Math.abs(deltaX) > 40) {
+          goTo(deltaX < 0 ? currentIndex + 1 : currentIndex - 1);
+        }
+        startAuto();
+      });
+
+      update();
+      startAuto();
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Tour experiences (grid)",
+  "settings": [
+    { "type": "header", "content": "Hero" },
+    { "type": "checkbox", "id": "show_hero", "label": "Show hero", "default": true },
+    { "type": "image_picker", "id": "hero_image", "label": "Hero image" },
+    { "type": "checkbox", "id": "hero_use_page_title", "label": "Use page title in hero", "default": true },
+    { "type": "textarea", "id": "hero_heading", "label": "Hero heading", "default": "Experiences" },
+    { "type": "range", "id": "hero_height", "label": "Hero height", "min": 260, "max": 400, "step": 2, "default": 360 },
+    { "type": "range", "id": "overlay_top", "label": "Hero overlay top darkness", "min": 0, "max": 1, "step": 0.1, "default": 0.8 },
+    { "type": "range", "id": "overlay_mid", "label": "Hero overlay mid darkness", "min": 0, "max": 1, "step": 0.1, "default": 0.6 },
+    { "type": "range", "id": "overlay_bottom", "label": "Hero overlay bottom darkness", "min": 0, "max": 1, "step": 0.1, "default": 0.3 },
+    { "type": "select", "id": "hero_title_font", "label": "Hero title font", "options": [{ "value": "inherit", "label": "Theme default" }, { "value": "heading", "label": "Theme heading font" }, { "value": "body", "label": "Theme body font" }], "default": "heading" },
+    { "type": "range", "id": "hero_title_size", "label": "Hero title max size", "min": 22, "max": 72, "step": 1, "default": 44 },
+    { "type": "range", "id": "hero_title_weight", "label": "Hero title weight", "min": 300, "max": 900, "step": 100, "default": 700 },
+    { "type": "range", "id": "hero_title_letter_spacing", "label": "Hero title letter spacing (em)", "min": 0, "max": 0.3, "step": 0.1, "default": 0 },
+    { "type": "select", "id": "hero_title_transform", "label": "Hero title transform", "options": [{ "value": "none", "label": "None" }, { "value": "uppercase", "label": "UPPERCASE" }, { "value": "capitalize", "label": "Capitalize" }], "default": "none" },
+    { "type": "select", "id": "hero_title_align", "label": "Hero title alignment", "options": [{ "value": "left", "label": "Left" }, { "value": "center", "label": "Center" }, { "value": "right", "label": "Right" }], "default": "center" },
+    { "type": "range", "id": "hero_title_max_width", "label": "Hero title max width (ch)", "min": 10, "max": 40, "step": 1, "default": 22 },
+    { "type": "checkbox", "id": "hero_title_bg_enable", "label": "Enable hero title background", "default": false },
+    { "type": "range", "id": "hero_title_bg_opacity", "label": "Hero title background opacity", "min": 0, "max": 1, "step": 0.2, "default": 0.6 },
+    { "type": "range", "id": "hero_title_bg_radius", "label": "Hero title background radius", "min": 0, "max": 40, "step": 1, "default": 12 },
+    { "type": "range", "id": "hero_title_pad_x", "label": "Hero title background horizontal padding", "min": 0, "max": 48, "step": 1, "default": 20 },
+    { "type": "range", "id": "hero_title_pad_y", "label": "Hero title background vertical padding", "min": 0, "max": 32, "step": 1, "default": 12 },
+
+    { "type": "header", "content": "Daily Experiences" },
+    { "type": "text", "id": "heading", "label": "Section title", "default": "Daily Experiences" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "Curated day experiences by locals." },
+    { "type": "collection", "id": "collection", "label": "Collection", "info": "Leave empty to use blocks below." },
+    { "type": "range", "id": "products_to_show", "label": "Products to show", "min": 2, "max": 24, "step": 1, "default": 2 },
+    { "type": "text", "id": "product_btn_label", "label": "Button label (products)", "default": "View Experience" },
+
+    { "type": "color", "id": "bg", "label": "Background", "default": "#f7f0e2" },
+    { "type": "color", "id": "title_color", "label": "Heading color", "default": "#1f1f1f" },
+    { "type": "color", "id": "text_color", "label": "Text color", "default": "#1f1f1f" },
+    { "type": "color", "id": "muted_color", "label": "Muted color", "default": "#6b6b6b" },
+
+    { "type": "color", "id": "btn_bg", "label": "Button background", "default": "#e06c3e" },
+    { "type": "color", "id": "btn_text", "label": "Button text color", "default": "#ffffff" },
+
+    { "type": "range", "id": "radius", "label": "Card radius", "min": 0, "max": 30, "step": 1, "default": 14 },
+    { "type": "range", "id": "gap", "label": "Grid gap", "min": 8, "max": 40, "step": 1, "default": 22 }
+  ],
+  "blocks": [
+    {
+      "type": "experience",
+      "name": "Experience card",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "tag", "label": "Meta label", "default": "Signature · Full Day" },
+        { "type": "text", "id": "overlay_title", "label": "Overlay title (legacy)", "default": "Night Market" },
+        { "type": "text", "id": "overlay_subtitle", "label": "Overlay subtitle (legacy)", "default": "Food Tour" },
+        { "type": "text", "id": "location", "label": "Location (legacy)", "default": "GWANGJANG MARKET" },
+
+        { "type": "text", "id": "title", "label": "Title", "default": "Experience title" },
+        { "type": "textarea", "id": "desc", "label": "Description", "default": "Short description of the experience." },
+        { "type": "textarea", "id": "features", "label": "Features (one per line)", "default": "Private Group\nDoor-to-Door\nAll-Inclusive" },
+
+        { "type": "text", "id": "btn_label", "label": "Button label", "default": "View Experience" },
+        { "type": "url", "id": "btn_link", "label": "Button link" },
+        { "type": "checkbox", "id": "coming_soon", "label": "Coming Soon (not yet open)", "default": false }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "Tour experiences (grid)",
+      "settings": { "heading": "Daily Experiences", "subheading": "Curated day experiences by locals.", "products_to_show": 2 },
+      "blocks": [
+        {
+          "type": "experience",
+          "settings": {
+            "tag": "Signature · Full Day · Wellness",
+            "title": "The Royal K-Wellness Escape",
+            "desc": "Relax in a serene forest spa and enjoy a refined dining experience inspired by Korean elegance. Premium spa and king's feast in one day.",
+            "features": "Private Group\nDoor-to-Door\nAll-Inclusive\nThermal Spa\nUp to 8 Guests",
+            "btn_label": "View Experience"
+          }
+        },
+        {
+          "type": "experience",
+          "settings": {
+            "tag": "Full Day · Active · Seoul Outdoors",
+            "title": "Summit Seoul: The Authentic Hike & Gourmet Reward",
+            "desc": "Hike the real Seoul through scenic mountain trails, then celebrate the day with a deeply satisfying local meal.",
+            "features": "Private Group\nDoor-to-Door\nAll-Inclusive\nScenic Mountain Trail\nUp to 8 Guests",
+            "btn_label": "Discover Route"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

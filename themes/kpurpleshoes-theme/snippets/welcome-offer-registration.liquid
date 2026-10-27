@@ -1,0 +1,33 @@
+{% doc %}
+  Starts the welcome offer after Shopify has authenticated the customer.
+{% enddoc %}
+{% if customer %}
+  <script>
+    window.psWelcomeOfferReady = (function () {
+      var attempts = 0;
+      function activate() {
+        attempts += 1;
+        var controller = new AbortController();
+        var timeout = setTimeout(function () { controller.abort(); }, 6000);
+        return fetch('/apps/bta-booking/coupons/registration', {
+          method: 'POST',
+          signal: controller.signal,
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json' }
+        }).then(function (response) {
+          if (!response.ok) throw new Error('Welcome offer unavailable');
+          return response.json();
+        }).then(function (payload) {
+          if (!payload || !payload.ok) throw new Error('Welcome offer unavailable');
+          return payload.data;
+        }).finally(function () { clearTimeout(timeout); }).catch(function () {
+          if (attempts < 3) {
+            return new Promise(function (resolve) { setTimeout(resolve, attempts * 1000); }).then(activate);
+          }
+          return null;
+        });
+      }
+      return activate();
+    })();
+  </script>
+{% endif %}

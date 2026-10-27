@@ -1,0 +1,148 @@
+<section class="tgit {% if section.settings.bg_style == 'cream' %}tgit--cream{% endif %}" style="--b: rgba(0,0,0,.10); --m: {{ section.settings.muted }};">
+  <div class="page-width tgit__inner">
+    <div class="ps-section-heading tgit__title-wrap">
+      <h2 class="ps-section-heading__title tgit__h">{{ section.settings.heading }}</h2>
+      <div class="ps-section-heading__rule"></div>
+    </div>
+
+    <div class="tgit__grid">
+      <div class="tgit__timeline" aria-label="Itinerary">
+        {% for block in section.blocks %}
+          <div class="tgit__step" {{ block.shopify_attributes }}>
+            <div class="tgit__dot" aria-hidden="true"></div>
+            <div class="tgit__content">
+              <div class="tgit__title">
+                {{ block.settings.title }}
+                {% if block.settings.duration != blank %}
+                  <span class="tgit__dur">({{ block.settings.duration }})</span>
+                {% endif %}
+              </div>
+              {% if block.settings.desc != blank %}
+                <div class="tgit__desc">{{ block.settings.desc }}</div>
+              {% endif %}
+              {% if block.settings.note != blank %}
+                <div class="tgit__note">{{ block.settings.note }}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="tgit__map" aria-label="Map">
+        <div class="tgit__mapBox">
+          {% if section.settings.map_embed != blank %}
+            {{ section.settings.map_embed }}
+          {% else %}
+            <div class="tgit__mapPh">Add the map embed code in the section settings.</div>
+          {% endif %}
+        </div>
+
+        {% if section.settings.map_caption != blank %}
+          <p class="tgit__cap">{{ section.settings.map_caption }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% if section.settings.cta_label != blank and section.settings.cta_link != blank %}
+      <div class="tgit__cta-wrap">
+        <a class="tgit__cta" href="{{ section.settings.cta_link }}">{{ section.settings.cta_label | escape }}</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<style>
+  .tgit{ padding: clamp(48px, 8vw, 124px) 0; }
+  .tgit--cream{ background: #faf8f5; }
+  .tgit__cta-wrap{ margin-top: 28px; }
+  .tgit__cta{ display: inline-block; padding: 14px 32px; background: #e85d3c; color: #fff; border-radius: 999px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; }
+  .tgit__cta:hover{ opacity: 0.92; }
+  .tgit__h{ margin: 0 0 14px; font-size: 20px; letter-spacing:-0.02em; }
+  .tgit__grid{ display:grid; grid-template-columns: 1.05fr .95fr; gap: 22px; align-items:start; }
+
+  .tgit__timeline{ position: relative; padding-left: 6px; }
+  .tgit__step{
+    position: relative;
+    display:flex;
+    gap: 14px;
+    padding: 12px 0 12px 18px;
+  }
+  .tgit__step::before{
+    content:"";
+    position:absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(0,0,0,.08);
+  }
+  .tgit__dot{
+    position:absolute;
+    left: 0;
+    top: 16px;
+    width: 16px; height: 16px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.14);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,.12);
+  }
+  .tgit__title{ font-weight: 800; font-size: 14px; }
+  .tgit__dur{ font-weight: 650; color: var(--m); margin-left: 6px; }
+  .tgit__desc{ margin-top: 4px; color: var(--m); font-size: 13px; line-height: 1.6; }
+  .tgit__note{ margin-top: 6px; font-size: 12px; color: var(--m); }
+
+  .tgit__mapBox{
+    border: 1px solid var(--b);
+    border-radius: 16px;
+    overflow:hidden;
+    background: rgba(0,0,0,.03);
+    min-height: 320px;
+  }
+  .tgit__mapBox iframe{ width: 100% !important; height: 340px !important; display:block; border: 0; }
+  .tgit__mapPh{ padding: 18px; color: var(--m); font-size: 13px; }
+  .tgit__cap{ margin: 10px 0 0; font-size: 12px; color: var(--m); }
+
+  @media (max-width: 990px){
+    .tgit__grid{ grid-template-columns: 1fr; }
+    .tgit__mapBox iframe{ height: 300px !important; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Itinerary + Map",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Itinerary" },
+    { "type": "html", "id": "map_embed", "label": "Map embed (iframe HTML)" },
+    { "type": "text", "id": "map_caption", "label": "Map caption", "default": "Reference map for the main route (sample)" },
+    { "type": "select", "id": "bg_style", "label": "Section background", "options": [
+      { "value": "default", "label": "Default" },
+      { "value": "cream", "label": "Cream" }
+    ], "default": "default" },
+    { "type": "text", "id": "cta_label", "label": "Button label (e.g. BOOK NOW)", "default": "BOOK NOW" },
+    { "type": "url", "id": "cta_link", "label": "Button link" },
+    { "type": "color", "id": "muted", "label": "Muted text", "default": "#6b6b6b" }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Itinerary step",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Title", "default": "Meet-up / Departure" },
+        { "type": "text", "id": "duration", "label": "Duration", "default": "15 min" },
+        { "type": "textarea", "id": "desc", "label": "Description", "default": "Enter a short description." },
+        { "type": "text", "id": "note", "label": "Note (optional)", "default": "Additional note (optional)" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Itinerary + Map",
+      "blocks": [
+        { "type": "step", "settings": { "title": "Meet-up / Departure", "duration": "15 min", "desc": "Meet your guide at the meeting point." } },
+        { "type": "step", "settings": { "title": "Visit key spots", "duration": "75 min", "desc": "Continue through the main experience route." } },
+        { "type": "step", "settings": { "title": "Free time / Wrap-up", "duration": "30 min", "desc": "Wrap up after recommendations for nearby spots." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

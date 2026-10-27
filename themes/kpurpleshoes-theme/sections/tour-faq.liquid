@@ -1,0 +1,173 @@
+<section class="tgfaq {% if section.settings.bg_style == 'orange' %}tgfaq--orange{% endif %} {% if section.settings.bg_style == 'yellow' %}tgfaq--yellow{% endif %}" style="--b: rgba(0,0,0,.10); --m: {{ section.settings.muted }}; {% if section.settings.bg_style == 'yellow' %}--tgfaq-bg: {{ section.settings.bg_color | default: '#ffd400' }};{% endif %}">
+  <div class="page-width tgfaq__inner">
+    <div class="ps-section-heading tgfaq__title-wrap">
+      <h2 class="ps-section-heading__title tgfaq__h">{{ section.settings.heading }}</h2>
+      <div class="ps-section-heading__rule"></div>
+    </div>
+
+    <div class="tgfaq__box" data-accordion>
+      {% for block in section.blocks %}
+        <details class="tgfaq__item" {{ block.shopify_attributes }}>
+          <summary class="tgfaq__q">
+            <span class="tgfaq__q-text">{{ block.settings.q }}</span>
+            <span class="tgfaq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="tgfaq__a">{{ block.settings.a | newline_to_br }}</div>
+        </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<style>
+  .tgfaq{ padding: clamp(40px, 7vw, 124px) 0; }
+  .tgfaq--orange{ background: #e85d3c; padding: clamp(48px, 8vw, 124px) 0; }
+  .tgfaq--orange .tgfaq__h{ color: #fff; }
+  .tgfaq--orange .tgfaq__box{ border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.08); }
+  .tgfaq--orange .tgfaq__item{ border-top-color: rgba(255,255,255,.2); }
+  .tgfaq--orange .tgfaq__q{ color: #fff; }
+  .tgfaq--orange .tgfaq__icon{ border-color: #fff; }
+  .tgfaq--orange .tgfaq__a{ color: rgba(255,255,255,.9); }
+
+  .tgfaq--yellow{
+    background: var(--tgfaq-bg, #ffd400);
+    padding: clamp(48px, 8vw, 124px) 0;
+  }
+  .tgfaq--yellow .tgfaq__h{
+    color: #111;
+    font-size: clamp(22px, 2.2vw, 28px);
+    font-weight: 800;
+    margin-bottom: 24px;
+  }
+  .tgfaq--yellow .tgfaq__box{
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,.06);
+  }
+  .tgfaq--yellow .tgfaq__item{
+    border-top: 1px solid rgba(0,0,0,.08);
+    margin-bottom: 0;
+  }
+  .tgfaq--yellow .tgfaq__item:first-child{ border-top: 0; }
+  .tgfaq--yellow .tgfaq__q{
+    padding: 20px 22px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #111;
+    transition: background 0.2s;
+  }
+  .tgfaq--yellow .tgfaq__q:hover{ background: rgba(0,0,0,.02); }
+  .tgfaq--yellow .tgfaq__q-text{ flex: 1; }
+  .tgfaq--yellow .tgfaq__icon{
+    width: 10px; height: 10px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    color: #111;
+  }
+  .tgfaq--yellow details[open] .tgfaq__icon{ transform: rotate(-135deg); }
+  .tgfaq--yellow .tgfaq__a{
+    padding: 0 22px 20px;
+    color: #444;
+    line-height: 1.75;
+    font-size: clamp(16px, 1.55vw, 18px);
+  }
+  .tgfaq--yellow .tgfaq__a p,
+  .tgfaq--yellow .tgfaq__a ul{
+    margin: 0 0 12px;
+  }
+  .tgfaq--yellow .tgfaq__a p:last-child,
+  .tgfaq--yellow .tgfaq__a ul:last-child{
+    margin-bottom: 0;
+  }
+  .tgfaq--yellow .tgfaq__a ul{
+    padding-left: 1.2em;
+  }
+
+  .tgfaq__h{ margin: 0 0 14px; font-size: 20px; letter-spacing:-0.02em; }
+  .tgfaq__box{ border: 1px solid var(--b); border-radius: 16px; overflow:hidden; background:#fff; }
+  .tgfaq__item{ border-top: 1px solid var(--b); }
+  .tgfaq__item:first-child{ border-top: 0; }
+
+  .tgfaq__q{
+    list-style:none;
+    cursor:pointer;
+    padding: 14px 16px;
+    font-weight: 800;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 14px;
+    font-size: clamp(16px, 1.8vw, 19px);
+  }
+  .tgfaq__q-text{ flex: 1; }
+  .tgfaq__q::-webkit-details-marker{ display:none; }
+
+  .tgfaq__icon{
+    width: 12px; height: 12px;
+    border-right: 2px solid rgba(0,0,0,.55);
+    border-bottom: 2px solid rgba(0,0,0,.55);
+    transform: rotate(45deg);
+    transition: transform .18s ease;
+    flex: 0 0 auto;
+  }
+  details[open] .tgfaq__icon{ transform: rotate(225deg); }
+
+  .tgfaq__a{ padding: 0 16px 18px; color: var(--m); line-height: 1.7; font-size: clamp(15px, 1.5vw, 17px); }
+</style>
+
+<script>
+  (function(){
+    var root = document.querySelector('.tgfaq [data-accordion]');
+    if(!root) return;
+    var items = Array.prototype.slice.call(root.querySelectorAll('details'));
+    items.forEach(function(d){
+      d.addEventListener('toggle', function(){
+        if(!d.open) return;
+        items.forEach(function(other){
+          if(other !== d) other.removeAttribute('open');
+        });
+      });
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Tour FAQ",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "FAQ" },
+    { "type": "select", "id": "bg_style", "label": "Section style", "options": [
+      { "value": "default", "label": "Default (white)" },
+        { "value": "yellow", "label": "Colored background (uses the color below)" },
+      { "value": "orange", "label": "Orange background" }
+    ], "default": "yellow" },
+    { "type": "color", "id": "bg_color", "label": "Background color (for color background)", "default": "#ffd400" },
+    { "type": "color", "id": "muted", "label": "Muted", "default": "#6b6b6b" }
+  ],
+  "blocks": [
+    {
+      "type": "qa",
+      "name": "Q&A",
+      "settings": [
+    { "type": "text", "id": "q", "label": "Question", "default": "How late can I cancel for a refund?" },
+    { "type": "textarea", "id": "a", "label": "Answer", "default": "Enter a sample answer." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Tour FAQ",
+      "blocks": [
+        { "type": "qa", "settings": { "q": "How late can I cancel for a refund?", "a": "Example: Free cancellation is available up to 24 hours before the experience starts." } },
+        { "type": "qa", "settings": { "q": "What language is the experience offered in?", "a": "Example: The guide runs the experience in English, and Korean support is included in the kit plan." } },
+        { "type": "qa", "settings": { "q": "Do I need to bring anything?", "a": "Example: We recommend comfortable shoes and a light rain jacket or outer layer." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

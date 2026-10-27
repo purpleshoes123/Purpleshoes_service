@@ -1,0 +1,343 @@
+{% comment %}
+  Section: Tour Plans - Hero (Title Focus)
+  - Hero height < 400px
+  - Full-image dark overlay
+  - Title only, fully customizable
+{% endcomment %}
+
+<section class="tg-plans-page">
+  <section
+    class="tg-hero"
+    aria-label="Tour plans hero"
+    style="
+      --tg-hero-h: {{ section.settings.hero_height }}px;
+
+      --tg-overlay-top: {{ section.settings.overlay_top }};
+      --tg-overlay-mid: {{ section.settings.overlay_mid }};
+      --tg-overlay-bot: {{ section.settings.overlay_bottom }};
+
+      --tg-title-size: {{ section.settings.title_size }}px;
+      --tg-title-weight: {{ section.settings.title_weight }};
+      --tg-title-letter: {{ section.settings.title_letter_spacing }}em;
+      --tg-title-transform: {{ section.settings.title_transform }};
+      --tg-title-max: {{ section.settings.title_max_width }}ch;
+      --tg-title-align: {{ section.settings.title_align }};
+
+      --tg-title-pad-y: {{ section.settings.title_pad_y }}px;
+      --tg-title-pad-x: {{ section.settings.title_pad_x }}px;
+      --tg-title-bg-opacity: {{ section.settings.title_bg_opacity }};
+      --tg-title-bg-radius: {{ section.settings.title_bg_radius }}px;
+
+      --tg-title-font: {% if section.settings.title_font == 'heading' %}var(--font-heading-family){% elsif section.settings.title_font == 'body' %}var(--font-body-family){% else %}inherit{% endif %};
+    "
+  >
+    <div class="tg-hero__media{% if section.settings.hero_image == blank %} tg-hero__media--fallback{% endif %}">
+      {% if section.settings.hero_image != blank %}
+        <img
+          src="{{ section.settings.hero_image | image_url: width: 2400 }}"
+          alt="{{ section.settings.hero_image.alt | default: 'Tour guide hero image' | escape }}"
+          loading="lazy"
+        >
+      {% endif %}
+
+      <div class="tg-hero__overlay" aria-hidden="true"></div>
+
+      <div class="tg-hero__content tg-container">
+        <h1 class="tg-title">
+          {% if section.settings.title_bg_enable %}
+            <span class="tg-title__bg" aria-hidden="true"></span>
+          {% endif %}
+
+          <span class="tg-title__text">
+            {% if request.page_type == 'product' and product %}
+              {% if section.settings.heading != blank %}
+                {{ section.settings.heading | escape | newline_to_br }}
+              {% else %}
+                {{ product.title | escape }}
+              {% endif %}
+            {% elsif section.settings.use_page_title %}
+              {{ page.title | escape }}
+            {% else %}
+              {{ section.settings.heading | escape | newline_to_br }}
+            {% endif %}
+          </span>
+        </h1>
+      </div>
+    </div>
+  </section>
+</section>
+
+<style>
+  .tg-container{
+    width: min(1120px, calc(100% - 40px));
+    margin: 0 auto;
+  }
+
+  .tg-hero{ position: relative; isolation: isolate; }
+
+  /* Hero box */
+  .tg-hero__media{
+    position: relative;
+    height: var(--tg-hero-h);
+    max-height: 399px;
+    overflow: hidden;
+    background: #0b0b0c;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+
+  /* Image */
+  .tg-hero__media img{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.02);
+    opacity: .95;
+  }
+
+  /* Fallback */
+  .tg-hero__media--fallback{
+    background:
+      radial-gradient(900px 420px at 20% 30%, rgba(255,255,255,.10), transparent 60%),
+      radial-gradient(720px 380px at 70% 20%, rgba(255,255,255,.08), transparent 55%),
+      linear-gradient(135deg, #0b0b0c, #15121b);
+  }
+
+  .tg-hero__overlay{
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(0,0,0,var(--tg-overlay-top)) 0%,
+      rgba(0,0,0,var(--tg-overlay-mid)) 55%,
+      rgba(0,0,0,var(--tg-overlay-bot)) 100%
+    );
+  }
+
+  /* Content centered */
+  .tg-hero__content{
+    position: relative;
+    z-index: 3;
+    height: var(--tg-hero-h);
+    max-height: 399px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Title */
+  .tg-plans-page .tg-title{
+    position: relative;
+    margin: 0;
+    max-width: var(--tg-title-max);
+    text-align: var(--tg-title-align);
+    font-family: var(--font-heading-family);
+    font-style: var(--font-heading-style);
+    font-size: clamp(38px, 4vw, 52px);
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.12;
+
+    color: #fff;
+  }
+
+  .tg-plans-page .tg-title__text{
+    position: relative;
+    z-index: 2;
+    display: inline-block;
+  }
+
+  .tg-plans-page .tg-title__bg{
+    position: absolute;
+    z-index: 1;
+    left: calc(-1 * var(--tg-title-pad-x));
+    right: calc(-1 * var(--tg-title-pad-x));
+    top: calc(-1 * var(--tg-title-pad-y));
+    bottom: calc(-1 * var(--tg-title-pad-y));
+    border-radius: var(--tg-title-bg-radius);
+
+    background: linear-gradient(
+      90deg,
+      rgba(0,0,0,var(--tg-title-bg-opacity)) 0%,
+      rgba(0,0,0,0) 92%
+    );
+  }
+
+  /* Small screens: keep nice */
+  @media (max-width: 560px){
+    .tg-container{ width: min(1120px, calc(100% - 28px)); }
+    .tg-plans-page .tg-title{ max-width: 22ch; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Tour Plans - Hero (Title)",
+  "settings": [
+    { "type": "image_picker", "id": "hero_image", "label": "Hero image" },
+
+    {
+      "type": "range",
+      "id": "hero_height",
+      "label": "Hero height (px) — below 400px",
+      "min": 260,
+      "max": 400,
+      "step": 2,
+      "default": 360
+    },
+
+    { "type": "checkbox", "id": "use_page_title", "label": "Use page title", "default": true },
+    { "type": "text", "id": "heading", "label": "Heading (when not using page title)", "default": "Tour Plans" },
+
+    {
+      "type": "range",
+      "id": "overlay_top",
+      "label": "Overlay - top darkness",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.8
+    },
+    {
+      "type": "range",
+      "id": "overlay_mid",
+      "label": "Overlay - mid darkness",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.6
+    },
+    {
+      "type": "range",
+      "id": "overlay_bottom",
+      "label": "Overlay - bottom darkness",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.3
+    },
+
+    {
+      "type": "header",
+      "content": "Title settings"
+    },
+    {
+      "type": "select",
+      "id": "title_font",
+      "label": "Title font",
+      "options": [
+        { "value": "inherit", "label": "Theme default" },
+        { "value": "heading", "label": "Theme heading font" },
+        { "value": "body", "label": "Theme body font" }
+      ],
+      "default": "heading"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Title max size (px)",
+      "min": 22,
+      "max": 72,
+      "step": 1,
+      "default": 44
+    },
+    {
+      "type": "range",
+      "id": "title_weight",
+      "label": "Title weight",
+      "min": 300,
+      "max": 900,
+      "step": 100,
+      "default": 700
+    },
+    {
+      "type": "range",
+      "id": "title_letter_spacing",
+      "label": "Title letter spacing (em)",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.1,
+      "default": 0
+    },
+    {
+      "type": "select",
+      "id": "title_transform",
+      "label": "Title transform",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "uppercase", "label": "UPPERCASE" },
+        { "value": "capitalize", "label": "Capitalize" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "select",
+      "id": "title_align",
+      "label": "Title alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "title_max_width",
+      "label": "Title max width (ch)",
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "default": 22
+    },
+
+    {
+      "type": "checkbox",
+      "id": "title_bg_enable",
+      "label": "Enable title background (behind title only)",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "title_bg_opacity",
+      "label": "Title background opacity",
+      "min": 0,
+      "max": 1,
+      "step": 0.2,
+      "default": 0.6
+    },
+    {
+      "type": "range",
+      "id": "title_bg_radius",
+      "label": "Title background radius (px)",
+      "min": 0,
+      "max": 28,
+      "step": 1,
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "title_pad_x",
+      "label": "Title background padding X (px)",
+      "min": 6,
+      "max": 28,
+      "step": 1,
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "title_pad_y",
+      "label": "Title background padding Y (px)",
+      "min": 4,
+      "max": 22,
+      "step": 1,
+      "default": 10
+    }
+  ],
+  "presets": [{ "name": "Tour Plans - Hero (Title)" }]
+}
+{% endschema %}

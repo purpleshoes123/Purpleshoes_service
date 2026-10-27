@@ -1,0 +1,6 @@
+{
+  "name": "purpleshoes-publication-fix",
+  "private": true,
+  "workspaces": ["extensions/*"],
+  "devDependencies": { "typescript": "5.9.3", "esbuild": "0.25.11" }
+}

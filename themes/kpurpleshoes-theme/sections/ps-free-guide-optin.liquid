@@ -1,0 +1,665 @@
+{% comment %}
+  ps-free-guide-optin.liquid
+  Free Korea Travel Guide opt-in landing page.
+  Layout: hero copy → 2-col card (video | benefits) → full-width CTA bar
+  Klaviyo list ID: VkipLH (hardcoded)
+  Klaviyo API key: entered via Shopify theme settings (klaviyo_api_key)
+{% endcomment %}
+
+<style>
+  .fgo__hidden-form { display: none !important; }
+
+  .fgo {
+    font-family: 'Poppins', sans-serif;
+    background: var(--ps-surface, #f5f6f8);
+    min-height: 100vh;
+    padding-bottom: 0;
+  }
+
+  /* ── Logo bar ── */
+  .fgo__logobar {
+    padding: 18px 24px 0;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .fgo__logo {
+    display: block;
+    height: 38px;
+    width: auto;
+  }
+  .fgo__logo-text {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ps-purple, #5b2bd8);
+    letter-spacing: -.02em;
+  }
+
+  /* ── Hero copy ── */
+  .fgo__hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 52px 24px 36px;
+  }
+  .fgo__headline {
+    font-size: clamp(26px, 4vw, 46px);
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--ps-text, #111827);
+    margin: 0 0 16px;
+    max-width: 760px;
+  }
+  .fgo__headline em {
+    font-style: normal;
+    color: var(--ps-purple, #5b2bd8);
+  }
+  .fgo__subtext {
+    font-size: clamp(17px, 1.6vw, 20px);
+    color: #4b5563;
+    line-height: 1.75;
+    margin: 0 0 28px;
+    max-width: 720px;
+    white-space: normal;
+  }
+  .fgo__section-label {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ps-purple, #5b2bd8);
+    background: rgba(91,43,216,0.08);
+    border-radius: 999px;
+    padding: 5px 14px;
+    margin: 0;
+  }
+
+  /* ── Content card ── */
+  .fgo__card {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 52px;
+  }
+  .fgo__card-inner {
+    background: #fff;
+    border-radius: var(--ps-radius-lg, 22px);
+    box-shadow: var(--ps-shadow, 0 16px 40px rgba(17,24,39,0.10));
+    overflow: hidden;
+    padding: 36px 36px 40px;
+  }
+  @media (max-width: 680px) {
+    .fgo__card-inner { padding: 28px 20px 32px; }
+    .fgo__hero { padding-top: 36px; }
+  }
+
+  /* ── Benefits (full-width) ── */
+  .fgo__benefits-head {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ps-text, #111827);
+    margin: 0 0 28px;
+  }
+  .fgo__benefits {
+    list-style: none; margin: 0; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .fgo__benefit-group {
+    background: #f6f3ff;
+    border: 1px solid rgba(91,43,216,0.12);
+    border-radius: 16px;
+    padding: 22px 18px 20px;
+  }
+  .fgo__benefit-group-title {
+    font-size: 15px; font-weight: 800;
+    color: var(--ps-text, #111827);
+    display: flex; align-items: center; gap: 9px;
+    margin-bottom: 14px; line-height: 1.3;
+  }
+  .fgo__check {
+    width: 26px; height: 26px;
+    background: #22c55e;
+    border-radius: 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(34,197,94,0.3);
+  }
+  .fgo__check svg { width: 13px; height: 13px; }
+  .fgo__benefit-items {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .fgo__benefit-items li {
+    font-size: 13px;
+    color: var(--ps-muted, #6b7280);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.55;
+  }
+  .fgo__benefit-items li::before {
+    content: '•';
+    position: absolute;
+    left: 3px;
+    color: var(--ps-purple, #5b2bd8);
+    font-size: 11px;
+    top: 1px;
+  }
+  .fgo__benefits-tagline {
+    text-align: center;
+    font-size: 15px;
+    color: #111827;
+    margin: 20px 0 0;
+    font-style: italic;
+  }
+  @media (max-width: 720px) {
+    .fgo__benefits { grid-template-columns: 1fr; }
+  }
+
+  /* ── Full-width CTA bar ── */
+  .fgo__cta-bar {
+    margin-top: 0;
+    background: var(--ps-purple, #5b2bd8);
+    padding: 52px 24px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .fgo__cta-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 620px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .fgo__cta-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ps-yellow, #ffd400);
+    margin: 0 0 14px;
+  }
+  .fgo__cta-title {
+    font-size: clamp(20px, 2.8vw, 30px);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+    margin: 0 0 8px;
+  }
+  .fgo__cta-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    margin: 0 0 32px;
+    line-height: 1.6;
+  }
+
+  /* Form fields */
+  .fgo__form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .fgo__input-wrap {
+    position: relative;
+  }
+  .fgo__input-icon {
+    position: absolute;
+    left: 18px; top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+  }
+  .fgo__input-icon svg { width: 18px; height: 18px; display: block; }
+  .fgo__input {
+    width: 100%;
+    height: 56px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 0 18px 0 48px;
+    font-family: inherit;
+    font-size: 15px;
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+    outline: none;
+    transition: border-color .18s, background .18s;
+    box-sizing: border-box;
+    backdrop-filter: blur(8px);
+  }
+  .fgo__input:focus {
+    border-color: var(--ps-yellow, #ffd400);
+    background: rgba(255,255,255,0.15);
+  }
+  .fgo__input::placeholder { color: rgba(255,255,255,0.45); }
+
+  /* CAPTCHA slot */
+  .fgo__captcha-slot {
+    min-height: 80px;
+    border: 2px dashed rgba(255,255,255,0.2);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.78);
+    font-size: 12px;
+    letter-spacing: .02em;
+    padding: 16px 18px;
+    text-align: left;
+    backdrop-filter: blur(4px);
+  }
+  .fgo__captcha-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .fgo__captcha-copy {
+    margin: 0;
+    color: rgba(255,255,255,0.72);
+    line-height: 1.6;
+  }
+  .fgo__captcha-legal {
+    margin: 0;
+    color: rgba(255,255,255,0.52);
+    line-height: 1.6;
+  }
+  .fgo__captcha-legal a {
+    color: #fff;
+    text-decoration: underline;
+  }
+
+  .fgo__status {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.88);
+  }
+  .fgo__status--error {
+    color: #ffe3a8;
+  }
+  .fgo__status--success {
+    color: #dcfce7;
+  }
+
+  /* CTA button */
+  .fgo__submit {
+    display: block;
+    width: 100%;
+    height: 58px;
+    background: var(--ps-yellow, #ffd400);
+    color: #1a0060;
+    border: none;
+    border-radius: 16px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: .03em;
+    cursor: pointer;
+    transition: background .18s, transform .12s, box-shadow .18s;
+    box-shadow: 0 8px 28px rgba(255,212,0,0.35);
+  }
+  .fgo__submit:hover {
+    background: #ffe033;
+    box-shadow: 0 12px 36px rgba(255,212,0,0.5);
+    transform: translateY(-1px);
+  }
+  .fgo__submit:active { transform: scale(0.98); }
+  .fgo__submit:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+  .fgo__privacy {
+    margin: 14px 0 0;
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+  }
+
+  /* Success state */
+  .fgo__success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    padding: 20px 0;
+  }
+  .fgo__success-icon {
+    width: 56px; height: 56px;
+    background: rgba(34,197,94,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fgo__success-icon svg { width: 28px; height: 28px; color: #4ade80; }
+  .fgo__success-title {
+    font-size: 20px; font-weight: 800; color: #fff; margin: 0;
+  }
+  .fgo__success-sub {
+    font-size: 14px; color: rgba(255,255,255,0.65); margin: 0;
+  }
+
+  .fgo__form[hidden],
+  .fgo__success[hidden],
+  .fgo__status[hidden] {
+    display: none !important;
+  }
+.fgo__submit-notice {
+  margin: 14px 0 18px;
+  padding: 0 10px;
+  text-align: center;
+  color: #ffffff !important;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+@media screen and (max-width: 749px) {
+  .fgo__submit-notice {
+    margin: 12px 0 16px;
+    font-size: 13px;
+  }
+}
+.fgo__marketing-consent { display: flex; gap: 10px; align-items: flex-start; color: #fff; font-size: 14px; line-height: 1.5; margin: 16px 0; text-align: left; }
+.fgo__marketing-consent input { flex: 0 0 20px; width: 20px; height: 20px; margin: 2px 0 0; accent-color: #7136e8; }
+.fgo__subscription-notice { font-size: 14px; line-height: 1.6; }
+</style>
+
+<div
+  class="fgo"
+  data-fgo-section
+  data-section-id="{{ section.id }}"
+  data-mailer-endpoint="/apps/bta-booking/mail/request"
+  data-template-slug="{{ section.settings.mailer_template_slug | default: 'squeeze' | escape }}"
+  data-recaptcha-site-key="{{ section.settings.mail_recaptcha_site_key | escape }}"
+  data-recaptcha-action="{{ section.settings.mail_recaptcha_action | default: 'mail_request_submit' | escape }}"
+  data-success-redirect-url="https://kpurpleshoes.com/pages/squeezthank"
+  data-klaviyo-api-key="{{ section.settings.klaviyo_api_key | escape }}"
+  data-klaviyo-list-id="{{ section.settings.klaviyo_list_id | default: 'VkipLH' | escape }}"
+  data-submit-label="{{ section.settings.cta_label | default: 'Unlock My Free Starter Kit' | escape }}"
+  data-submit-loading-label="Sending..."
+>
+
+  {%- comment -%} ── Logo Bar ── {%- endcomment -%}
+  <div class="fgo__logobar">
+    {%- if settings.logo != blank -%}
+      {{
+        settings.logo
+        | image_url: width: 320
+        | image_tag:
+          class: 'fgo__logo',
+          alt: settings.logo.alt | default: shop.name,
+          loading: 'eager'
+      }}
+    {%- else -%}
+      <span class="fgo__logo-text">{{ shop.name }}</span>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} ── Hero Copy ── {%- endcomment -%}
+  <div class="fgo__hero">
+    <span class="fgo__section-label">{{ section.settings.section_label | default: "Free Korea Travel Info" }}</span>
+    <h1 class="fgo__headline" style="margin-top:20px;">{{ section.settings.headline | default: "The Real Korea That Millions of Travelers Miss.<br><em>Your Trip Will Be Different.</em>" | newline_to_br }}</h1>
+    <p class="fgo__subtext">{{ section.settings.subtext | default: "Don't make the same mistakes others do in Korea — get the essential info you actually need, completely free." | newline_to_br }}</p>
+  </div>
+
+  {%- comment -%} ── Benefits Card ── {%- endcomment -%}
+  <div class="fgo__card">
+    <div class="fgo__card-inner">
+      <p class="fgo__benefits-head">What you'll get (FREE):</p>
+      <ul class="fgo__benefits" aria-label="What's included">
+        <li class="fgo__benefit-group">
+          <div class="fgo__benefit-group-title">
+            <span class="fgo__check" aria-hidden="true">
+              <svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>
+            </span>
+            Pre-Trip Made Simple
+          </div>
+          <ul class="fgo__benefit-items">
+            <li>Travel prep summary</li>
+            <li>Entry checklist</li>
+            <li>Packing guide</li>
+            <li>Basic Korea map</li>
+          </ul>
+        </li>
+        <li class="fgo__benefit-group">
+          <div class="fgo__benefit-group-title">
+            <span class="fgo__check" aria-hidden="true">
+              <svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>
+            </span>
+            Travel Like a Local
+          </div>
+          <ul class="fgo__benefit-items">
+            <li>Korea travel hacks</li>
+            <li>Essential manners &amp; etiquette</li>
+            <li>What makes Korea special</li>
+            <li>Must-Have Apps</li>
+          </ul>
+        </li>
+        <li class="fgo__benefit-group">
+          <div class="fgo__benefit-group-title">
+            <span class="fgo__check" aria-hidden="true">
+              <svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>
+            </span>
+            Plan Without Stress
+          </div>
+          <ul class="fgo__benefit-items">
+            <li>Korea's seasons &amp; weather</li>
+            <li>Festival calendar</li>
+            <li>Transportation guide</li>
+            <li>Essential Korean phrases</li>
+
+          </ul>
+        </li>
+      </ul>
+      <p class="fgo__benefits-tagline">A simple start to your first Korea trip.</p>
+    </div>
+  </div>
+
+  {%- comment -%} ── Full-width CTA Bar ── {%- endcomment -%}
+  <div class="fgo__cta-bar">
+    <div class="fgo__cta-inner">
+      <p class="fgo__cta-eyebrow">{{ section.settings.cta_eyebrow | default: "FREE • NO CREDIT CARD REQUIRED" }}</p>
+      <h2 class="fgo__cta-title">{{ section.settings.cta_title | default: "Get Instant Access to the Free Starter Kit" }}</h2>
+      <form class="fgo__form" id="FgoForm-{{ section.id }}" data-fgo-form novalidate>
+        <div class="fgo__input-wrap">
+          <span class="fgo__input-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <polyline points="2,4 12,13 22,4"/>
+            </svg>
+          </span>
+          <input
+            type="email"
+            class="fgo__input"
+            id="FgoEmail-{{ section.id }}"
+            name="email"
+            placeholder="{{ section.settings.email_placeholder | default: 'Enter your email address' }}"
+            autocomplete="email"
+            required
+            data-fgo-email
+            aria-label="Email address"
+          >
+        </div>
+
+        <label class="fgo__marketing-consent">
+          <input type="checkbox" data-fgo-marketing-consent>
+          <span>{{ 'free_guide_marketing.consent' | t }}</span>
+        </label>
+        <button
+          type="submit"
+          class="fgo__submit"
+          id="FgoSubmit-{{ section.id }}"
+          data-fgo-submit
+        >
+          {{ section.settings.cta_label | default: "Unlock My Free Starter Kit" }}
+        </button>
+<p class="fgo__submit-notice">
+  This may take a few seconds. Please keep this page open.
+</p>
+        <div
+          class="fgo__captcha-slot"
+          id="FgoCaptcha-{{ section.id }}"
+          data-captcha
+          aria-label="CAPTCHA verification"
+        >
+          <p class="fgo__captcha-title">Protected by reCAPTCHA</p>
+          <p class="fgo__captcha-copy" data-fgo-captcha-status>
+            We verify your request before providing access to your free Starter Kit.
+          </p>
+          <p class="fgo__captcha-legal">
+            This site is protected by reCAPTCHA and the Google
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+            and
+            <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+            apply.
+          </p>
+        </div>
+
+        <p class="fgo__status" id="FgoStatus-{{ section.id }}" data-fgo-status aria-live="polite" hidden></p>
+      </form>
+
+      <div class="fgo__success" id="FgoSuccess-{{ section.id }}" data-fgo-success aria-live="polite" hidden>
+        <div class="fgo__success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="5,12 10,17 19,8"/>
+          </svg>
+        </div>
+        <p class="fgo__success-title">You're in.</p>
+        <p class="fgo__success-sub">Your free Starter Kit is ready.</p>
+        <p class="fgo__subscription-notice" data-fgo-subscription-notice hidden>{{ 'free_guide_marketing.incomplete' | t }}</p>
+        <a class="fgo__submit" href="/pages/squeezthank">Open My Free Starter Kit</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="{{ 'free-guide-optin.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "PS Free Guide Opt-in",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Hero Copy"
+    },
+    {
+      "type": "text",
+      "id": "section_label",
+      "label": "Eyebrow pill label",
+      "default": "Free Korea Travel Info"
+    },
+    {
+      "type": "textarea",
+      "id": "headline",
+      "label": "Headline",
+      "default": "The Real Korea That Millions of Travelers Miss.<br><em>Your Trip Will Be Different.</em>"
+    },
+    {
+      "type": "textarea",
+      "id": "subtext",
+      "label": "Sub-text",
+      "default": "Don't make the same mistakes others do in Korea — get the essential info you actually need, completely free."
+    },
+    {
+      "type": "header",
+      "content": "Left Media"
+    },
+    {
+      "type": "image_picker",
+      "id": "media_image",
+      "label": "Image (used when no video URL)"
+    },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Video embed URL (takes priority over image)",
+      "info": "Paste a YouTube or Vimeo embed URL"
+    },
+    {
+      "type": "text",
+      "id": "media_badge",
+      "label": "Media badge label",
+      "default": "Preview"
+    },
+    {
+      "type": "textarea",
+      "id": "media_placeholder_text",
+      "label": "Placeholder text (no image/video)",
+      "default": "Video: Navigating Korea's top spots using in-app map pins — screen recorded for you."
+    },
+    {
+      "type": "header",
+      "content": "CTA Bar"
+    },
+    {
+      "type": "text",
+      "id": "cta_eyebrow",
+      "label": "CTA eyebrow / social proof",
+      "default": "FREE • NO CREDIT CARD REQUIRED"
+    },
+    {
+      "type": "text",
+      "id": "cta_title",
+      "label": "CTA section title",
+      "default": "Get Instant Access to the Free Starter Kit"
+    },
+    {
+      "type": "text",
+      "id": "email_placeholder",
+      "label": "Email input placeholder",
+      "default": "Enter your email address"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "CTA button label",
+      "default": "Unlock My Free Starter Kit"
+    },
+    {
+      "type": "header",
+      "content": "Mailer Settings"
+    },
+    {
+      "type": "text",
+      "id": "mailer_template_slug",
+      "label": "Mailer template slug",
+      "default": "squeeze"
+    },
+    {
+      "type": "text",
+      "id": "mail_recaptcha_site_key",
+      "label": "reCAPTCHA site key"
+    },
+    {
+      "type": "text",
+      "id": "mail_recaptcha_action",
+      "label": "reCAPTCHA action",
+      "default": "mail_request_submit"
+    },
+    {
+      "type": "header",
+      "content": "Klaviyo Settings"
+    },
+    {
+      "type": "text",
+      "id": "klaviyo_api_key",
+      "label": "Klaviyo public API key"
+    },
+    {
+      "type": "text",
+      "id": "klaviyo_list_id",
+      "label": "Klaviyo list ID",
+      "default": "VkipLH"
+    }
+  ],
+  "presets": [
+    {
+      "name": "PS Free Guide Opt-in"
+    }
+  ]
+}
+{% endschema %}

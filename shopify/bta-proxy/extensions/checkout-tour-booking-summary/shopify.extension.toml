@@ -1,0 +1,11 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "Purple Shoes Tour Booking Summary"
+handle = "purple-shoes-tour-booking-summary"
+uid = "2aeb44e7-164e-b0f4-1d94-a2c0f4bd6304b27e878f"
+type = "ui_extension"
+
+[[extensions.targeting]]
+target = "purchase.checkout.cart-line-list.render-after"
+module = "./src/CheckoutTourBookingSummary.tsx"

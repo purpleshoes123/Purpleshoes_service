@@ -1,0 +1,559 @@
+{% comment %}
+  PS Tabs + Video Card (Dawn)
+{% endcomment %}
+
+<section class="ps-tabs" data-ps-tabs data-ps-tabs-id="{{ section.id }}">
+  <div class="ps-tabs__wrap">
+    <div class="ps-tabs__shell">
+
+      <!-- TAB BAR -->
+      <div class="ps-tabbar" role="tablist" aria-label="Tabs">
+        <button
+          class="ps-tab is-active"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="ps-panel-1"
+          id="ps-tab-1"
+          data-tab="1"
+        >
+          {{ section.settings.tab1_label | escape }}
+        </button>
+
+        <button
+          class="ps-tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="ps-panel-2"
+          id="ps-tab-2"
+          data-tab="2"
+        >
+          {{ section.settings.tab2_label | escape }}
+        </button>
+      </div>
+
+      <!-- PANELS -->
+      <div class="ps-panels">
+        <!-- PANEL 1 -->
+        {%- liquid
+          assign tab1_video_url = ''
+          if section.settings.tab1_video != blank
+            for source in section.settings.tab1_video.sources
+              if source.mime_type == 'video/mp4'
+                assign tab1_video_url = source.url
+                break
+              endif
+            endfor
+            if tab1_video_url == blank and section.settings.tab1_video.sources.size > 0
+              assign tab1_video_url = section.settings.tab1_video.sources[0].url
+            endif
+          endif
+        -%}
+        <div id="ps-panel-1" class="ps-panel is-active" role="tabpanel" aria-labelledby="ps-tab-1" tabindex="0">
+          <div class="ps-card">
+            <div class="ps-card__media">
+              {% assign img1 = section.settings.tab1_image %}
+
+              <div class="ps-mediaFrame{% if tab1_video_url != blank %} ps-mediaFrame--video{% endif %}">
+                {% if tab1_video_url != blank %}
+                  <video
+                    class="ps-mediaVideo"
+                    data-ps-tab-video
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                    {% if img1 != blank %}poster="{{ img1 | image_url: width: 1400 }}"{% endif %}
+                    aria-label="{{ section.settings.tab1_heading | escape }}"
+                  >
+                    <source src="{{ tab1_video_url }}">
+                  </video>
+                {% elsif img1 != blank %}
+                  {{
+                    img1
+                    | image_url: width: 1400
+                    | image_tag:
+                      class: 'ps-mediaImg',
+                      loading: 'lazy',
+                      sizes: '(min-width: 990px) 740px, 92vw',
+                      widths: '480, 720, 960, 1200, 1400',
+                      alt: section.settings.tab1_heading | escape
+                  }}
+                {% else %}
+                  <div class="ps-mediaPlaceholder" aria-hidden="true"></div>
+                {% endif %}
+
+                {% if tab1_video_url == blank %}
+                <span class="ps-play" aria-hidden="true">
+                  <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                    <circle cx="36" cy="36" r="34" fill="rgba(255,255,255,0.38)"/>
+                    <path d="M30 24.5v23l20-11.5-20-11.5z" fill="rgba(255,255,255,0.92)"/>
+                  </svg>
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="ps-card__content">
+              {% if section.settings.tab1_heading != blank %}
+                <h2 class="ps-title">{{ section.settings.tab1_heading }}</h2>
+              {% endif %}
+              {% if section.settings.tab1_subheading != blank %}
+                <div class="ps-subtitle">{{ section.settings.tab1_subheading }}</div>
+              {% endif %}
+              {% if section.settings.tab1_desc != blank %}
+                <div class="ps-desc">{{ section.settings.tab1_desc | escape | newline_to_br }}</div>
+              {% endif %}
+
+              {% if section.settings.tab1_cta_label != blank %}
+              <div style="display:flex; justify-content:center;">
+                <a class="ps-cta" href="{{ section.settings.tab1_cta_link | default: '/products/korea-guide-kit' }}">
+                  {{ section.settings.tab1_cta_label | escape }}
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2 -->
+        {%- liquid
+          assign tab2_video_url = ''
+          if section.settings.tab2_video != blank
+            for source in section.settings.tab2_video.sources
+              if source.mime_type == 'video/mp4'
+                assign tab2_video_url = source.url
+                break
+              endif
+            endfor
+            if tab2_video_url == blank and section.settings.tab2_video.sources.size > 0
+              assign tab2_video_url = section.settings.tab2_video.sources[0].url
+            endif
+          endif
+        -%}
+        <div id="ps-panel-2" class="ps-panel" role="tabpanel" aria-labelledby="ps-tab-2" tabindex="0" hidden>
+          <div class="ps-card">
+            <div class="ps-card__media">
+              {% assign img2 = section.settings.tab2_image %}
+
+              <div class="ps-mediaFrame{% if tab2_video_url != blank %} ps-mediaFrame--video{% endif %}">
+                {% if tab2_video_url != blank %}
+                  <video
+                    class="ps-mediaVideo"
+                    data-ps-tab-video
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                    {% if img2 != blank %}poster="{{ img2 | image_url: width: 1400 }}"{% endif %}
+                    aria-label="{{ section.settings.tab2_heading | escape }}"
+                  >
+                    <source src="{{ tab2_video_url }}">
+                  </video>
+                {% elsif img2 != blank %}
+                  {{
+                    img2
+                    | image_url: width: 1400
+                    | image_tag:
+                      class: 'ps-mediaImg',
+                      loading: 'lazy',
+                      sizes: '(min-width: 990px) 740px, 92vw',
+                      widths: '480, 720, 960, 1200, 1400',
+                      alt: section.settings.tab2_heading | escape
+                  }}
+                {% else %}
+                  <div class="ps-mediaPlaceholder" aria-hidden="true"></div>
+                {% endif %}
+
+                {% if tab2_video_url == blank %}
+                <span class="ps-play" aria-hidden="true">
+                  <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                    <circle cx="36" cy="36" r="34" fill="rgba(255,255,255,0.38)"/>
+                    <path d="M30 24.5v23l20-11.5-20-11.5z" fill="rgba(255,255,255,0.92)"/>
+                  </svg>
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="ps-card__content">
+              {% if section.settings.tab2_heading != blank %}
+                <h2 class="ps-title">{{ section.settings.tab2_heading }}</h2>
+              {% endif %}
+              {% if section.settings.tab2_subheading != blank %}
+                <div class="ps-subtitle">{{ section.settings.tab2_subheading }}</div>
+              {% endif %}
+              {% if section.settings.tab2_desc != blank %}
+                <div class="ps-desc">{{ section.settings.tab2_desc | escape | newline_to_br }}</div>
+              {% endif %}
+
+              {% if section.settings.tab2_cta_label != blank %}
+              <div style="display:flex; justify-content:center;">
+                <a class="ps-cta" href="{{ section.settings.tab2_cta_link | default: '/collections/experience-tour' }}">
+                  {{ section.settings.tab2_cta_label | escape }}
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% style %}
+  /* ====== Layout wrapper ====== */
+  .ps-tabs {
+    position: relative;
+    isolation: isolate;
+    padding: 96px 0 42px;
+  }
+  .ps-tabs__wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ====== Tab shell (gives the “card behind” feel) ====== */
+  .ps-tabs__shell {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  /* ====== Tab bar (top) ====== */
+  .ps-tabbar {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 3;
+  }
+
+  .ps-tab {
+    appearance: none;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+    padding: 18px 38px 20px;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    position: relative;
+    background: #e0e0e0;
+    color: #333;
+    user-select: none;
+    border-radius: 10px 10px 0 0;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  /* “angled” feel like the sample */
+  .ps-tab.is-active {
+    background: #fff;
+    color: #8a2be2;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+  }
+
+  .ps-tab:focus-visible {
+    outline: 2px solid rgba(106,43,217,0.45);
+    outline-offset: 3px;
+  }
+
+  /* ====== Big main card ====== */
+  .ps-panels {
+    position: relative;
+    z-index: 2;
+  }
+
+  .ps-panel {
+    display: block;
+  }
+  .ps-panel[hidden] { display: none !important; }
+
+  .ps-card {
+    background: #ffffff;
+    border-radius: 0 10px 10px 10px;
+    box-shadow: none;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-top: none;
+    padding: 32px 44px 44px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    min-height: 480px;
+  }
+
+  /* ====== Media (left) ====== */
+  .ps-card__media {
+    align-self: center;
+  }
+
+  .ps-mediaLink {
+    display: block;
+    text-decoration: none;
+  }
+
+  .ps-mediaFrame {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #e9ecf2;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+  }
+
+  .ps-mediaImg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+
+  .ps-mediaVideo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #000;
+  }
+
+  .ps-mediaPlaceholder {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background:
+      linear-gradient(135deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02));
+  }
+
+  .ps-play {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    opacity: 0.95;
+  }
+
+  .ps-play svg {
+    width: 88px;
+    height: 88px;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.2));
+  }
+
+  .ps-mediaLink:hover .ps-play svg,
+  .ps-mediaLink:focus-visible .ps-play svg {
+    transform: scale(1.03);
+  }
+
+  /* ====== Content (right) ====== */
+  .ps-card__content {
+    align-self: center;
+    padding-right: 10px;
+  }
+
+  .ps-title {
+    margin: 0 0 6px;
+    font-size: 2em;
+    line-height: 1.05;
+    font-weight: bold;
+    letter-spacing: -0.02em;
+    color: #333;
+    text-align:center !important;
+  }
+
+  .ps-subtitle {
+    margin: 0 0 16px;
+    font-size: 1.1em;
+    line-height: 1.15;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: -0.02em;
+  }
+
+  .ps-desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #666;
+    max-width: 44ch;
+  }
+
+  .ps-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 24px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    background: #ffcc00;
+    color: #000000;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    box-shadow: 0 2px 10px rgba(255, 204, 0, 0.35);
+    min-width: 180px;
+    transition: transform 0.12s ease;
+  }
+
+  .ps-cta:hover { transform: translateY(-1px); 
+    background:rgb(244, 179, 49);}
+  .ps-cta:active { transform: translateY(0px); }
+
+  .ps-cta:focus-visible {
+    outline: 2px solid rgba(106,43,217,0.45);
+    outline-offset: 3px;
+  }
+
+  /* ====== Responsive ====== */
+  @media (max-width: 989px) {
+    .ps-tabbar { padding-left: 6px; }
+    .ps-tab { padding: 16px 24px 18px; font-size: 17px; }
+    .ps-tab::after { right: -18px; width: 26px; }
+
+    .ps-card {
+      grid-template-columns: 1fr;
+      padding: 22px;
+      gap: 18px;
+      min-height: unset;
+    }
+    .ps-title { font-size: 34px;  }
+    .ps-subtitle { font-size: 22px; margin-bottom: 14px; }
+    .ps-desc { font-size: 16px; max-width: none; }
+    .ps-cta { width: 100%; min-width: 0; }
+    .ps-play svg { width: 76px; height: 76px; }
+  }
+
+  @media (max-width: 749px) {
+    .ps-tabs { padding: 72px 0 32px; }
+    .ps-tabs__wrap { padding: 0 16px; }
+    .ps-tabbar { gap: 4px; padding-left: 0; overflow-x: auto; }
+    .ps-tab { flex: 0 0 auto; padding: 14px 18px 16px; font-size: 15px; }
+    .ps-card { padding: 18px; gap: 20px; border-radius: 0 12px 12px 12px; }
+    .ps-title { font-size: clamp(26px, 8vw, 34px); }
+    .ps-card__content { padding-right: 0; }
+  }
+{% endstyle %}
+
+<script>
+  (function () {
+    const root = document.querySelector('[data-ps-tabs-id="{{ section.id }}"]');
+    if (!root) return;
+
+    const tabs = Array.from(root.querySelectorAll('.ps-tab'));
+    const panels = Array.from(root.querySelectorAll('.ps-panel'));
+    const videos = Array.from(root.querySelectorAll('[data-ps-tab-video]'));
+    let sectionVisible = false;
+
+    function pauseVideo(video) {
+      if (!video || video.paused) return;
+      video.pause();
+    }
+
+    function getActiveVideo() {
+      const activePanel = root.querySelector('.ps-panel.is-active');
+      return activePanel ? activePanel.querySelector('[data-ps-tab-video]') : null;
+    }
+
+    function syncVideoPlayback() {
+      const activeVideo = getActiveVideo();
+
+      videos.forEach((video) => {
+        if (video !== activeVideo) pauseVideo(video);
+      });
+
+      if (!sectionVisible || !activeVideo) return;
+
+      activeVideo.muted = true;
+      if (activeVideo.ended) activeVideo.currentTime = 0;
+      const playPromise = activeVideo.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
+      }
+    }
+
+    function activate(index) {
+      tabs.forEach((t, i) => {
+        const selected = i === index;
+        t.classList.toggle('is-active', selected);
+        t.setAttribute('aria-selected', selected ? 'true' : 'false');
+        t.setAttribute('tabindex', selected ? '0' : '-1');
+      });
+
+      panels.forEach((p, i) => {
+        const active = i === index;
+        p.classList.toggle('is-active', active);
+        if (active) {
+          p.removeAttribute('hidden');
+        } else {
+          p.setAttribute('hidden', '');
+        }
+      });
+
+      syncVideoPlayback();
+    }
+
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => activate(i));
+      t.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const dir = e.key === 'ArrowRight' ? 1 : -1;
+          const next = (i + dir + tabs.length) % tabs.length;
+          tabs[next].focus();
+          activate(next);
+        }
+      });
+    });
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        sectionVisible = Boolean(entry && entry.isIntersecting && entry.intersectionRatio > 0);
+        if (sectionVisible) {
+          syncVideoPlayback();
+        } else {
+          videos.forEach(pauseVideo);
+        }
+      }, { threshold: [0, 0.2] });
+
+      observer.observe(root);
+    } else {
+      sectionVisible = true;
+      syncVideoPlayback();
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "PS Tabs (Video Card)",
+  "settings": [
+    { "type": "text", "id": "tab1_label", "label": "Tab 1 label", "default": "Travel Smart" },
+    { "type": "image_picker", "id": "tab1_image", "label": "Tab 1 image" },
+    { "type": "video", "id": "tab1_video", "label": "Tab 1 video file (optional)" },
+    { "type": "text", "id": "tab1_heading", "label": "Tab 1 heading", "default": "Travel Korea" },
+    { "type": "text", "id": "tab1_subheading", "label": "Tab 1 subheading", "default": "The Smart Way" },
+    { "type": "textarea", "id": "tab1_desc", "label": "Tab 1 description", "default": "One kit. Everything covered. The Korea Guide Kit includes a full guidebook, full video guides, and 1,000+ local food spots in Seoul, all tried, tested, and mapped by a local." },
+    { "type": "text", "id": "tab1_cta_label", "label": "Tab 1 CTA label", "default": "Explore Now" },
+    { "type": "url", "id": "tab1_cta_link", "label": "Tab 1 CTA link" },
+
+    { "type": "text", "id": "tab2_label", "label": "Tab 2 label", "default": "Meet Your Local Mate" },
+    { "type": "image_picker", "id": "tab2_image", "label": "Tab 2 image" },
+    { "type": "video", "id": "tab2_video", "label": "Tab 2 video file (optional)" },
+    { "type": "text", "id": "tab2_heading", "label": "Tab 2 heading", "default": "A Private Tour with a Local Mate" },
+    { "type": "text", "id": "tab2_subheading", "label": "Tab 2 subheading", "default": "A private tour for a special day of real local experiences." },
+    { "type": "textarea", "id": "tab2_desc", "label": "Tab 2 description", "default": "Travel with a local mate who feels like a friend, going beyond the tourist spots." },
+    { "type": "text", "id": "tab2_cta_label", "label": "Tab 2 CTA label", "default": "Get My Free Guide" },
+    { "type": "url", "id": "tab2_cta_link", "label": "Tab 2 CTA link" }
+  ],
+  "presets": [
+    { "name": "PS Tabs (Video Card)" }
+  ]
+}
+{% endschema %}

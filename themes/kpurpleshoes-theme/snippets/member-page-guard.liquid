@@ -1,0 +1,24 @@
+{% liquid
+  assign gate_path = gate_path | default: '/pages/members-only'
+  assign current_path = request.path | default: '/'
+  assign encoded_return = current_path | url_encode
+  assign gate_url = gate_path | append: '?return_to=' | append: encoded_return
+%}
+
+{% unless customer %}
+  {% unless request.design_mode %}
+    <script>
+      (function() {
+        var gateUrl = {{ gate_url | json }};
+        var currentSearch = window.location.search || '';
+        if (currentSearch && currentSearch.length > 1) {
+          gateUrl += '&from_qs=' + encodeURIComponent(currentSearch.slice(1));
+        }
+        window.location.replace(gateUrl);
+      })();
+    </script>
+    <noscript>
+      <meta http-equiv="refresh" content="0;url={{ gate_url }}">
+    </noscript>
+  {% endunless %}
+{% endunless %}

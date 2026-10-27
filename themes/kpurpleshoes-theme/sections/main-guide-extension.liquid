@@ -1,0 +1,235 @@
+{%- if customer or request.design_mode -%}
+{{ 'guide-extension.css' | asset_url | stylesheet_tag }}
+
+{% render 'member-page-guard', gate_path: '/pages/members-only' %}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .guide-extension-page.mp-wrap {
+    --primary: #6366f1;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #f1f5f9;
+    --radius: 16px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .guide-extension-page.mp-wrap .mp-main {
+    min-width: 0;
+  }
+
+  .guide-extension-page.mp-wrap .mp-panel.is-active {
+    display: block;
+  }
+
+  .guide-extension-page.mp-wrap .mp-ordersHead .mp-h2 {
+    margin-bottom: 0;
+  }
+
+  .guide-extension-page.mp-wrap .mp-ordersHead {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .guide-extension-page.mp-wrap .guide-extension__eyebrow {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary);
+    text-align: center;
+  }
+
+  .guide-extension-page.mp-wrap .guide-extension__intro {
+    margin: 0 0 24px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--muted);
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .guide-extension-page.mp-wrap .guide-extension__intro p {
+    margin: 0 0 10px;
+  }
+
+  .guide-extension-page.mp-wrap .guide-extension__intro p:last-child {
+    margin-bottom: 0;
+  }
+
+  .guide-extension-page.mp-wrap .guide-extension-login {
+    text-align: center;
+    padding: 24px 8px 8px;
+  }
+
+  .guide-extension-page.mp-wrap .guide-extension-login p {
+    margin: 0 0 16px;
+    font-size: 15px;
+    color: #475569;
+  }
+
+  .guide-extension-page.mp-wrap .guide-extension-login .button {
+    min-width: 160px;
+    border-radius: 999px;
+    font-weight: 800;
+  }
+
+{%- endstyle -%}
+
+{% capture guide_extension_panel %}
+  {% if section.settings.eyebrow != blank %}
+    <p class="guide-extension__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+  {% endif %}
+  <div class="mp-ordersHead">
+    <h2 class="mp-h2">{{ section.settings.title | escape }}</h2>
+  </div>
+
+  <div class="guide-extension__intro rte">
+    {% if section.settings.intro != blank %}
+      {{ section.settings.intro }}
+    {% else %}
+      <p>The expiration date is updated only after payment is completed.</p>
+      <p>Unpaid draft orders do not affect the expiration date.</p>
+      <p>Expired entitlements cannot be extended.</p>
+      <p>Extensions are available in 30-day units, up to 24 units at a time.</p>
+    {% endif %}
+  </div>
+
+  {% if customer %}
+    <div id="GuideExtensionRoot" data-customer-id="{{ customer.id }}"></div>
+  {% else %}
+    <div class="guide-extension-login">
+      <p>{{ section.settings.login_prompt | escape }}</p>
+      <a class="button button--primary" href="{{ routes.account_login_url }}">{{ section.settings.login_cta | escape }}</a>
+    </div>
+  {% endif %}
+{% endcapture %}
+
+{% if customer %}
+  <section
+    class="guide-extension-page mp-wrap hc-wrap section-{{ section.id }}-padding"
+    data-mypage
+  >
+    <div class="mp-grid">
+      {% render 'mypage-sidebar', active: 'guide' %}
+
+      <main class="mp-main">
+        <section class="mp-panel is-active">
+          {{ guide_extension_panel }}
+        </section>
+      </main>
+    </div>
+  </section>
+{% elsif request.design_mode %}
+  <section
+    class="guide-extension-page mp-wrap hc-wrap section-{{ section.id }}-padding"
+    data-mypage
+  >
+    <div class="mp-grid">
+      {% render 'mypage-sidebar', active: 'guide' %}
+
+      <main class="mp-main">
+        <section class="mp-panel is-active">
+          {{ guide_extension_panel }}
+        </section>
+      </main>
+    </div>
+  </section>
+{% endif %}
+
+<script src="{{ 'bta-theme-cart-checkout.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'guide-extension.js' | asset_url }}" defer="defer"></script>
+
+
+{%- else -%}
+  {% render 'member-login-required' %}
+{%- endif -%}
+{% schema %}
+{
+  "name": "Guide extension",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "MY PAGE"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Extend Access Period"
+    },
+    {
+      "type": "richtext",
+      "id": "intro",
+      "label": "Intro text",
+      "default": "<p>The expiration date is updated only after payment is completed.</p><p>Unpaid draft orders do not affect the expiration date.</p><p>Expired entitlements cannot be extended.</p><p>Extensions are available in 30-day units, up to 24 units at a time.</p>"
+    },
+    {
+      "type": "text",
+      "id": "login_prompt",
+      "label": "Login prompt (theme editor preview)",
+      "default": "Please sign in to continue."
+    },
+    {
+      "type": "text",
+      "id": "login_cta",
+      "label": "Login button label",
+      "default": "Sign in"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 36
+    }
+  ]
+}
+{% endschema %}

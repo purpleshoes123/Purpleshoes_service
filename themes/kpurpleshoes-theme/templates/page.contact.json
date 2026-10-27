@@ -1,0 +1,52 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "ps-contact": {
+      "type": "ps-contact",
+      "settings": {
+        "show_hero": true,
+        "hero_image": "shopify://shop_images/4bda8907d9c7235be77c08639c36fbe5.png",
+        "hero_use_page_title": true,
+        "hero_heading": "Contact Us",
+        "hero_height": 260,
+        "overlay_top": 0.8,
+        "overlay_mid": 0.6,
+        "overlay_bottom": 0.3,
+        "hero_title_font": "heading",
+        "hero_title_size": 44,
+        "hero_title_weight": 700,
+        "hero_title_letter_spacing": 0,
+        "hero_title_transform": "uppercase",
+        "hero_title_align": "center",
+        "hero_title_max_width": 22,
+        "hero_title_bg_enable": false,
+        "hero_title_bg_opacity": 0.6,
+        "hero_title_bg_radius": 12,
+        "hero_title_pad_x": 20,
+        "hero_title_pad_y": 12,
+        "heading": "Contact Us",
+        "intro": "Do you have a question, need assistance or, you just want to say hello? You're in the right place :)",
+        "email": "",
+        "phone": "",
+        "address": "",
+        "instagram_link": "",
+        "youtube_link": "",
+        "facebook_link": "",
+        "color_scheme": "scheme-1",
+        "padding_top": 72,
+        "padding_bottom": 80
+      }
+    }
+  },
+  "order": [
+    "ps-contact"
+  ]
+}

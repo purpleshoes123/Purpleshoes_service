@@ -1,0 +1,148 @@
+{% comment %}
+  Public Starter Kit Viewer.
+  This is intentionally public until the planned email-verification gate is enabled.
+  Configure the PDF and video URLs in the Theme Editor; do not attach these files
+  to the squeeze email.
+{% endcomment %}
+
+<style>
+  .skv { background: #f7f7fb; color: #161225; font-family: var(--font-body-family, Arial, sans-serif); padding: clamp(32px, 5vw, 72px) 24px clamp(56px, 7vw, 96px); }
+  .skv__hero, .skv__content { max-width: 1200px; margin-inline: auto; }
+  .skv__hero { box-sizing: border-box; border-radius: 24px; background: linear-gradient(125deg, #35107f 0%, #5122bf 58%, #7442ec 100%); padding: clamp(42px, 6vw, 72px) 28px; text-align: center; box-shadow: 0 18px 42px rgba(52, 16, 127, .16); }
+  .skv__eyebrow { margin: 0 0 12px; color: #e7dcff !important; font-size: 12px; letter-spacing: .12em; font-weight: 800; text-transform: uppercase; }
+  .skv .skv__title { max-width: 760px; margin: 0 auto 14px; color: #fff !important; font-family: var(--font-heading-family, Arial, sans-serif); font-size: clamp(34px, 5vw, 58px); line-height: 1.08; letter-spacing: -.035em; }
+  .skv .skv__title::after, .skv .skv__card-title::after, .skv .skv__next h2::after { content: none !important; display: none !important; }
+  .skv__subtitle { max-width: 620px; margin: 0 auto; color: rgba(255,255,255,.88) !important; font-size: 17px; line-height: 1.65; }
+  .skv__content { padding-top: 28px; }
+  .skv__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+  .skv__card { overflow: hidden; background: #fff; border: 1px solid #e5e2ed; border-radius: 18px; box-shadow: 0 8px 24px rgba(29, 20, 53, .07); }
+  .skv__card-head { padding: 24px 26px 18px; border-bottom: 1px solid #eeeaf4; }
+  .skv__card-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+  .skv .skv__card-title { margin: 0 0 8px; color: #171222 !important; font-family: var(--font-heading-family, Arial, sans-serif); font-size: 22px; line-height: 1.25; }
+  .skv__card-copy { margin: 0; color: #655e70; font-size: 14px; line-height: 1.55; }
+  .skv__video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #17111f; }
+  .skv__pdf { display: block; width: 100%; height: min(44vh, 420px); border: 0; background: #f1eff6; }
+  .skv__pdf-mobile { display: none; background: #f1eff6; }
+  .skv__pdf-toolbar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; background: #fff; }
+  .skv__pdf-toolbar button { min-height: 40px; padding: 7px 12px; border: 1px solid #d9d2e8; border-radius: 8px; background: #fff; color: #4c258f; font: inherit; font-weight: 700; }
+  .skv__pdf-toolbar button:disabled { opacity: .45; }
+  .skv__pdf-toolbar [data-skv-pdf-close] { display: none; }
+  .skv__pdf-page { display: flex; justify-content: center; padding: 12px; overflow: auto; }
+  .skv__pdf-page img { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 3px 12px rgba(29, 20, 53, .12); }
+  .skv__pdf-mobile.is-expanded { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; width: 100vw; height: 100dvh; overflow: auto; }
+  .skv__pdf-mobile.is-expanded .skv__pdf-toolbar { position: sticky; top: 0; z-index: 1; }
+  .skv__pdf-mobile.is-expanded [data-skv-pdf-close] { display: inline-block; }
+  .skv__pdf:fullscreen, .skv__pdf:-webkit-full-screen { width: 100vw; height: 100vh; background: #f1eff6; }
+  .skv__fullscreen-btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 8px 11px; border: 1px solid #d9d2e8; border-radius: 9px; background: #fff; color: #4c258f; font: inherit; font-size: 12px; font-weight: 800; line-height: 1; cursor: pointer; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+  .skv__fullscreen-btn:hover { border-color: #6d42ce; background: #f3efff; transform: translateY(-1px); }
+  .skv__fullscreen-btn:focus-visible { outline: 3px solid rgba(109, 66, 206, .32); outline-offset: 2px; }
+  .skv__empty { margin: 0 24px 24px; padding: 18px; border-radius: 12px; background: #f5f2fa; color: #675f75; font-size: 14px; }
+  .skv__next { margin-top: 28px; padding: clamp(30px, 5vw, 48px); border-radius: 18px; background: #251052; color: #fff; text-align: center; }
+  .skv .skv__next h2 { margin: 0 0 10px; color: #fff !important; font-family: var(--font-heading-family, Arial, sans-serif); font-size: clamp(25px, 3vw, 36px); }
+  .skv__next p { max-width: 600px; margin: 0 auto 24px; color: rgba(255,255,255,.82) !important; line-height: 1.65; }
+  .skv__cta { display: inline-block; padding: 15px 26px; border-radius: 999px; background: #ffc400; color: #1b1430 !important; font-weight: 800; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+  .skv__cta:hover { color: #1b1430 !important; transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.22); }
+  @media (max-width: 760px) { .skv { padding: 28px 16px 56px; } .skv__hero { border-radius: 18px; padding: 42px 20px; } .skv__grid { grid-template-columns: 1fr; } .skv__card-head { padding: 20px; } .skv__pdf { display: none; } .skv__pdf-mobile { display: block; } .skv__next { padding: 30px 20px; } }
+</style>
+
+<section
+  class="skv"
+  data-section="starter-kit-viewer"
+  data-customer-id="{{ customer.id | default: '' }}"
+  data-coupon-summary-endpoint="/apps/bta-booking/coupons/summary"
+  data-guide-kit-url="{{ section.settings.guide_kit_url | default: '/products/korea-guide-kit' }}"
+>
+  <header class="skv__hero">
+    <p class="skv__eyebrow">{{ section.settings.eyebrow | default: 'Free Korea Travel Starter Kit' }}</p>
+    <h1 class="skv__title">{{ section.settings.title | default: 'Your Korea trip starts here.' }}</h1>
+    <p class="skv__subtitle">{{ section.settings.subtitle | default: 'Start with the essentials.\nWatch the video and read the guide at your own pace.' | newline_to_br }}</p>
+  </header>
+
+  <div class="skv__content">
+    <div class="skv__grid">
+      <article class="skv__card">
+        <div class="skv__card-head">
+          <h2 class="skv__card-title">{{ section.settings.video_title | default: 'Starter Kit Video' }}</h2>
+          <p class="skv__card-copy">{{ section.settings.video_copy | default: 'Watch the essential travel tips for your first Korea trip.' | newline_to_br }}</p>
+        </div>
+        {% if section.settings.video_url != blank %}
+          <video class="skv__video" controls playsinline preload="metadata" controlsList="nodownload noremoteplayback" disablepictureinpicture>
+            <source src="{{ section.settings.video_url | escape }}">
+            Your browser does not support this video.
+          </video>
+        {% else %}
+          <p class="skv__empty">The Starter Kit video will be available here shortly.</p>
+        {% endif %}
+      </article>
+
+      <article class="skv__card">
+        <div class="skv__card-head">
+          <div class="skv__card-title-row">
+          <h2 class="skv__card-title">{{ section.settings.pdf_title | default: 'Starter Kit Guidebook' }}</h2>
+            {% if section.settings.pdf_url != blank %}
+              <button class="skv__fullscreen-btn" type="button" data-skv-pdf-fullscreen data-skv-pdf-target="StarterKitPdf-{{ section.id }}" aria-label="Open {{ section.settings.pdf_title | default: 'Starter Guide PDF' | escape }} in full screen">
+                <span aria-hidden="true">⛶</span> Full screen
+              </button>
+            {% endif %}
+          </div>
+          <p class="skv__card-copy">{{ section.settings.pdf_copy | default: 'Read the essential Korea travel information at your own pace.' | newline_to_br }}</p>
+        </div>
+        {% if section.settings.pdf_url != blank %}
+          <iframe class="skv__pdf" id="StarterKitPdf-{{ section.id }}" data-pdf-url="{{ section.settings.pdf_url | escape }}" title="{{ section.settings.pdf_title | default: 'Starter Guide PDF' | escape }}" loading="lazy" allowfullscreen></iframe>
+          <div class="skv__pdf-mobile" data-skv-pdf-mobile aria-label="{{ section.settings.pdf_title | default: 'Starter Guide PDF' | escape }}">
+            <div class="skv__pdf-toolbar">
+              <button type="button" data-skv-pdf-prev disabled aria-label="Previous PDF page">Previous</button>
+              <span data-skv-pdf-count aria-live="polite">1 / 48</span>
+              <button type="button" data-skv-pdf-next disabled aria-label="Next PDF page">Next</button>
+              <button type="button" data-skv-pdf-close aria-label="Close full screen">Close</button>
+            </div>
+            <div class="skv__pdf-page"><img data-skv-pdf-image src="{{ 'starter-guide-page-01.jpg' | asset_url }}" alt="Starter Guidebook page 1 of 48" width="1445" height="2045" loading="lazy"></div>
+            <div hidden>
+              {% for page_number in (1..48) %}
+                {% assign page_suffix = page_number | prepend: '0' | slice: -2, 2 %}
+                {% assign page_asset = 'starter-guide-page-' | append: page_suffix | append: '.jpg' %}
+                <span data-skv-pdf-page-url="{{ page_asset | asset_url }}"></span>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <p class="skv__empty">The Starter Guide PDF will be available here shortly.</p>
+        {% endif %}
+      </article>
+    </div>
+
+    <div class="skv__next" data-skv-next>
+      <h2 data-skv-cta-title>{{ section.settings.cta_title | default: 'Ready for the full Korea Guide Kit?' }}</h2>
+      <p data-skv-cta-copy>{% if customer %}Explore the complete Korea Guide Kit and see everything included.{% else %}Create your account to unlock your 50% Welcome Offer for 24 hours.{% endif %}</p>
+      <a class="skv__cta" data-skv-cta href="{% if customer %}{{ section.settings.guide_kit_url | default: '/products/korea-guide-kit' }}{% else %}{{ routes.root_url }}{% endif %}">{% if customer %}Explore the Korea Guide Kit{% else %}Create My Account{% endif %}</a>
+    </div>
+  </div>
+</section>
+
+<script src="{{ 'starter-kit-viewer.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Starter Kit Viewer",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Free Korea Travel Starter Kit" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Your Korea trip starts here." },
+    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Start with the essentials.\nWatch the video and read the guide at your own pace." },
+    { "type": "header", "content": "Starter video" },
+    { "type": "text", "id": "video_title", "label": "Title", "default": "Starter Kit Video" },
+    { "type": "textarea", "id": "video_copy", "label": "Description", "default": "Watch the essential travel tips for your first Korea trip." },
+    { "type": "url", "id": "video_url", "label": "Video URL" },
+    { "type": "header", "content": "Starter PDF" },
+    { "type": "text", "id": "pdf_title", "label": "Title", "default": "Starter Kit Guidebook" },
+    { "type": "textarea", "id": "pdf_copy", "label": "Description", "default": "Read the essential Korea travel information at your own pace." },
+    { "type": "url", "id": "pdf_url", "label": "PDF URL" },
+    { "type": "header", "content": "Account conversion" },
+    { "type": "text", "id": "cta_title", "label": "CTA title", "default": "Ready for the full Korea Guide Kit?" },
+    { "type": "textarea", "id": "cta_copy", "label": "Fallback CTA copy", "default": "Create your account to unlock your 50% Welcome Offer for 24 hours." },
+    { "type": "text", "id": "cta_label", "label": "CTA label", "default": "Create My Account" },
+    { "type": "url", "id": "guide_kit_url", "label": "Korea Guide Kit page URL" },
+    { "type": "text", "id": "signin_label", "label": "Top link label", "default": "Create an account" }
+  ],
+  "presets": [{ "name": "Starter Kit Viewer" }]
+}
+{% endschema %}

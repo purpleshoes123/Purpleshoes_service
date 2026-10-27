@@ -1,0 +1,115 @@
+{% comment %}
+  Travel Booking Config Snippet
+{% endcomment %}
+
+{%- if request.page_type == 'page' and template.suffix == 'member-tour' -%}
+<script type="application/json" id="TravelBookingConfig-{{ section.id }}">
+{"memberCatalogKey": {{ page.handle | json }}, "adultMinRequired": true, "travelerLabelAdult": "Adult", "travelerLabelTeen": "Teen", "travelerLabelInfant": "Infant"}
+</script>
+{%- else -%}
+{%- liquid
+  assign max_pax = product.metafields.travel.max_pax.value
+  if max_pax == blank or max_pax == null
+    assign max_pax = 8
+  endif
+  
+  assign booking_window_days = product.metafields.travel.booking_window_days.value
+  if booking_window_days == blank or booking_window_days == null
+    assign booking_window_days = 180
+  endif
+  
+  assign operating_weekdays_raw = product.metafields.travel.operating_weekdays.value
+  if operating_weekdays_raw == blank or operating_weekdays_raw == null
+    assign operating_weekdays = '["mon","tue","wed","thu","fri","sat","sun"]'
+  else
+    assign operating_weekdays = operating_weekdays_raw | json
+  endif
+  
+  assign start_time_label = product.metafields.travel.start_time_label.value | default: ""
+  assign tour_duration_label = product.metafields.travel.tour_duration_label.value | default: ""
+  
+  assign booking_mode = product.metafields.travel.booking_mode.value | default: "private"
+  
+  assign guide_units_required = product.metafields.travel.guide_units_required.value
+  if guide_units_required == blank or guide_units_required == null
+    assign guide_units_required = shop.metafields.booking.default_guide_units_required.value
+    if guide_units_required == blank or guide_units_required == null
+      assign guide_units_required = 1
+    endif
+  endif
+  
+  assign pool_key_product = product.metafields.travel.pool_key.value
+  assign pool_key_shop = shop.metafields.booking.default_pool_key.value
+  if pool_key_product != blank and pool_key_product != null
+    assign pool_key = pool_key_product
+  elsif pool_key_shop != blank and pool_key_shop != null
+    assign pool_key = pool_key_shop
+  else
+    assign pool_key = "DEFAULT"
+  endif
+  
+  assign pools_capacity_json_raw = shop.metafields.booking.pools_capacity_json.value
+  if pools_capacity_json_raw != blank and pools_capacity_json_raw != null
+    assign pools_capacity_json = pools_capacity_json_raw | json
+  else
+    assign pools_capacity_json = 'null'
+  endif
+  
+  assign pools_label_json_raw = shop.metafields.booking.pools_label_json.value
+  if pools_label_json_raw != blank and pools_label_json_raw != null
+    assign pools_label_json = pools_label_json_raw | json
+  else
+    assign pools_label_json = 'null'
+  endif
+  
+  assign adapter_base_url = section.settings.adapter_base_url | default: ""
+  
+  assign adult_min_required = section.settings.adult_min_required
+  if adult_min_required == blank
+    assign adult_min_required = true
+  endif
+  
+  assign traveler_label_adult = section.settings.traveler_label_adult | default: "Adult"
+  assign traveler_label_teen = section.settings.traveler_label_teen | default: "Teen"
+  assign traveler_label_infant = section.settings.traveler_label_infant | default: "Infant"
+  
+  assign blackout_dates_raw = product.metafields.travel.blackout_dates.value
+  if blackout_dates_raw == blank or blackout_dates_raw == null
+    assign blackout_dates = '[]'
+  else
+    comment
+      list type returns array via .value; use | json filter for JSON string
+    endcomment
+    assign blackout_dates = blackout_dates_raw | json
+  endif
+-%}
+
+<script type="application/json" id="TravelBookingConfig-{{ section.id }}">
+{
+  "variants": [
+    {%- for variant in product.variants -%}
+      {
+        "id": {{ variant.id | json }},
+        "options": {{ variant.options | json }}
+      }{%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ],
+  "maxPax": {{ max_pax }},
+  "bookingWindowDays": {{ booking_window_days }},
+  "operatingWeekdays": {{ operating_weekdays }},
+  "startTimeLabel": {{ start_time_label | json }},
+  "tourDurationLabel": {{ tour_duration_label | json }},
+  "bookingMode": {{ booking_mode | json }},
+  "guideUnitsRequired": {{ guide_units_required }},
+  "poolKey": {{ pool_key | json }},
+  "poolsCapacityJson": {{ pools_capacity_json }},
+  "poolsLabelJson": {{ pools_label_json }},
+  "adapterBaseUrl": {{ adapter_base_url | json }},
+  "adultMinRequired": {{ adult_min_required }},
+  "travelerLabelAdult": {{ traveler_label_adult | json }},
+  "travelerLabelTeen": {{ traveler_label_teen | json }},
+  "travelerLabelInfant": {{ traveler_label_infant | json }},
+  "blackoutDates": {{ blackout_dates }}
+}
+</script>
+{%- endif -%}

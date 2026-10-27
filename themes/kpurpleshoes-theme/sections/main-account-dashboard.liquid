@@ -1,0 +1,811 @@
+{%- if customer or request.design_mode -%}
+{% comment %}
+  Main Account Dashboard (Legacy customer accounts)
+  - Left nav tabs
+  - Orders: real customer.orders list
+  - Coupons/Help: placeholder blocks
+{% endcomment %}
+
+{%- comment -%} First-login redirect: new customers (0 orders) → /pages/thankyou {%- endcomment -%}
+{%- if customer and customer.orders_count == 0 -%}
+<script>
+  (function () {
+    var key = 'ps_welcomed_{{ customer.id }}';
+    if (!localStorage.getItem(key)) {
+      localStorage.setItem(key, '1');
+      window.location.replace('/pages/thankyou');
+    }
+  })();
+</script>
+{%- endif -%}
+
+{% render 'member-page-guard', gate_path: '/pages/members-only' %}
+<script src="{{ 'customer.js' | asset_url }}" defer></script>
+<script src="{{ 'bta-theme-cart-checkout.js' | asset_url }}" defer></script>
+<script src="{{ 'guide-extension.js' | asset_url }}" defer></script>
+
+<section class="mp-wrap" data-mypage>
+  <div class="mp-grid">
+
+    <!-- LEFT SIDEBAR -->
+    {% render 'mypage-sidebar', active: 'orders' %}
+
+    <!-- RIGHT CONTENT -->
+    <main class="mp-main">
+
+      <!-- TAB: ORDERS -->
+      <section class="mp-panel is-active" data-panel="orders" aria-label="Orders & Bookings">
+        <div class="mp-ordersHead">
+          <h2 class="mp-h2">{{ section.settings.orders_heading }}</h2>
+
+          <div class="mp-ordersTools">
+            <div class="mp-chipRow" role="tablist" aria-label="Orders and booking tabs">
+              <button class="mp-chip is-active" type="button" data-ob-tab="orders">Order</button>
+              <button class="mp-chip" type="button" data-ob-tab="booking">Booking</button>
+            </div>
+            <div class="mp-chipRow" role="tablist" aria-label="Order filters" data-order-filter-wrap>
+              <button class="mp-chip is-active" type="button" data-order-filter="all">All</button>
+              <button class="mp-chip" type="button" data-order-filter="unfulfilled">Preparing</button>
+              <button class="mp-chip" type="button" data-order-filter="fulfilled">Shipped</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mp-ob-tab-panel is-active" data-ob-tab-panel="orders">
+          {% if customer and customer.orders_count > 0 %}
+            {% paginate customer.orders by 12 %}
+              <div class="mp-ordersGrid" data-orders-grid>
+                {% for order in customer.orders %}
+                  {%- assign fin = order.financial_status -%}
+                  {%- assign ful = order.fulfillment_status -%}
+
+                  <article
+                    class="mp-orderCard"
+                    data-financial="{{ fin }}"
+                    data-fulfillment="{{ ful }}"
+                  >
+                    <div class="mp-orderCard__top">
+                      <div class="mp-orderCard__left">
+                        <div class="mp-orderCard__no">
+                          <a href="{{ order.customer_url }}">{{ order.name }}</a>
+                        </div>
+
+                        <div class="mp-orderCard__meta">
+                          <span class="mp-dot"></span>
+                          <span>{{ order.created_at | date: "%Y-%m-%d" }}</span>
+                        </div>
+                      </div>
+
+                      <div class="mp-orderCard__right">
+                        <div class="mp-orderCard__price">{{ order.total_price | money }}</div>
+
+                        <div class="mp-badges">
+                          <span class="mp-badge mp-badge--fin">
+                            {{ order.financial_status_label }}
+                          </span>
+                          <span class="mp-badge mp-badge--ful">
+                            {{ order.fulfillment_status_label }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="mp-orderCard__body">
+                      <div class="mp-orderItems">
+                        {% for line_item in order.line_items limit: 3 %}
+                          <div class="mp-orderItem">
+                            <div class="mp-orderItem__title">{{ line_item.title }}</div>
+                            <div class="mp-orderItem__qty">x{{ line_item.quantity }}</div>
+                          </div>
+                        {% endfor %}
+                        {% if order.line_items.size > 3 %}
+                          <div class="mp-orderMore">+ {{ order.line_items.size | minus: 3 }} more items</div>
+                        {% endif %}
+                      </div>
+
+                      <div class="mp-orderCard__actions">
+                        <a class="mp-ctaLink" href="{{ order.customer_url }}">
+                          View details
+                          <span aria-hidden="true">→</span>
+                        </a>
+                      </div>
+
+                      <div class="mp-orderCard__extension-actions">
+                        <button class="mp-btn mp-btn--small mp-btn--primary" type="button" data-open-extension data-extension-type="PDF">Extension PDF</button>
+                        <button class="mp-btn mp-btn--small mp-btn--primary" type="button" data-open-extension data-extension-type="VIDEO">Extension Video</button>
+                        <button class="mp-btn mp-btn--small mp-btn--primary" type="button" data-open-extension data-extension-type="BUNDLE">Extension All</button>
+                      </div>
+                    </div>
+                  </article>
+                {% endfor %}
+              </div>
+
+              {% if paginate.pages > 1 %}
+                <nav class="mp-pagination" role="navigation" aria-label="Pagination">
+                  {% if paginate.previous %}
+                    <a class="mp-page" href="{{ paginate.previous.url }}">Prev</a>
+                  {% endif %}
+                  <span class="mp-page mp-page--current">{{ paginate.current_page }} / {{ paginate.pages }}</span>
+                  {% if paginate.next %}
+                    <a class="mp-page" href="{{ paginate.next.url }}">Next</a>
+                  {% endif %}
+                </nav>
+              {% endif %}
+            {% endpaginate %}
+          {% else %}
+            <div class="mp-blank">
+              <p>No orders found.</p>
+              <p class="mp-muted">New orders will appear here.</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="mp-ob-tab-panel" data-ob-tab-panel="booking" hidden>
+          <div class="mp-blank">
+            <p style="margin: 0 0 10px; font-weight: 800;">Extend Access Period</p>
+            <p class="mp-muted" style="margin: 0 0 12px;">Select how many 30-day units you want to add, then proceed to checkout. You can also open this directly from each order card.</p>
+          </div>
+          {% if customer %}
+            <div id="GuideExtensionRoot" data-customer-id="{{ customer.id }}"></div>
+          {% else %}
+            <div class="mp-blank">
+              <p>Please sign in to continue.</p>
+              <a class="mp-btn mp-btn--primary mp-btn--link" href="{{ routes.account_login_url }}">Sign in</a>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+
+      <!-- TAB: COUPONS -->
+      <section class="mp-panel" data-panel="coupons" aria-label="My Coupons">
+        <h2 class="mp-h2">{{ section.settings.coupons_heading }}</h2>
+        <div class="mp-blank">
+          <p>Coupon and promotion UI area</p>
+          <p class="mp-muted">Coupons are usually exposed through an app or membership system integration.</p>
+        </div>
+      </section>
+
+      <!-- TAB: HELP -->
+      <section class="mp-panel" data-panel="help" aria-label="Help Center">
+        <h2 class="mp-h2">{{ section.settings.help_heading }}</h2>
+        <div class="mp-blank">
+          {% if section.settings.help_text != blank %}
+            <div class="mp-helpText">{{ section.settings.help_text }}</div>
+          {% endif %}
+
+          <div class="mp-helpLinks">
+            {% if section.settings.help_link_1_label != blank %}
+              <a class="mp-helpLink" href="{{ section.settings.help_link_1_url }}">{{ section.settings.help_link_1_label }}</a>
+            {% endif %}
+            {% if section.settings.help_link_2_label != blank %}
+              <a class="mp-helpLink" href="{{ section.settings.help_link_2_url }}">{{ section.settings.help_link_2_label }}</a>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="mp-modal" aria-hidden="true" data-modal>
+    <div class="mp-modal__backdrop" data-modal-close></div>
+    <div class="mp-modal__card" role="dialog" aria-modal="true" aria-label="Confirm delete">
+      <h3 class="mp-modal__title">Delete this card?</h3>
+      <p class="mp-modal__desc">This action cannot be undone. Are you sure you want to delete it?</p>
+      <div class="mp-modal__actions">
+        <button class="mp-btn mp-btn--small" type="button" data-modal-close>Cancel</button>
+        <button class="mp-btn mp-btn--danger" type="button" data-confirm-delete>Delete</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+    /* ===== LotteON-like My Page (Account) ===== */
+.mp-wrap{
+  --primary: #6366f1;
+  --brand: #6f40ff;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #f1f5f9;
+  --radius: 16px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+.mp-grid{
+  margin: 0 auto;
+  display:grid;
+  grid-template-columns: 240px 1fr;
+  align-items:start;
+}
+
+
+/* RIGHT */
+.mp-main{ min-width:0; }
+.mp-panel{ display:none; }
+.mp-panel.is-active{ display:block; }
+
+.mp-panel{
+  background: var(--card); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 20px; border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.mp-h2{
+  margin:0 0 14px;
+  font-size: 20px;
+  font-weight: 900;
+}
+.mp-h3{
+  margin: 18px 0 10px;
+  font-size: 14px;
+  font-weight: 900;
+  color:#333;
+}
+.mp-h3--inline{ margin: 0; }
+
+.mp-row{ display:grid; gap:12px; margin-bottom:12px; }
+.mp-row--2{ grid-template-columns: 1fr 1fr; }
+.mp-row--country{ grid-template-columns: 140px 1fr; }
+
+.mp-label{
+  display:block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+/* readonly blocks */
+.mp-readonly{
+  width:100%;
+  min-height: 46px;
+  display:flex;
+  align-items:center;
+  padding: 0 12px;
+  border-radius: 12px;
+  background:#ebedf0;
+  border: 1px solid var(--line2);
+  font-size: 14px;
+  font-weight: 700;
+  color:#111;
+}
+.mp-readonly--multiline{
+  display:block;
+  padding: 12px;
+  line-height: 1.55;
+}
+
+/* inputs */
+.mp-input{
+  width:100%;
+  height: 46px;
+  background:#ebedf0;
+  border: 1px solid var(--line2);
+  color:#111;
+  padding:0 12px;
+  font-size:14px;
+  font-weight:600;
+  border-radius: 12px;
+  outline:none;
+}
+.mp-input:focus{
+  border-color: rgba(111,64,255,.55);
+  box-shadow: 0 0 0 3px rgba(111,64,255,.12);
+}
+.mp-input::placeholder{ color:#a0a6ad; }
+
+/* buttons */
+.mp-actions{ margin-top: 14px; }
+.mp-actions--profile{
+  display:flex;
+  gap: 10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.mp-actions--cards{
+  display:flex;
+  gap: 10px;
+  justify-content:flex-end;
+  margin-top: 12px;
+}
+
+.mp-btn{
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line2);
+  background: #fff;
+  color:#222;
+  font-weight: 900;
+  font-size: 13px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+}
+.mp-btn:hover{ background:#fafafa; }
+.mp-btn--small{ height: 38px; font-size: 12px; }
+
+.mp-btn--primary{
+  background: var(--brand);
+  border-color: var(--brand);
+  color:#fff;
+}
+.mp-btn--primary:hover{ filter: brightness(.96); }
+
+.mp-btn--ghost{
+  background: #fff;
+  border-color: var(--line2);
+}
+
+.mp-btn--danger{
+  background:#fff;
+  border-color:#ffdadb;
+  color:#d90017;
+}
+.mp-btn--danger:hover{ background:#fff5f5; }
+
+.mp-note{
+  margin: 10px 0 0;
+  width:100%;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.mp-inline-edit{
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* Saved cards block */
+.mp-saved{
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.mp-saved__head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.mp-warn{
+  margin-top: 12px;
+  display:block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background:#fff7e8;
+  border:1px solid #ffe1b3;
+  color:#7a4b00;
+  font-weight: 800;
+}
+
+/* Orders */
+.mp-ordersHead{
+  display:flex;
+  align-items:flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.mp-chipRow{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mp-chip{
+  appearance:none;
+  border: 1px solid var(--line2);
+  background:#fff;
+  color:#222;
+  font-weight: 900;
+  padding: 8px 12px;
+  cursor:pointer;
+  font-size: 12px;
+  border-radius: 999px;
+}
+.mp-chip.is-active{
+  background:#f3f0ff;
+  border-color: rgba(111,64,255,.35);
+  color:#2d1cff;
+}
+
+.mp-ob-tab-panel{ margin-top: 8px; }
+
+.mp-orderCard__extension-actions{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line2);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mp-ordersGrid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mp-orderCard{
+  border: 1px solid var(--line);
+  background:#fff;
+  border-radius: 14px;
+  padding: 14px;
+}
+.mp-orderCard__top{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mp-orderCard__no a{
+  color:#111;
+  font-weight: 1000;
+  text-decoration:none;
+  font-size: 15px;
+}
+.mp-orderCard__meta{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.mp-dot{
+  width: 7px; height: 7px;
+  background: rgba(0,0,0,.22);
+  border-radius: 999px;
+  display:inline-block;
+}
+.mp-orderCard__right{
+  text-align:right;
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mp-orderCard__price{
+  font-weight: 1000;
+  font-size: 14px;
+}
+.mp-badges{
+  display:flex;
+  gap: 8px;
+  justify-content:flex-end;
+  flex-wrap: wrap;
+}
+.mp-badge{
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  font-weight: 900;
+  font-size: 11px;
+  background:#fff;
+  color: rgba(0,0,0,.72);
+  border-radius: 999px;
+}
+
+.mp-orderCard__body{
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.mp-orderItems{ display:grid; gap: 8px; }
+.mp-orderItem{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mp-orderItem__title{
+  font-weight: 700;
+  color: rgba(0,0,0,.78);
+  line-height: 1.3;
+  font-size: 13px;
+}
+.mp-orderItem__qty{
+  font-weight: 900;
+  color: rgba(0,0,0,.55);
+  font-size: 12px;
+}
+.mp-orderMore{
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(0,0,0,.55);
+}
+
+.mp-orderCard__actions{
+  margin-top: 12px;
+  display:flex;
+  justify-content:flex-end;
+}
+.mp-ctaLink{
+  text-decoration:none;
+  font-weight: 1000;
+  color:#111;
+  border-bottom: 1px solid #111;
+  padding-bottom: 2px;
+  font-size: 12px;
+}
+
+/* Pagination */
+.mp-pagination{
+  margin-top: 16px;
+  display:flex;
+  gap: 10px;
+  justify-content:flex-end;
+}
+.mp-page{
+  border: 1px solid var(--line2);
+  padding: 8px 10px;
+  text-decoration:none;
+  color:#111;
+  font-weight: 1000;
+  background:#fff;
+  border-radius: 10px;
+}
+.mp-page--current{
+  background:#fafafa;
+}
+
+/* Help links */
+.mp-helpLinks{
+  margin-top: 10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap: 10px;
+}
+.mp-helpLink{
+  border: 1px solid var(--line2);
+  padding: 10px 12px;
+  text-decoration:none;
+  color:#111;
+  font-weight: 900;
+  background:#fff;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+/* Blank */
+.mp-blank{
+  border: 1px dashed var(--line2);
+  background: #fbfbfc;
+  border-radius: 14px;
+  padding: 16px;
+}
+.mp-muted{ color: var(--muted); }
+
+/* Modal */
+.mp-modal{ position:fixed; inset:0; display:none; z-index:9999; }
+.mp-modal.is-open{ display:block; }
+.mp-modal__backdrop{ position:absolute; inset:0; background: rgba(0,0,0,.45); }
+.mp-modal__card{
+  position:relative;
+  width: min(520px, calc(100% - 40px));
+  margin: 14vh auto 0;
+  background:#fff;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  padding: 18px;
+}
+.mp-modal__title{
+  margin:0 0 8px;
+  font-size: 16px;
+  font-weight: 1000;
+}
+.mp-modal__desc{
+  margin:0 0 14px;
+  color: var(--muted);
+  line-height:1.5;
+  font-size: 13px;
+}
+.mp-modal__actions{
+  display:flex;
+  justify-content:flex-end;
+  gap: 10px;
+}
+
+/* Responsive */
+@media (max-width: 980px){
+  .mp-grid{ grid-template-columns: 1fr; }
+  .mp-side{ position: static; }
+  .mp-row--2{ grid-template-columns: 1fr; }
+  .mp-row--country{ grid-template-columns: 1fr; }
+  .mp-ordersGrid{ grid-template-columns: 1fr; }
+  .mp-actions--profile{ justify-content: stretch; }
+  .mp-actions--profile .mp-btn{ width: 100%; }
+  .mp-orderCard__extension-actions .mp-btn{
+    width: 100%;
+  }
+}
+
+</style>
+
+<script>
+  <script>
+(function(){
+  var root = document.querySelector('[data-mypage]');
+  if(!root) return;
+
+  // Tabs
+  var navItems = Array.prototype.slice.call(root.querySelectorAll('.mp-navItem[data-tab]'));
+  var panels = Array.prototype.slice.call(root.querySelectorAll('.mp-panel'));
+
+  function openTab(key){
+    navItems.forEach(function(btn){
+      btn.classList.toggle('is-active', btn.getAttribute('data-tab') === key);
+    });
+    panels.forEach(function(p){
+      p.classList.toggle('is-active', p.getAttribute('data-panel') === key);
+    });
+  }
+
+  navItems.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      openTab(btn.getAttribute('data-tab'));
+    });
+  });
+
+  // Modal (delete confirm)
+  var modal = root.querySelector('[data-modal]');
+  var openDelete = root.querySelector('[data-delete-card]');
+  var closeEls = Array.prototype.slice.call(root.querySelectorAll('[data-modal-close]'));
+  var confirmDelete = root.querySelector('[data-confirm-delete]');
+
+  function openModal(){
+    if(!modal) return;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+  function closeModal(){
+    if(!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  if(openDelete){ openDelete.addEventListener('click', openModal); }
+  closeEls.forEach(function(el){ el.addEventListener('click', closeModal); });
+
+  if(confirmDelete){
+    confirmDelete.addEventListener('click', function(){
+      closeModal();
+    });
+  }
+
+  // Orders/Booking tabs
+  var obTabs = Array.prototype.slice.call(root.querySelectorAll('[data-ob-tab]'));
+  var obPanels = Array.prototype.slice.call(root.querySelectorAll('[data-ob-tab-panel]'));
+  var orderFilterWrap = root.querySelector('[data-order-filter-wrap]');
+
+  function openObTab(key){
+    obTabs.forEach(function(tab){
+      tab.classList.toggle('is-active', tab.getAttribute('data-ob-tab') === key);
+    });
+    obPanels.forEach(function(panel){
+      var isActive = panel.getAttribute('data-ob-tab-panel') === key;
+      panel.classList.toggle('is-active', isActive);
+      panel.hidden = !isActive;
+    });
+    if (orderFilterWrap) {
+      orderFilterWrap.hidden = (key !== 'orders');
+    }
+  }
+
+  obTabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      openObTab(tab.getAttribute('data-ob-tab'));
+    });
+  });
+
+  // Orders filter chips
+  var chips = Array.prototype.slice.call(root.querySelectorAll('[data-order-filter]'));
+  var grid = root.querySelector('[data-orders-grid]');
+
+  function applyFilter(key){
+    chips.forEach(function(c){
+      c.classList.toggle('is-active', c.getAttribute('data-order-filter') === key);
+    });
+    if(!grid) return;
+
+    var cards = Array.prototype.slice.call(grid.querySelectorAll('.mp-orderCard'));
+    cards.forEach(function(card){
+      var show = true;
+      var ful = (card.getAttribute('data-fulfillment') || '').toLowerCase();
+
+      if(key === 'unfulfilled'){
+        show = (ful === 'unfulfilled' || ful === 'partial');
+      } else if(key === 'fulfilled'){
+        show = (ful === 'fulfilled');
+      }
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      applyFilter(chip.getAttribute('data-order-filter'));
+    });
+  });
+
+  // Extension quick actions from order cards
+  var extensionButtons = Array.prototype.slice.call(root.querySelectorAll('[data-open-extension]'));
+  extensionButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var type = btn.getAttribute('data-extension-type');
+      openObTab('booking');
+      document.dispatchEvent(new CustomEvent('guide-extension:select-type', {
+        detail: { type: type }
+      }));
+      var extRoot = document.getElementById('GuideExtensionRoot');
+      if (extRoot && typeof extRoot.scrollIntoView === 'function') {
+        extRoot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  openObTab('orders');
+
+  if (typeof CustomerAddresses !== 'undefined') {
+    new CustomerAddresses();
+  }
+
+})();
+</script>
+
+</script>
+
+
+{%- else -%}
+  {% render 'member-login-required' %}
+{%- endif -%}
+{% schema %}
+{
+  "name": "Main Account Dashboard",
+  "settings": [
+    { "type": "text", "id": "tab_orders", "label": "Tab: Orders", "default": "Orders & Bookings" },
+    {
+      "type": "select",
+      "id": "orders_nav_mode",
+      "label": "Orders nav mode",
+      "default": "link",
+      "options": [
+        { "value": "link", "label": "Link" },
+        { "value": "tab", "label": "Tab" }
+      ]
+    },
+    { "type": "url", "id": "orders_page_url", "label": "Orders page url" },
+    { "type": "text", "id": "tab_coupons", "label": "Tab: Coupons", "default": "My Coupons" },
+    { "type": "text", "id": "tab_help", "label": "Tab: Help", "default": "Help Center" },
+
+    { "type": "text", "id": "orders_heading", "label": "Orders heading", "default": "Orders & Bookings" },
+    { "type": "text", "id": "coupons_heading", "label": "Coupons heading", "default": "My Coupons" },
+
+    { "type": "text", "id": "help_heading", "label": "Help heading", "default": "Help Center" },
+    { "type": "richtext", "id": "help_text", "label": "Help text", "default": "<p>Add links to your support, guide, and refund policy pages.</p>" },
+    { "type": "text", "id": "help_link_1_label", "label": "Help link 1 label", "default": "FAQ" },
+    { "type": "url", "id": "help_link_1_url", "label": "Help link 1 url" },
+    { "type": "text", "id": "help_link_2_label", "label": "Help link 2 label", "default": "Contact" },
+    { "type": "url", "id": "help_link_2_url", "label": "Help link 2 url" }
+  ],
+  "presets": [{ "name": "Main Account Dashboard" }]
+}
+{% endschema %}

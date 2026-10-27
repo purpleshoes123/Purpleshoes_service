@@ -1,0 +1,354 @@
+{% comment %}
+  Thank You page — ONLY for customers who purchased the lower-priced (cheaper) product.
+  Encourages app install and referral sharing to unlock $10 coupon.
+  Does NOT modify Shopify order confirmation logic. UI and helper logic only.
+
+  CONDITIONAL DISPLAY:
+  - This section renders its content ONLY when the current order contains a qualifying
+    (cheaper) product. Set "Qualifying product handle(s)" in section settings
+    (e.g. "korea-guide-kit-basic"). Multiple handles: comma-separated.
+  - Use on Order status page (Settings → Checkout → Order status) so `order` is in scope.
+  - When used on a regular page without `order`, the section shows nothing (or optional
+    fallback message) so the page does not appear for non-qualifying visits.
+{% endcomment %}
+
+{%- assign qualifying_handles = section.settings.qualifying_product_handles | split: ',' | map: 'strip' -%}
+{%- assign show_page = false -%}
+{%- if order != blank and order.line_items.size > 0 -%}
+  {%- assign handles_list = section.settings.qualifying_product_handles | strip -%}
+  {%- if handles_list != blank -%}
+    {%- for line_item in order.line_items -%}
+      {%- if line_item.product.handle != blank and qualifying_handles contains line_item.product.handle -%}
+        {%- assign show_page = true -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+  {%- comment %} Alternative: qualify by max price (e.g. "cheaper" = under $X) {% endcomment -%}
+  {%- if section.settings.qualify_by_max_price_cents > 0 and show_page == false -%}
+    {%- for line_item in order.line_items -%}
+      {%- if line_item.final_line_price < section.settings.qualify_by_max_price_cents -%}
+        {%- assign show_page = true -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment %} Standalone page: link sent only to low-price buyers (e.g. from Flow). No order in scope. {% endcomment -%}
+{%- if order == blank and section.settings.show_when_no_order -%}
+  {%- assign show_page = true -%}
+{%- endif -%}
+
+{%- if show_page -%}
+
+{%- assign referral_url = section.settings.referral_link -%}
+{%- if referral_url == blank -%}
+  {%- assign referral_url = request.origin | append: '/pages/freeguideoptin' -%}
+{%- endif -%}
+
+<section
+  class="tylp"
+  data-section="thank-you-low-price"
+  data-ty-offer
+  data-customer-id="{{ customer.id | default: '' }}"
+  data-summary-endpoint="/apps/bta-booking/coupons/summary"
+  data-share-activate-endpoint="/apps/bta-booking/coupons/extra10/activate-share"
+  data-referral-url="{{ referral_url | escape }}"
+  data-share-title="{{ section.settings.referral_title | default: 'Get an Extra $10 OFF Coupon' | escape }}"
+  data-share-text="{{ section.settings.referral_subtitle | default: 'Share this link with a friend. Your coupon unlocks when they click it.' | escape }}"
+  data-referral-copy-success="Your Extra $10 coupon is active. The homepage link has been copied."
+>
+  <div class="tylp__container">
+
+    {% comment %} ========== 1. HEADER ========== {% endcomment %}
+    <header class="tylp__header">
+      <p class="tylp__logo">{{ section.settings.logo_text | default: shop.name }}</p>
+      <h1 class="tylp__headline">{{ section.settings.headline | default: "Thank you for your purchase!" }}</h1>
+      <p class="tylp__subheadline">{{ section.settings.subheadline | default: "You Already Know the Secret: Next-Level Korea Starts Here." }}</p>
+    </header>
+
+    {% comment %} ========== 2. APP ACCESS NOTICE ========== {% endcomment %}
+    <div class="tylp__notice" role="alert">
+      <p class="tylp__notice-text">{{ section.settings.notice_text | default: "All content is available exclusively on the Purple Shoes App & Web." }}</p>
+      <p class="tylp__instruction">{{ section.settings.instruction_text | default: "Please download the Purple Shoes App & Web to access your guides." }}</p>
+    </div>
+
+    {% comment %} ========== 3. APP DOWNLOAD AREA ========== {% endcomment %}
+    <div class="tylp__app">
+      {% render 'ps-app-downloads' %}
+      <p class="tylp__offline">{{ section.settings.offline_note | default: "Offline Viewing Supported" }}</p>
+    </div>
+
+    {%- if section.settings.show_viewer_cta -%}
+      <div class="tylp__access-card">
+        <div>
+          <p class="tylp__card-eyebrow">YOUR PURCHASE</p>
+          <h2>{{ section.settings.viewer_title | default: "Open your guide" }}</h2>
+          <p>{{ section.settings.viewer_text | default: "Your purchased PDF and video are available in your secure Guide Viewer." }}</p>
+        </div>
+        <a href="{{ section.settings.viewer_url | default: '/pages/pdfviewer' }}" class="tylp__access-btn">
+          {{ section.settings.viewer_label | default: "Open My Guide" }}
+        </a>
+      </div>
+    {%- endif -%}
+
+    {%- if section.settings.show_kit_upsell -%}
+      <aside class="tylp__kit-upsell">
+        <p class="tylp__card-eyebrow">COMPLETE YOUR TRIP</p>
+        <h2>{{ section.settings.kit_title | default: "Unlock the full Korea Guide Kit" }}</h2>
+        <p>{{ section.settings.kit_text | default: "Add the complete guidebook, video guides and Purple Map to your trip." }}</p>
+        <a href="{{ section.settings.kit_url | default: '/products/korea-guide-kit' }}" class="tylp__kit-btn">
+          {{ section.settings.kit_label | default: "Explore Korea Guide Kit" }}
+        </a>
+      </aside>
+    {%- endif -%}
+
+    {% comment %}
+      ========== 4 & 5. REFERRAL COUPON SECTION ==========
+      Shown ONLY if the customer has NOT already received the $10 coupon.
+      When order.metafields.custom.has_referral_coupon is true, section is hidden.
+      Set this metafield via Flow, app, or backend when the $10 coupon is issued.
+    {% endcomment %}
+    {%- assign show_referral = true -%}
+    {%- if order.metafields.custom.has_referral_coupon == true -%}
+      {%- assign show_referral = false -%}
+    {%- endif -%}
+    {%- if section.settings.show_referral_override == false -%}
+      {%- assign show_referral = false -%}
+    {%- endif -%}
+
+    {%- if show_referral -%}
+      <div class="tylp__referral" data-referral-section>
+        <h2 class="tylp__referral-title">{{ section.settings.referral_title | default: "Get an Extra $10 OFF Coupon" }}</h2>
+        <div class="tylp__referral-underline"></div>
+        <p class="tylp__referral-subtitle">{{ section.settings.referral_subtitle | default: "Share & Save! Share this link with a friend. Your coupon unlocks when they click it." }}</p>
+        <div class="tylp__referral-field-wrap">
+          <input type="text" class="tylp__referral-input" value="{{ referral_url }}" readonly id="tylp-referral-url-{{ section.id }}" aria-label="Referral link">
+          <button type="button" class="tylp__copy-btn" data-referral-share-button>
+            Share &amp; Unlock $10 Coupon
+          </button>
+          <button type="button" class="tylp__copy-btn" data-referral-copy-button hidden>
+            {{ section.settings.copy_button_label | default: "Copy Link" }}
+          </button>
+        </div>
+        <p class="tylp__referral-link-preview" data-referral-link-preview>{{ referral_url }}</p>
+        <p class="tylp__referral-status" data-referral-status hidden role="status" aria-live="polite"></p>
+        <ul class="tylp__benefits">
+          <li><span class="tylp__check" aria-hidden="true">✅</span> {{ section.settings.benefit_1 | default: "No expiration date" }}</li>
+          <li><span class="tylp__check" aria-hidden="true">✅</span> {{ section.settings.benefit_2 | default: "Stackable — combine it with other coupons for extra savings" }}</li>
+          <li><span class="tylp__check" aria-hidden="true">✅</span> {{ section.settings.benefit_4 | default: "You can find your coupon in My → My Coupons" }}</li>
+        </ul>
+      </div>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<style>
+  .tylp {
+    --tylp-bg: #f5f6f8;
+    --tylp-card: #ffffff;
+    --tylp-text: #1d1d1f;
+    --tylp-muted: #6e6e73;
+    --tylp-primary: #5b2bd8;
+    --tylp-radius: 14px;
+    --tylp-space: 24px;
+    --tylp-space-lg: 40px;
+    background: var(--tylp-bg);
+    padding: 32px 20px 56px;
+    min-height: 100vh;
+  }
+  .tylp__container { max-width: 560px; margin: 0 auto; }
+
+  .tylp__header { text-align: center; margin-bottom: var(--tylp-space-lg); }
+  .tylp__logo {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--tylp-primary);
+    margin: 0 0 20px; text-transform: uppercase;
+  }
+  .tylp__headline {
+    font-size: clamp(28px, 5vw, 36px); font-weight: 800; color: var(--tylp-text);
+    margin: 0 0 12px; line-height: 1.2; letter-spacing: -0.02em;
+  }
+  .tylp__subheadline { font-size: 17px; color: var(--tylp-muted); margin: 0; line-height: 1.5; }
+
+  .tylp__notice {
+    background: var(--tylp-card); border-radius: var(--tylp-radius);
+    padding: 20px 24px; margin-bottom: var(--tylp-space-lg);
+    box-shadow: 0 2px 12px rgba(91,43,216,0.08);
+    border: 1px solid rgba(91,43,216,0.12);
+  }
+  .tylp__notice-text { font-size: 15px; font-weight: 700; color: var(--tylp-primary); margin: 0 0 8px; line-height: 1.4; }
+  .tylp__instruction { font-size: 14px; color: var(--tylp-muted); margin: 0; line-height: 1.5; }
+
+  .tylp__app {
+    background: var(--tylp-card); border-radius: var(--tylp-radius);
+    padding: var(--tylp-space); margin-bottom: var(--tylp-space-lg);
+    box-shadow: 0 2px 12px rgba(91,43,216,0.08);
+    border: 1px solid rgba(91,43,216,0.12);
+  }
+  .tylp__app-row {
+    display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap;
+  }
+  .tylp__app-icon-wrap { flex-shrink: 0; }
+  .tylp__app-icon-link { display: block; }
+  .tylp__app-icon { width: 80px; height: 80px; border-radius: 18px; display: block; }
+  .tylp__app-icon-placeholder {
+    width: 80px; height: 80px; border-radius: 18px;
+    background: linear-gradient(135deg, #2a0b6b 0%, #5b2bd8 100%); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  .tylp__qr-wrap { flex-shrink: 0; }
+  .tylp__qr { width: 140px; height: 140px; display: block; border-radius: 8px; }
+  .tylp__qr-placeholder {
+    width: 140px; height: 140px; background: #eee8ff; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--tylp-muted);
+  }
+  .tylp__offline { text-align: center; font-size: 13px; color: var(--tylp-muted); margin: 16px 0 0; }
+
+  .tylp__access-card,
+  .tylp__kit-upsell {
+    background: var(--tylp-card); border-radius: var(--tylp-radius); padding: var(--tylp-space);
+    margin-bottom: var(--tylp-space-lg); border: 1px solid rgba(91,43,216,.14);
+    box-shadow: 0 2px 12px rgba(91,43,216,.08);
+  }
+  .tylp__kit-upsell { background: linear-gradient(135deg, #f2edff, #fff); }
+  .tylp__card-eyebrow { margin: 0 0 8px; color: var(--tylp-primary); font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+  .tylp__access-card h2,
+  .tylp__kit-upsell h2 { margin: 0 0 8px; color: var(--tylp-text); font-size: 21px; line-height: 1.25; }
+  .tylp__access-card p:not(.tylp__card-eyebrow),
+  .tylp__kit-upsell p:not(.tylp__card-eyebrow) { margin: 0; color: var(--tylp-muted); font-size: 14px; line-height: 1.6; }
+  .tylp__access-btn,
+  .tylp__kit-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-top: 18px; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 800; text-decoration: none; }
+  .tylp__access-btn { background: #fff; border: 1px solid var(--tylp-primary); color: var(--tylp-primary); }
+  .tylp__kit-btn { background: var(--tylp-primary); border: 1px solid var(--tylp-primary); color: #fff; }
+
+  .tylp__referral {
+    background: var(--tylp-card); border-radius: var(--tylp-radius);
+    padding: var(--tylp-space); margin-bottom: var(--tylp-space-lg);
+    box-shadow: 0 2px 12px rgba(91,43,216,0.08);
+    border: 1px solid rgba(91,43,216,0.12);
+  }
+  .tylp__referral-title {
+    font-size: 22px; font-weight: 800; color: var(--tylp-text);
+    margin: 0 0 8px; text-align: center;
+  }
+  .tylp__referral-underline {
+    width: 48px; height: 3px; background: var(--tylp-primary);
+    border-radius: 999px; margin: 0 auto 20px;
+  }
+  .tylp__referral-subtitle { font-size: 15px; color: var(--tylp-muted); margin: 0 0 16px; line-height: 1.5; }
+  .tylp__referral-field-wrap { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .tylp__referral-input {
+    flex: 1 1 200px; min-width: 0; padding: 12px 14px; font-size: 14px;
+    border: 1px solid rgba(91,43,216,0.2); border-radius: 10px; background: var(--tylp-bg);
+    color: var(--tylp-text);
+  }
+  .tylp__copy-btn {
+    padding: 12px 20px; font-size: 15px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #2a0b6b 0%, #5b2bd8 100%);
+    border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(91,43,216,0.28);
+  }
+  .tylp__copy-btn:hover { opacity: 0.88; }
+  .tylp__copy-btn.copied { background: #16a34a; box-shadow: none; }
+  .tylp__copy-btn[hidden] { display: none; }
+  .tylp__referral-link-preview { margin: 12px 0 0; color: var(--tylp-muted); font-size: 12px; overflow-wrap: anywhere; }
+  .tylp__referral-status { margin: 12px 0 0; font-size: 14px; line-height: 1.5; }
+  .tylp__referral-status[hidden] { display: none; }
+  .tylp__referral-status.ty-offer__referral-status--success { color: #147a42; }
+  .tylp__referral-status.ty-offer__referral-status--error { color: #b42318; }
+
+  .tylp__benefits {
+    list-style: none; margin: 20px 0 0; padding: 20px 0 0;
+    border-top: 1px solid rgba(91,43,216,0.1);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .tylp__benefits li {
+    display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--tylp-text);
+    line-height: 1.6;
+  }
+  .tylp__check { flex-shrink: 0; width: 22px; text-align: center; line-height: 1.6; }
+
+  @media (max-width: 600px) {
+    .tylp__app-row { flex-direction: column; }
+    .tylp { padding: 24px 16px 48px; }
+  }
+</style>
+
+<script src="{{ 'thank-you-offer.js' | asset_url }}" defer="defer"></script>
+
+{%- else -%}
+  {%- comment %} Not a qualifying order (or no order): render nothing so this page does not appear. {% endcomment -%}
+  <div class="tylp-placeholder" data-section="thank-you-low-price-placeholder" style="display: none;" aria-hidden="true"></div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Thank You Low-Price",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Display logic (qualifying orders only)"
+    },
+    {
+      "type": "text",
+      "id": "qualifying_product_handles",
+      "label": "Qualifying product handle(s)",
+      "info": "Comma-separated. Order must contain a product with one of these handles (e.g. korea-guide-kit-basic)."
+    },
+    {
+      "type": "number",
+      "id": "qualify_by_max_price_cents",
+      "label": "Or qualify by max line price (cents)",
+      "info": "Optional. If set, order with any line under this price also qualifies. 0 = off.",
+      "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "show_when_no_order",
+      "label": "Show when no order (standalone page)",
+      "info": "Enable if this page is only linked from email to low-price buyers; then order is not in scope.",
+      "default": false
+    },
+    { "type": "header", "content": "Header" },
+    { "type": "text", "id": "logo_text", "label": "Logo / brand name", "default": "Purple Shoes" },
+    { "type": "text", "id": "headline", "label": "Main headline", "default": "Thank you for your purchase!" },
+    { "type": "text", "id": "subheadline", "label": "Sub headline", "default": "You Already Know the Secret: Next-Level Korea Starts Here." },
+    { "type": "header", "content": "App access notice" },
+    { "type": "text", "id": "notice_text", "label": "Notice", "default": "All content is available exclusively on the Purple Shoes App & Web." },
+    { "type": "text", "id": "instruction_text", "label": "Instruction", "default": "Please download the Purple Shoes App & Web to access your guides." },
+    { "type": "header", "content": "App download" },
+    { "type": "image_picker", "id": "app_icon", "label": "App icon" },
+    { "type": "url", "id": "app_download_url", "label": "App download URL" },
+    { "type": "image_picker", "id": "qr_image", "label": "QR code image", "info": "Leave blank to generate from App download URL." },
+    { "type": "text", "id": "offline_note", "label": "Offline note", "default": "Offline Viewing Supported" },
+    { "type": "header", "content": "Purchased guide access" },
+    { "type": "checkbox", "id": "show_viewer_cta", "label": "Show Guide Viewer button", "default": true },
+    { "type": "text", "id": "viewer_title", "label": "Title", "default": "Open your guide" },
+    { "type": "textarea", "id": "viewer_text", "label": "Description", "default": "Your purchased PDF and video are available in your secure Guide Viewer." },
+    { "type": "text", "id": "viewer_label", "label": "Button label", "default": "Open My Guide" },
+    { "type": "url", "id": "viewer_url", "label": "Guide Viewer URL" },
+    { "type": "header", "content": "Korea Guide Kit upsell" },
+    { "type": "checkbox", "id": "show_kit_upsell", "label": "Show Korea Guide Kit upsell", "default": true },
+    { "type": "text", "id": "kit_title", "label": "Title", "default": "Unlock the full Korea Guide Kit" },
+    { "type": "textarea", "id": "kit_text", "label": "Description", "default": "Add the complete guidebook, video guides and Purple Map to your trip." },
+    { "type": "text", "id": "kit_label", "label": "Button label", "default": "Explore Korea Guide Kit" },
+    { "type": "url", "id": "kit_url", "label": "Korea Guide Kit URL" },
+    { "type": "header", "content": "Referral ($10 coupon)" },
+    { "type": "checkbox", "id": "show_referral_override", "label": "Show referral section", "default": true, "info": "Uncheck to hide. Otherwise hidden when order.metafields.custom.has_referral_coupon is true." },
+    { "type": "text", "id": "referral_title", "label": "Title", "default": "Get an Extra $10 OFF Coupon" },
+    { "type": "textarea", "id": "referral_subtitle", "label": "Subtitle", "default": "Share & Save! Share this link with a friend. Your coupon unlocks when they click it." },
+    { "type": "text", "id": "referral_link", "label": "Referral link", "info": "Leave blank to use /pages/freeguideoptin." },
+    { "type": "text", "id": "copy_button_label", "label": "Copy button", "default": "Copy Link" },
+    { "type": "header", "content": "Coupon benefits" },
+    { "type": "text", "id": "benefit_1", "label": "Benefit 1", "default": "No expiration date" },
+    { "type": "text", "id": "benefit_2", "label": "Benefit 2", "default": "Stackable — combine it with other coupons for extra savings" },
+    { "type": "text", "id": "benefit_4", "label": "Benefit 4", "default": "You can find your coupon in My → My Coupons" }
+  ],
+  "presets": [
+    { "name": "Thank You Low-Price" }
+  ]
+}
+{% endschema %}

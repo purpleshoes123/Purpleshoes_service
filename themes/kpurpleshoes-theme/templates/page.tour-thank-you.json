@@ -1,0 +1,53 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "theme",
+  "sections": {
+    "tour_thank_you": {
+      "type": "tour-thank-you",
+      "settings": {
+        "logo_text": "Purple Shoes",
+        "confirmed_badge": "Reservation Confirmed",
+        "headline": "Your Tour Is Confirmed",
+        "subheadline": "Your Journey Begins! Get Ready to Step Into Korea.",
+        "card_eyebrow": "Tour Confirmation",
+        "tour_title": "Your Experience Tour",
+        "pending_badge": "",
+        "no_booking_text": "Sign in with the account used at checkout to see your booking details here. Your full reservation details are also sent by email.",
+        "pickup_label": "Pickup point",
+        "pickup_value": "Confirmed by email",
+        "start_label": "Start time",
+        "start_value": "Confirmed by email",
+        "duration_label": "Tour duration",
+        "duration_value": "Confirmed by email",
+        "guests_label": "Guests",
+        "cancel_label": "Free cancellation before",
+        "cancel_value": "9:00 AM on the day before your tour",
+        "notice_text": "Your reservation is confirmed. A confirmation email has been sent to you.",
+        "instruction_text": "Your local guide will contact you before the tour\nto introduce themselves and share important tour information,\nincluding any weather-related updates.\n\nIf you need to make any changes to your reservation\nor have questions about your booking,\nplease contact us at support@kpurpleshoes.com.",
+        "app_title": "All content is available exclusively on the Purple Shoes App & Web.",
+        "app_desc": "Scan the QR code to open Purple Shoes and access your guides.",
+        "app_download_url": "https://kpurpleshoes.com/",
+        "offline_note": "Offline Viewing Supported",
+        "show_referral_section": true,
+        "referral_title": "Get an Extra $10 OFF Coupon",
+        "referral_desc": "Share & Save! Share this link with a friend. Your coupon unlocks when they click it.",
+        "referral_link": "",
+        "copy_button_label": "Copy Link",
+        "benefit_1": "No expiration date",
+        "benefit_2": "Stackable — combine it with other coupons for extra savings",
+        "benefit_4": "You can find your coupon in My Page > My Coupons"
+      }
+    }
+  },
+  "order": [
+    "tour_thank_you"
+  ]
+}

@@ -1,0 +1,85 @@
+{% comment %}
+  Tour page: Trip Summary - 6 cards (icon + number + label), cream background.
+  Admin: section heading, blocks for each card (icon text or image, number, label).
+{% endcomment %}
+
+<section class="tour-summary" style="--tour-cream: {{ section.settings.bg_cream | default: '#faf8f5' }}; --tour-text: {{ section.settings.text_color | default: '#111' }};">
+  <div class="page-width tour-summary__inner">
+    {% if section.settings.heading != blank %}
+      <h2 class="tour-summary__title">{{ section.settings.heading | escape }}</h2>
+    {% endif %}
+    <div class="tour-summary__grid">
+      {% for block in section.blocks %}
+        <div class="tour-summary__card" {{ block.shopify_attributes }}>
+          {% if block.settings.icon_image != blank %}
+            <div class="tour-summary__icon-img">
+              {{ block.settings.icon_image | image_url: width: 80 | image_tag: loading: 'lazy', alt: '' }}
+            </div>
+          {% elsif block.settings.icon_text != blank %}
+            <div class="tour-summary__icon-text" aria-hidden="true">{{ block.settings.icon_text | escape }}</div>
+          {% endif %}
+          <div class="tour-summary__value">{{ block.settings.value | escape }}</div>
+          {% if block.settings.label != blank %}
+            <div class="tour-summary__label">{{ block.settings.label | escape }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<style>
+  .tour-summary { background: var(--tour-cream); padding: clamp(48px, 8vw, 124px) 0; }
+  .tour-summary__inner { max-width: 1000px; margin: 0 auto; }
+  .tour-summary__title { text-align: center; font-size: clamp(20px, 2vw, 28px); font-weight: 800; color: var(--tour-text); margin: 0 0 28px; }
+  .tour-summary__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .tour-summary__card {
+    background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px;
+    padding: 24px 16px; text-align: center; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .tour-summary__icon-img { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+  .tour-summary__icon-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .tour-summary__icon-text { font-size: 24px; line-height: 1; opacity: 0.85; }
+  .tour-summary__value { font-size: 18px; font-weight: 800; color: var(--tour-text); }
+  .tour-summary__label { font-size: 13px; color: var(--tour-text); opacity: 0.75; }
+  @media (max-width: 749px) {
+    .tour-summary__grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Tour Trip Summary",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Trip Summary" },
+    { "type": "color", "id": "bg_cream", "label": "Background", "default": "#faf8f5" },
+    { "type": "color", "id": "text_color", "label": "Text color", "default": "#111111" }
+  ],
+  "blocks": [
+    {
+      "type": "card",
+      "name": "Summary card",
+      "settings": [
+        { "type": "text", "id": "icon_text", "label": "Icon (emoji or short text)", "default": "📅" },
+        { "type": "image_picker", "id": "icon_image", "label": "Or icon image (overrides text)" },
+        { "type": "text", "id": "value", "label": "Value / Number", "default": "8 Days" },
+        { "type": "text", "id": "label", "label": "Label", "default": "Duration" }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "Tour Trip Summary",
+      "blocks": [
+        { "type": "card", "settings": { "icon_text": "📅", "value": "8 Days", "label": "Duration" } },
+        { "type": "card", "settings": { "icon_text": "📍", "value": "3 Cities", "label": "Destinations" } },
+        { "type": "card", "settings": { "icon_text": "👤", "value": "1 Person", "label": "Min. group" } },
+        { "type": "card", "settings": { "icon_text": "🛏", "value": "1 Night", "label": "Accommodation" } },
+        { "type": "card", "settings": { "icon_text": "🍽", "value": "2 Meals", "label": "Included" } },
+        { "type": "card", "settings": { "icon_text": "📷", "value": "4 Sightseeing", "label": "Activities" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

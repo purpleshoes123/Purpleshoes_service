@@ -1,0 +1,34 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "theme",
+  "sections": {
+    "signup_thank_you": {
+      "type": "signup-thank-you",
+      "settings": {
+        "headline": "Thanks for signing up!",
+        "sub": "Your Purple Shoes account is ready.",
+        "email_title": "Your free Starter Kit is ready to open now.",
+        "email_body": "You can also use your 24-hour 50% welcome offer for the Korea Guide Kit.",
+        "gift_heading": "Your 50% Welcome Offer Is Ready",
+        "gift_sub": "Valid for 24 hours after sign-up",
+        "cta_label": "Use My 50% Welcome Offer",
+        "cta_url": "/products/korea-guide-kit#choose-your-best-plan",
+        "email_hint_prefix": "Keep an eye out for an email titled",
+        "email_subject": "\"Welcome to Purple Shoes — Your First Korea Trip Just Got Easier\"",
+        "happy_title": "Happy Traveling!",
+        "happy_note": "We hope this exclusive information helps you enjoy Korea more deeply than anyone else."
+      }
+    }
+  },
+  "order": [
+    "signup_thank_you"
+  ]
+}

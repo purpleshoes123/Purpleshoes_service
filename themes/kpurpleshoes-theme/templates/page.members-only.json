@@ -1,0 +1,27 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-members-only-gate",
+      "settings": {
+        "eyebrow": "MEMBERS ONLY",
+        "title": "This page is available to members only",
+        "body": "Please sign in first. After login, you will be redirected back to the page you tried to open.",
+        "login_label": "Sign in and continue",
+        "home_label": "Go to home",
+        "home_url": "/"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

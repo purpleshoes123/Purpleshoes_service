@@ -1,0 +1,514 @@
+{%- if customer or request.design_mode -%}
+{{ 'purple-map.css' | asset_url | stylesheet_tag }}
+
+{% render 'member-page-guard', gate_path: '/pages/members-only' %}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<section
+  class="tm-wrap section-{{ section.id }}-padding"
+  data-purple-map
+  data-tm-naver-client-id="{{ section.settings.naver_client_id | strip | escape }}"
+  data-tm-marker-landmark="{{ 'purple-map-marker-landmark.svg' | asset_url }}"
+  data-tm-marker-restaurant="{{ 'purple-map-marker-restaurant.svg' | asset_url }}"
+  data-tm-marker-selected-landmark="{{ 'purple-map-marker-selected-landmark.svg' | asset_url }}"
+  data-tm-marker-selected-restaurant="{{ 'purple-map-marker-selected-restaurant.svg' | asset_url }}"
+  id="purple-map-{{ section.id }}"
+  data-tm-api-base="{{ section.settings.api_base_path | escape }}"
+  data-tm-list-endpoint-template="{{ section.settings.restaurant_items_endpoint_template | escape }}"
+  data-tm-filter-endpoint-template="{{ section.settings.restaurant_filters_endpoint_template | escape }}"
+  data-tm-default-list-id="{{ section.settings.default_restaurant_list_id | escape }}"
+  data-tm-kakao-app-key="{{ section.settings.kakao_app_key | escape }}"
+  data-tm-label-collapse="{{ section.settings.toggle_collapse_label | escape }}"
+  data-tm-label-expand="{{ section.settings.toggle_expand_label | escape }}"
+  data-tm-prompt-select="{{ section.settings.empty_select_prompt | escape }}"
+  data-tm-prompt-none="{{ section.settings.empty_results_prompt | escape }}"
+  data-tm-loading-text="{{ section.settings.loading_text | escape }}"
+  data-tm-error-text="{{ section.settings.error_text | escape }}"
+  data-tm-missing-list-id-text="{{ section.settings.missing_list_id_text | escape }}"
+  data-tm-map-loading-text="{{ section.settings.map_loading_text | escape }}"
+  data-tm-map-key-missing-text="{{ section.settings.map_key_missing_text | escape }}"
+  data-tm-map-error-text="{{ section.settings.map_error_text | escape }}"
+  data-tm-retry-label="{{ section.settings.retry_label | escape }}"
+  {% if customer %}data-tm-customer-id="{{ customer.id }}" data-tm-customer-gid="gid://shopify/Customer/{{ customer.id }}"{% endif %}
+>
+  <header class="tm-topbar">
+    <div class="tm-topbar__brand">
+      <span class="tm-topbar__app-title">PurpleMap</span>
+      <a href="{{ routes.root_url }}" class="tm-topbar__logo-link">
+        {% if section.settings.logo != blank %}
+          <img
+            class="tm-topbar__logo"
+            src="{{ section.settings.logo | image_url: width: 400 }}"
+            alt="{{ shop.name | escape }}"
+            width="{{ section.settings.logo_width }}"
+            height="auto"
+            loading="eager"
+          >
+        {% elsif settings.logo != blank %}
+          <img
+            class="tm-topbar__logo"
+            src="{{ settings.logo | image_url: width: 400 }}"
+            alt="{{ shop.name | escape }}"
+            width="{{ section.settings.logo_width }}"
+            height="auto"
+            loading="eager"
+          >
+        {% else %}
+          <span class="tm-topbar__title-fallback">{{ shop.name | escape }}</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="tm-topbar__actions">
+      <button
+        type="button"
+        class="tm-topbar__toggle tm-sidebar-toggle tm-sidebar-toggle--mobile"
+        data-tm-sidebar-toggle
+        aria-expanded="true"
+        aria-controls="tm-sidebar-{{ section.id }}"
+      >
+        <span class="tm-sidebar-toggle__text tm-sidebar-toggle__text--collapse">{{ section.settings.toggle_collapse_label | escape }}</span>
+        <span class="tm-sidebar-toggle__text tm-sidebar-toggle__text--expand" hidden>{{ section.settings.toggle_expand_label | escape }}</span>
+      </button>
+      {% if section.settings.back_label != blank %}
+        <a class="tm-topbar__link" href="{{ section.settings.back_url | default: routes.root_url }}">{{ section.settings.back_label | escape }}</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="tm-layout">
+    <aside
+      class="tm-sidebar"
+      id="tm-sidebar-{{ section.id }}"
+      aria-label="{{ section.settings.sidebar_aria_label | escape }}"
+    >
+      <div class="tm-selects">
+        <div class="tm-field">
+          <label class="tm-field__label" for="tm-category-{{ section.id }}">{{ section.settings.category_label | escape }}</label>
+          <select
+            id="tm-category-{{ section.id }}"
+            class="tm-field__select"
+            data-tm-category-select
+            autocomplete="off"
+          >
+            <option value="">{{ section.settings.category_placeholder | escape }}</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="tm-select-hint" data-tm-select-hint hidden></p>
+
+      <div class="tm-favorite-toggle">
+        <div class="tm-favorite-toggle__copy">
+          <p class="tm-favorite-toggle__label">Favorites</p>
+          <p class="tm-favorite-toggle__hint">Show saved places only</p>
+        </div>
+        <button
+          type="button"
+          class="tm-favorite-toggle__button"
+          data-tm-favorite-filter
+          aria-pressed="false"
+        >
+          Favorites only
+        </button>
+      </div>
+
+      <div class="tm-chips-wrap tm-chips-wrap--filters" data-tm-filters-wrap hidden>
+        <p class="tm-chips-wrap__label">{{ section.settings.filters_label | escape }}</p>
+        <div class="tm-chips" data-tm-chips-filters></div>
+      </div>
+
+      <div class="tm-list" data-tm-list role="list"></div>
+
+      <nav class="tm-pagination" data-tm-pagination aria-label="{{ section.settings.pagination_aria_label | escape }}"></nav>
+    </aside>
+
+    <div class="tm-map" aria-label="{{ section.settings.map_region_label | escape }}">
+      <button
+        type="button"
+        class="tm-sidebar-toggle tm-sidebar-toggle--edge"
+        data-tm-sidebar-toggle
+        aria-expanded="true"
+        aria-controls="tm-sidebar-{{ section.id }}"
+        title="{{ section.settings.toggle_collapse_label | escape }}"
+      >
+        <span class="tm-sidebar-toggle__chev" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ section.settings.toggle_collapse_label | escape }}</span>
+      </button>
+
+      <div id="purple-map-kakao-root" class="tm-map__canvas"></div>
+
+      <div class="tm-map__controls" data-tm-map-controls>
+        <button type="button" class="tm-map-control tm-map-control--list" data-tm-list-jump>
+          List
+        </button>
+        <button type="button" class="tm-map-control tm-map-control--search" data-tm-search-area hidden>
+          Search this area
+        </button>
+        <button type="button" class="tm-map-control tm-map-control--reset" data-tm-reset-map>
+          Reset
+        </button>
+      </div>
+
+      <div class="tm-map__placeholder" data-tm-map-placeholder hidden>
+        <div class="tm-map__placeholder-inner">
+          <p data-tm-map-placeholder-text></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="{{ 'account-favorites.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'purple-map-naver.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'purple-map.js' | asset_url }}" defer="defer"></script>
+
+
+{%- else -%}
+  {% render 'member-login-required' %}
+{%- endif -%}
+{% schema %}
+{
+  "name": "Purple map page",
+  "tag": "section",
+  "class": "section-purple-map",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo",
+      "info": "Leave empty to use the theme header logo."
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 80,
+      "max": 280,
+      "step": 4,
+      "unit": "px",
+      "label": "Logo max width",
+      "default": 160
+    },
+    {
+      "type": "text",
+      "id": "back_url",
+      "label": "Back link URL",
+      "default": "/pages/mypage"
+    },
+    {
+      "type": "text",
+      "id": "back_label",
+      "label": "Back link label",
+      "default": "Back to My Page"
+    },
+    {
+      "type": "text",
+      "id": "toggle_collapse_label",
+      "label": "Sidebar toggle — hide list",
+      "default": "Hide list"
+    },
+    {
+      "type": "text",
+      "id": "toggle_expand_label",
+      "label": "Sidebar toggle — show list",
+      "default": "Show list"
+    },
+    {
+      "type": "text",
+      "id": "category_label",
+      "label": "Category select label",
+      "default": "Category"
+    },
+    {
+      "type": "text",
+      "id": "category_placeholder",
+      "label": "Category placeholder",
+      "default": "All categories"
+    },
+    {
+      "type": "header",
+      "content": "Data"
+    },
+    {
+      "type": "text",
+      "id": "api_base_path",
+      "label": "API base path",
+      "default": "/apps/bta-booking/mypage"
+    },
+    {
+      "type": "text",
+      "id": "restaurant_items_endpoint_template",
+      "label": "Restaurant items endpoint template",
+      "default": "/restaurant-lists/{id}/items",
+      "info": "Use {id} as the restaurant list id placeholder."
+    },
+    {
+      "type": "text",
+      "id": "restaurant_filters_endpoint_template",
+      "label": "Restaurant filters endpoint template",
+      "default": "/restaurant-lists/{id}/filters",
+      "info": "Use {id} as the restaurant list id placeholder."
+    },
+    {
+      "type": "text",
+      "id": "default_restaurant_list_id",
+      "label": "Default restaurant list id",
+      "default": "gkv_virtual_restaurants",
+      "info": "Used when the page URL does not include ?listId=... or ?restaurantListId=..."
+    },
+    {
+      "type": "text",
+      "id": "kakao_app_key",
+      "label": "Kakao JavaScript key",
+      "default": "48b4fb3ff4d5b7cd5b1987a43cff840c"
+    },
+    {
+      "type": "text",
+      "id": "naver_client_id",
+      "label": "Naver Maps Client ID",
+      "info": "Enter the public ncpKeyId, not Client Secret. Enables the English Naver map. Leave blank to keep Kakao during migration."
+    },
+    {
+      "type": "textarea",
+      "id": "empty_select_prompt",
+      "label": "Message before restaurants are loaded",
+      "default": "Move the map or choose a category to refine the list."
+    },
+    {
+      "type": "text",
+      "id": "empty_results_prompt",
+      "label": "Message when no restaurants match filters",
+      "default": "No restaurants match your filters."
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Loading text",
+      "default": "Loading restaurants..."
+    },
+    {
+      "type": "text",
+      "id": "error_text",
+      "label": "Error text",
+      "default": "Couldn't load the restaurant list right now."
+    },
+    {
+      "type": "text",
+      "id": "missing_list_id_text",
+      "label": "Missing list id text",
+      "default": "Restaurant list is not configured yet."
+    },
+    {
+      "type": "text",
+      "id": "filters_label",
+      "label": "Filters row label",
+      "default": "Filters"
+    },
+    {
+      "type": "text",
+      "id": "sidebar_aria_label",
+      "label": "Sidebar aria label",
+      "default": "Restaurant search and list"
+    },
+    {
+      "type": "text",
+      "id": "pagination_aria_label",
+      "label": "Pagination aria label",
+      "default": "List pagination"
+    },
+    {
+      "type": "text",
+      "id": "map_region_label",
+      "label": "Map region aria label",
+      "default": "Map"
+    },
+    {
+      "type": "text",
+      "id": "map_placeholder_title",
+      "label": "Map placeholder title",
+      "default": "Map area (Kakao)"
+    },
+    {
+      "type": "textarea",
+      "id": "map_placeholder_body",
+      "label": "Map placeholder text",
+      "default": "Connect Kakao Maps JavaScript API here. This panel is reserved for the interactive map."
+    },
+    {
+      "type": "text",
+      "id": "map_loading_text",
+      "label": "Map loading text",
+      "default": "Loading Kakao Map..."
+    },
+    {
+      "type": "text",
+      "id": "map_key_missing_text",
+      "label": "Map key missing text",
+      "default": "Add a Kakao JavaScript key in this section to display the map."
+    },
+    {
+      "type": "text",
+      "id": "map_error_text",
+      "label": "Map error text",
+      "default": "The map couldn't be loaded right now."
+    },
+    {
+      "type": "text",
+      "id": "retry_label",
+      "label": "Retry button label",
+      "default": "Retry"
+    },
+    {
+      "type": "text",
+      "id": "map_tab_fallback_all",
+      "label": "Fallback map tab — All",
+      "default": "All"
+    },
+    {
+      "type": "text",
+      "id": "map_tab_fallback_open",
+      "label": "Fallback map tab — Open",
+      "default": "Halal"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category_chip",
+      "name": "Category option",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Korean"
+        },
+        {
+          "type": "text",
+          "id": "value",
+          "label": "Value (match data)",
+          "default": "Korean",
+          "info": "Must match category field on restaurants when API is connected."
+        }
+      ]
+    },
+    {
+      "type": "filter_chip",
+      "name": "Filter chip",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Vegan"
+        },
+        {
+          "type": "text",
+          "id": "filter_id",
+          "label": "Filter id",
+          "default": "vegan",
+          "info": "Examples: vegan, exclude_meat, halal, no_pork, tag:parking, halal:CERTIFIED"
+        }
+      ]
+    },
+    {
+      "type": "map_tab",
+      "name": "Map top tab",
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "All"
+        },
+        {
+          "type": "text",
+          "id": "tab_value",
+          "label": "Tab value",
+          "default": "all",
+          "info": "Use \"all\" or a filter token such as halal or tag:parking."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Purple map page",
+      "settings": {
+      },
+      "blocks": [
+        {
+          "type": "category_chip",
+          "settings": { "label": "Korean", "value": "Korean" }
+        },
+        {
+          "type": "category_chip",
+          "settings": { "label": "Western", "value": "Western" }
+        },
+        {
+          "type": "category_chip",
+          "settings": { "label": "Japanese", "value": "Japanese" }
+        },
+        {
+          "type": "filter_chip",
+          "settings": { "label": "Vegan", "filter_id": "vegan" }
+        },
+        {
+          "type": "filter_chip",
+          "settings": { "label": "No meat", "filter_id": "exclude_meat" }
+        },
+        {
+          "type": "filter_chip",
+          "settings": { "label": "Halal", "filter_id": "halal" }
+        },
+        {
+          "type": "filter_chip",
+          "settings": { "label": "No pork", "filter_id": "no_pork" }
+        },
+        {
+          "type": "map_tab",
+          "settings": { "label": "All", "tab_value": "all" }
+        },
+        {
+          "type": "map_tab",
+          "settings": { "label": "Halal", "tab_value": "halal" }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

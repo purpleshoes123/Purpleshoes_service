@@ -1,0 +1,39 @@
+# Secrets and local service state
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.log
+*.pem
+!apps/bta-proxy/certs/rds-ap-northeast-2-rsa2048-g1.pem
+*.key
+*.p12
+*.pfx
+.aws/
+.shopify/
+.shopify.lock
+
+# Generated dependencies and builds
+node_modules/
+build/
+dist/
+.react-router/
+.cache/
+coverage/
+.DS_Store
+.vscode/
+.idea/
+*.tgz
+*.tar.gz
+*.zip
+*.csv
+
+# Do not publish local QA artifacts or runtime/customer exports
+output/
+tmp/
+temp/
+*-private.*
+secrets-report.json

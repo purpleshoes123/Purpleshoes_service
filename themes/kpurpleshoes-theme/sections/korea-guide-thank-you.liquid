@@ -1,0 +1,384 @@
+{% comment %}
+  Korea Guide Kit — Post-purchase Thank You page.
+  UI/UX layer only. Does not change Shopify order confirmation logic.
+  Use on a dedicated page (e.g. page.korea-guide-thank-you) or in Order status content.
+{% endcomment %}
+
+{%- assign referral_url = section.settings.referral_link -%}
+{%- if referral_url == blank -%}
+  {%- assign referral_url = request.origin | append: '/pages/freeguideoptin' -%}
+{%- endif -%}
+
+<section
+  class="kgty"
+  data-section="korea-guide-thank-you"
+  data-ty-offer
+  data-customer-id="{{ customer.id | default: '' }}"
+  data-summary-endpoint="/apps/bta-booking/coupons/summary"
+  data-share-activate-endpoint="/apps/bta-booking/coupons/extra10/activate-share"
+  data-referral-url="{{ referral_url | escape }}"
+  data-share-title="{{ section.settings.referral_title | default: 'Get an Extra $10 OFF Coupon' | escape }}"
+  data-share-text="{{ section.settings.referral_desc | default: 'Share this link with a friend. Your coupon unlocks when they click it.' | escape }}"
+  data-referral-copy-success="Your Extra $10 coupon is active. The homepage link has been copied."
+>
+  <div class="kgty__container">
+
+    {% comment %} ========== 1. HEADER SECTION ========== {% endcomment %}
+    <header class="kgty__header">
+      <p class="kgty__logo">{{ section.settings.logo_text | default: shop.name }}</p>
+      <h1 class="kgty__headline">{{ section.settings.headline | default: "Thank you for your purchase!" }}</h1>
+      <p class="kgty__subheadline">{{ section.settings.subheadline | default: "You Already Know the Secret: Next-Level Korea Starts Here." }}</p>
+    </header>
+
+    <div class="kgty__app-download">
+      <div class="kgty__notice" role="alert">
+        <p class="kgty__notice-text">{{ section.settings.notice_text | default: "All content is available exclusively on the Purple Shoes App&Web." | newline_to_br }}</p>
+        <p class="kgty__instruction">{{ section.settings.instruction_text | default: "* Please download the Purple Shoes app to access your guides." | newline_to_br }}</p>
+      </div>
+      {% render 'ps-app-downloads' %}
+      <p class="kgty__offline-note">{{ section.settings.offline_note | default: "* Offline Viewing Supported" }}</p>
+      {%- if section.settings.show_guide_viewer_cta -%}
+        <div class="kgty__guide-cta-wrap">
+          <a href="{{ section.settings.guide_viewer_url | default: '/pages/pdfviewer' }}" class="kgty__cta kgty__cta--guide-viewer">
+            {{ section.settings.guide_viewer_cta_label | default: "Open My Korea Guide Kit" }}
+          </a>
+        </div>
+      {%- endif -%}
+      {%- if section.settings.show_review_cta -%}
+        <div class="kgty__review-cta-wrap">
+          <a href="{{ section.settings.review_cta_url | default: '/account/orders' }}" class="kgty__cta kgty__cta--review">
+            {{ section.settings.review_cta_label | default: "Leave a Quick Review ➤" }}
+          </a>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {% comment %} ========== 4. CONTENT PREVIEW SECTION ========== {% endcomment %}
+    {%- if section.settings.preview_image != blank or section.settings.preview_label != blank -%}
+      <div class="kgty__preview">
+        <p class="kgty__preview-label">{{ section.settings.preview_label | default: "Guide Map Preview" }}</p>
+        {%- if section.settings.preview_image != blank -%}
+          <div class="kgty__preview-image-wrap">
+            <img src="{{ section.settings.preview_image | image_url: width: 800 }}" alt="{{ section.settings.preview_label | default: 'Guide map preview' }}" class="kgty__preview-image" loading="lazy" width="400" height="300">
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- assign show_referral = section.settings.show_referral_section -%}
+    {%- if order != blank and order.metafields.custom.has_referral_coupon == true -%}
+      {%- assign show_referral = false -%}
+    {%- endif -%}
+
+    <div class="kgty__gift-card">
+      <div class="kgty__gift-block">
+        <h2 class="kgty__gift-block-title">{{ section.settings.tour_upsell_title | default: "Special Gift Unlocked!" }}</h2>
+        <p class="kgty__tour-subtitle">{{ section.settings.tour_upsell_subtitle | default: "15% OFF Experience Tour Coupon" }}</p>
+        <div class="kgty__coupon-card">
+          <div class="kgty__coupon-card-top">
+            <p class="kgty__coupon-value">{{ section.settings.coupon_value | default: "15% OFF" }}</p>
+            <a href="{{ section.settings.tour_cta_url | default: routes.root_url }}" class="kgty__cta kgty__cta--tour">
+              {{ section.settings.tour_cta_label | default: "Book a Tour & Save 15%" }}
+            </a>
+          </div>
+          <p class="kgty__coupon-valid">{{ section.settings.coupon_valid_for | default: "Valid for Experience Tours" }}</p>
+        </div>
+        <ul class="kgty__benefits">
+          <li><span class="kgty__check" aria-hidden="true">✅</span> <strong>No expiration date</strong></li>
+          <li><span class="kgty__check" aria-hidden="true">✅</span> <strong>Instant Issue:</strong> Your 15% discount is ready to use immediately.</li>
+          <li><span class="kgty__check" aria-hidden="true">✅</span> <strong>Auto-Applied:</strong> Automatically applied at checkout when you book a tour.</li>
+          <li><span class="kgty__check" aria-hidden="true">✅</span> You can find your coupon in <strong>My Page &gt; My Coupons</strong>.</li>
+        </ul>
+      </div>
+    </div>
+
+    {%- if show_referral -%}
+      <div class="kgty__gift-card" data-referral-section>
+        <div class="kgty__gift-block">
+          <h2 class="kgty__gift-block-title">{{ section.settings.referral_title | default: "Get an Extra $10 OFF Coupon" }}</h2>
+          <p class="kgty__referral-desc">{{ section.settings.referral_desc | default: "Share & Save! Share this link with a friend. Your coupon unlocks when they click it." }}</p>
+          <div class="kgty__referral-field-wrap">
+            <input type="text" class="kgty__referral-input" value="{{ referral_url }}" readonly id="kgty-referral-url" aria-label="Referral link">
+            <button type="button" class="kgty__copy-btn" data-referral-share-button>
+              Share &amp; Unlock $10 Coupon
+            </button>
+            <button type="button" class="kgty__copy-btn" data-referral-copy-button hidden>
+              {{ section.settings.copy_button_label | default: "Copy Link" }}
+            </button>
+          </div>
+          <p class="kgty__referral-link-preview" data-referral-link-preview>{{ referral_url }}</p>
+          <p class="kgty__referral-status" data-referral-status hidden role="status" aria-live="polite"></p>
+          <ul class="kgty__benefits kgty__benefits--secondary">
+            <li><span class="kgty__check" aria-hidden="true">✅</span> <strong>No expiration date</strong></li>
+            <li><span class="kgty__check" aria-hidden="true">✅</span> <strong>Stackable</strong> — combine it with other coupons for extra savings</li>
+            <li><span class="kgty__check" aria-hidden="true">✅</span> You can find your coupon in <strong>My Page &gt; My Coupons</strong>.</li>
+          </ul>
+        </div>
+      </div>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<style>
+  .kgty {
+    --kgty-bg: #f5f6f8;
+    --kgty-card: #ffffff;
+    --kgty-text: #1d1d1f;
+    --kgty-muted: #6e6e73;
+    --kgty-primary: #5b2bd8;
+    --kgty-accent: #5b2bd8;
+    --kgty-radius: 14px;
+    --kgty-space: 24px;
+    --kgty-space-lg: 40px;
+    background: var(--kgty-bg);
+    padding: 32px 20px 56px;
+    min-height: 100vh;
+  }
+  .kgty__container { max-width: 680px; margin: 0 auto; }
+
+  /* 1. Header */
+  .kgty__header { text-align: center; margin-bottom: var(--kgty-space-lg); }
+  .kgty__logo {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--kgty-primary);
+    margin: 0 0 20px; text-transform: uppercase;
+  }
+  .kgty__headline {
+    font-size: clamp(28px, 5vw, 36px); font-weight: 800; color: var(--kgty-text);
+    margin: 0 0 12px; line-height: 1.2; letter-spacing: -0.02em;
+  }
+  .kgty__subheadline {
+    font-size: 17px; color: var(--kgty-muted); margin: 0 0 var(--kgty-space);
+    line-height: 1.5;
+  }
+  .kgty__notice {
+    background: rgba(91,43,216,0.06); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 20px;
+    border: 1px solid rgba(91,43,216,0.12);
+  }
+  .kgty__notice-text {
+    font-size: 15px; font-weight: 700; color: var(--kgty-primary); margin: 0 0 6px; line-height: 1.4;
+  }
+  .kgty__instruction { font-size: 13px; color: var(--kgty-muted); margin: 0; line-height: 1.5; }
+
+  /* 2. App download */
+  .kgty__app-download {
+    background: var(--kgty-card); border-radius: var(--kgty-radius);
+    padding: var(--kgty-space); margin-bottom: var(--kgty-space-lg);
+    box-shadow: 0 2px 12px rgba(91,43,216,0.08);
+    border: 1px solid rgba(91,43,216,0.12);
+  }
+  .kgty__app-row {
+    display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap;
+  }
+  .kgty__app-icon-wrap { flex-shrink: 0; }
+  .kgty__app-icon-link { display: block; }
+  .kgty__app-icon { width: 80px; height: 80px; border-radius: 18px; display: block; }
+  .kgty__app-icon-placeholder {
+    width: 80px; height: 80px; border-radius: 18px; background: var(--kgty-accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  .kgty__qr-wrap { flex-shrink: 0; }
+  .kgty__qr { width: 140px; height: 140px; display: block; border-radius: 8px; }
+  .kgty__qr-placeholder {
+    width: 140px; height: 140px; background: #eee8ff; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--kgty-muted);
+  }
+  .kgty__offline-note {
+    text-align: center; font-size: 13px; color: var(--kgty-muted); margin: 16px 0 0;
+  }
+
+  /* 3. Guide Viewer CTA / Review CTA */
+  .kgty__guide-cta-wrap,
+  .kgty__review-cta-wrap {
+    text-align: center;
+    margin-top: 12px;
+  }
+  .kgty__cta {
+    display: inline-block; color: #fff;
+    font-size: 17px; font-weight: 700; padding: 16px 32px; border-radius: 12px;
+    text-decoration: none; transition: opacity 0.2s;
+    background: linear-gradient(135deg, #2a0b6b 0%, #5b2bd8 100%);
+    box-shadow: 0 8px 24px rgba(91,43,216,0.28);
+  }
+  .kgty__cta:hover { opacity: 0.88; }
+  .kgty__cta--guide-viewer {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 13px 24px;
+  }
+  .kgty__cta--review {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 13px 24px;
+    background: transparent;
+    color: var(--kgty-primary);
+    border: 2px solid var(--kgty-primary);
+    box-shadow: none;
+  }
+  .kgty__cta--review:hover { opacity: 0.75; }
+
+  /* 4. Content preview */
+  .kgty__preview { margin-bottom: var(--kgty-space-lg); }
+  .kgty__preview-label { font-size: 13px; font-weight: 600; letter-spacing: 0.03em; color: var(--kgty-muted); margin: 0 0 12px; }
+  .kgty__preview-image-wrap { border-radius: var(--kgty-radius); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .kgty__preview-image { width: 100%; height: auto; display: block; }
+
+  .kgty__gift-card {
+    background: var(--kgty-card); border-radius: var(--kgty-radius);
+    box-shadow: 0 2px 12px rgba(91,43,216,0.08);
+    border: 1px solid rgba(91,43,216,0.12);
+    margin-bottom: var(--kgty-space-lg);
+    overflow: hidden;
+  }
+  .kgty__gift-block {
+    padding: var(--kgty-space);
+  }
+  .kgty__gift-block-title {
+    font-size: 22px; font-weight: 800; color: var(--kgty-text);
+    margin: 0 0 6px; text-align: center;
+  }
+  .kgty__gift-divider {
+    height: 1px; background: rgba(91,43,216,0.12); margin: 0;
+  }
+  .kgty__tour-subtitle {
+    font-size: 16px; color: var(--kgty-accent); font-weight: 700; margin: 0 0 20px; font-style: italic;
+  }
+  .kgty__coupon-card {
+    background: linear-gradient(135deg, #2a0b6b 0%, #5b2bd8 100%);
+    border-radius: 14px;
+    padding: 24px 24px 18px;
+  }
+  .kgty__coupon-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .kgty__coupon-value {
+    font-size: 42px; font-weight: 900; color: #fff; margin: 0; letter-spacing: -0.03em; line-height: 1;
+  }
+  .kgty__cta--tour {
+    background: #ffffff;
+    color: #5b2bd8;
+    border: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    font-size: 15px;
+    font-weight: 800;
+    padding: 14px 26px;
+    border-radius: 10px;
+    white-space: nowrap;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: -0.01em;
+  }
+  .kgty__cta--tour:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.38); opacity: 1; }
+  .kgty__coupon-valid {
+    font-size: 13px; color: rgba(255,255,255,0.72); margin: 0;
+  }
+
+  /* 6. Benefits */
+  .kgty__benefits {
+    list-style: none; margin: 20px 0 0; padding: 0;
+    border-top: 1px solid rgba(91,43,216,0.1); padding-top: 16px;
+  }
+  .kgty__benefits li {
+    display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: var(--kgty-text);
+    margin-bottom: 10px; line-height: 1.6;
+  }
+  .kgty__benefits li:last-child { margin-bottom: 0; }
+  .kgty__check { flex-shrink: 0; width: 22px; text-align: center; line-height: 1.6; }
+
+  /* 7. Referral */
+  .kgty__referral-desc { font-size: 15px; color: var(--kgty-muted); margin: 0 0 16px; line-height: 1.5; }
+  .kgty__referral-field-wrap {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  }
+  .kgty__referral-input {
+    flex: 1 1 200px; min-width: 0; padding: 12px 14px; font-size: 14px;
+    border: 1px solid rgba(91,43,216,0.2); border-radius: 10px; background: var(--kgty-bg);
+    color: var(--kgty-text);
+  }
+  .kgty__copy-btn {
+    padding: 12px 20px; font-size: 15px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #2a0b6b 0%, #5b2bd8 100%);
+    border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(91,43,216,0.28);
+  }
+  .kgty__copy-btn:hover { opacity: 0.88; }
+  .kgty__copy-btn[hidden] { display: none; }
+  .kgty__referral-link-preview { margin: 12px 0 0; color: var(--kgty-muted); font-size: 12px; overflow-wrap: anywhere; }
+  .kgty__referral-status { margin: 12px 0 0; font-size: 14px; line-height: 1.5; }
+  .kgty__referral-status[hidden] { display: none; }
+  .kgty__referral-status.ty-offer__referral-status--success { color: #147a42; }
+  .kgty__referral-status.ty-offer__referral-status--error { color: #b42318; }
+
+  /* 8. Secondary benefits */
+  .kgty__benefits--secondary { margin-bottom: 0; }
+
+  @media (max-width: 600px) {
+    .kgty__app-row { flex-direction: column; }
+    .kgty { padding: 24px 16px 48px; }
+    .kgty__coupon-card-top { flex-direction: column; align-items: flex-start; }
+    .kgty__cta--tour { width: 100%; box-sizing: border-box; text-align: center; }
+  }
+</style>
+
+<script src="{{ 'thank-you-offer.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Korea Guide Kit Thank You",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "header", "content": "Header" },
+    { "type": "text", "id": "logo_text", "label": "Logo / brand name", "default": "Purple Shoes" },
+    { "type": "text", "id": "headline", "label": "Main headline", "default": "Thank you for your purchase!" },
+    { "type": "text", "id": "subheadline", "label": "Sub headline", "default": "You Already Know the Secret: Next-Level Korea Starts Here." },
+    { "type": "text", "id": "notice_text", "label": "Important notice", "default": "All content is available exclusively on the Purple Shoes App&Web." },
+    { "type": "text", "id": "instruction_text", "label": "Instruction", "default": "* Please download the Purple Shoes app to access your guides." },
+    { "type": "header", "content": "App download" },
+    { "type": "image_picker", "id": "app_icon", "label": "App icon" },
+    { "type": "url", "id": "app_download_url", "label": "App download URL", "info": "Used for icon link and QR if no QR image uploaded." },
+    { "type": "image_picker", "id": "qr_image", "label": "QR code image", "info": "Leave blank to auto-generate from App download URL." },
+    { "type": "text", "id": "offline_note", "label": "Offline note", "default": "* Offline Viewing Supported" },
+    { "type": "header", "content": "Guide Viewer CTA" },
+    { "type": "checkbox", "id": "show_guide_viewer_cta", "label": "Show Guide Viewer CTA button", "default": true },
+    { "type": "text", "id": "guide_viewer_cta_label", "label": "Button label", "default": "Open My Korea Guide Kit" },
+    { "type": "url", "id": "guide_viewer_url", "label": "Guide Viewer URL", "info": "Leave blank to use /pages/pdfviewer" },
+    { "type": "header", "content": "Leave a Review CTA" },
+    { "type": "checkbox", "id": "show_review_cta", "label": "Show Leave a Review CTA button", "default": true },
+    { "type": "text", "id": "review_cta_label", "label": "Button label", "default": "Leave a Quick Review ➤" },
+    { "type": "url", "id": "review_cta_url", "label": "Review CTA URL", "info": "Leave blank to use /account/orders" },
+    { "type": "header", "content": "Content preview" },
+    { "type": "text", "id": "preview_label", "label": "Preview label", "default": "Guide Map Preview" },
+    { "type": "image_picker", "id": "preview_image", "label": "Preview image" },
+    { "type": "header", "content": "Tour upsell" },
+    { "type": "text", "id": "tour_upsell_title", "label": "Title", "default": "Special Gift Unlocked!" },
+    { "type": "text", "id": "tour_upsell_subtitle", "label": "Subtitle", "default": "15% OFF Experience Tour Coupon" },
+    { "type": "text", "id": "coupon_value", "label": "Coupon value", "default": "15% OFF" },
+    { "type": "text", "id": "coupon_valid_for", "label": "Valid for", "default": "Valid for Experience Tours" },
+    { "type": "text", "id": "tour_cta_label", "label": "CTA button", "default": "Book a Tour & Save 15%" },
+    { "type": "url", "id": "tour_cta_url", "label": "CTA URL" },
+    { "type": "header", "content": "Referral ($10 coupon)" },
+    { "type": "checkbox", "id": "show_referral_section", "label": "Show referral section", "default": true, "info": "Or use order metafield custom.has_referral_coupon when on Order status page." },
+    { "type": "text", "id": "referral_title", "label": "Referral title", "default": "Get an Extra $10 OFF Coupon" },
+    { "type": "textarea", "id": "referral_desc", "label": "Description", "default": "Share & Save! Share this link with a friend. Your coupon unlocks when they click it." },
+    { "type": "text", "id": "referral_link", "label": "Referral link", "info": "Leave blank to use /pages/freeguideoptin." },
+    { "type": "text", "id": "copy_button_label", "label": "Copy button", "default": "Copy Link" }
+  ],
+  "presets": [
+    { "name": "Korea Guide Kit Thank You" }
+  ]
+}
+{% endschema %}

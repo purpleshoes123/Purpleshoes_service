@@ -1,0 +1,359 @@
+<section class="tg-pricing" id="tg-section-{{ section.id }}" style="--tg-primary: {{ section.settings.primary_color | default: '#5b2bd8' }};">
+  <div class="tg-pricing__inner">
+    <header class="tg-pricing__head">
+      <h2 class="tg-pricing__title">{{ section.settings.heading }}</h2>
+      {% if section.settings.subheading != blank %}
+        <p class="tg-pricing__sub">{{ section.settings.subheading }}</p>
+      {% endif %}
+    </header>
+
+    <div class="tg-pricing__grid" role="list">
+      {% for block in section.blocks %}
+        {% liquid
+          assign is_featured = block.settings.featured
+          assign plan_name = block.settings.title
+          assign plan_desc = block.settings.desc
+          assign price_amount = block.settings.price_amount
+          assign price_unit = block.settings.price_unit
+          assign btn_label = block.settings.button_label
+          assign btn_link = block.settings.button_link
+          assign features_text = block.settings.features | strip
+          assign small_note = block.settings.small_note
+        %}
+        <article
+          class="tg-pricing-card{% if is_featured %} tg-pricing-card--featured{% endif %}"
+          role="listitem"
+          {{ block.shopify_attributes }}
+        >
+          {% if is_featured %}
+            <div class="tg-pricing-card__bar" aria-hidden="true">{{ block.settings.badge_solid | default: 'MOST POPULAR' }}</div>
+          {% endif %}
+
+          <div class="tg-pricing-card__body">
+            <h3 class="tg-pricing-card__plan">{{ plan_name }}</h3>
+            {% if plan_desc != blank %}
+              <p class="tg-pricing-card__desc">{{ plan_desc }}</p>
+            {% endif %}
+
+            <div class="tg-pricing-card__price" aria-label="Price">
+              <span class="tg-pricing-card__amount">{{ price_amount }}</span>
+              {% if price_unit != blank %}
+                <span class="tg-pricing-card__unit">{{ price_unit }}</span>
+              {% endif %}
+            </div>
+
+            <ul class="tg-pricing-card__features" aria-label="Plan features">
+              {% if features_text != blank %}
+                {% assign lines = features_text | newline_to_br | split: '<br />' %}
+                {% for line in lines %}
+                  {% assign t = line | strip %}
+                  {% if t != blank %}<li>{{ t }}</li>{% endif %}
+                {% endfor %}
+              {% else %}
+                {% if block.settings.f1 != blank %}<li>{{ block.settings.f1 }}</li>{% endif %}
+                {% if block.settings.f2 != blank %}<li>{{ block.settings.f2 }}</li>{% endif %}
+                {% if block.settings.f3 != blank %}<li>{{ block.settings.f3 }}</li>{% endif %}
+                {% if block.settings.f4 != blank %}<li>{{ block.settings.f4 }}</li>{% endif %}
+              {% endif %}
+            </ul>
+
+            {% if btn_label != blank %}
+              <a class="tg-pricing-card__btn" href="{{ btn_link | default: '#' }}">{{ btn_label }}</a>
+            {% endif %}
+
+            {% if small_note != blank %}
+              <p class="tg-pricing-card__note">{{ small_note }}</p>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    {% if section.settings.show_tip %}
+      <div class="tg-pricing__tip">
+        <div class="tg-pricing__tip-box">
+          <strong>{{ section.settings.tip_title }}</strong>
+          <div class="tg-pricing__tip-text rte">{{ section.settings.tip_text }}</div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<style>
+  .tg-pricing{
+    padding: clamp(48px, 6vw, 72px) 24px;
+    background: var(--tg-pricing-bg, #f8f7fa);
+  }
+  .tg-pricing__inner{
+    max-width: 1160px;
+    margin: 0 auto;
+  }
+  .tg-pricing__head{
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .tg-pricing__title{
+    margin: 0 0 10px;
+    font-size: clamp(24px, 2.5vw, 32px);
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+  .tg-pricing__sub{
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(0,0,0,.6);
+  }
+
+  .tg-pricing__grid{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  .tg-pricing-card{
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .tg-pricing-card:hover{
+    box-shadow: 0 12px 40px rgba(0,0,0,.1);
+  }
+  .tg-pricing-card--featured{
+    box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    transform: scale(1.03);
+  }
+  .tg-pricing-card--featured:hover{
+    box-shadow: 0 16px 48px rgba(0,0,0,.14);
+  }
+
+  .tg-pricing-card__bar{
+    padding: 10px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    color: #fff;
+    background: var(--tg-primary);
+  }
+  .tg-pricing-card__bar--soft{
+    background: rgba(0,0,0,.08);
+    color: rgba(0,0,0,.7);
+  }
+
+  .tg-pricing-card__body{
+    padding: 28px 24px 32px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tg-pricing-card__plan{
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.7);
+  }
+  .tg-pricing-card__desc{
+    margin: 0 0 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(0,0,0,.55);
+  }
+  .tg-pricing-card__price{
+    margin-bottom: 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tg-pricing-card__amount{
+    font-size: clamp(28px, 2.8vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #1a1a1a;
+  }
+  .tg-pricing-card__unit{
+    font-size: 14px;
+    color: rgba(0,0,0,.5);
+  }
+
+  .tg-pricing-card__features{
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: rgba(0,0,0,.78);
+    flex: 1;
+  }
+  .tg-pricing-card__features li{
+    position: relative;
+    padding-left: 1.2em;
+    margin-bottom: 10px;
+  }
+  .tg-pricing-card__features li:last-child{ margin-bottom: 0; }
+  .tg-pricing-card__features li::before{
+    content: "•";
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: var(--tg-primary);
+  }
+
+  .tg-pricing-card__btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 28px;
+    border-radius: 999px;
+    background: var(--tg-primary);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+  }
+  .tg-pricing-card__btn:hover{
+    opacity: 0.92;
+    background: color-mix(in srgb, var(--tg-primary) 85%, #000);
+  }
+
+  .tg-pricing-card__note{
+    margin: 14px 0 0;
+    font-size: 12px;
+    color: rgba(0,0,0,.5);
+  }
+
+  .tg-pricing__tip{ margin-top: 40px; }
+  .tg-pricing__tip-box{
+    border: 1px dashed rgba(0,0,0,.15);
+    background: rgba(0,0,0,.02);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .tg-pricing__tip-box strong{ display: block; margin-bottom: 8px; }
+  .tg-pricing__tip-text.rte p{ margin: 0 0 6px; }
+  .tg-pricing__tip-text.rte p:last-child{ margin-bottom: 0; }
+
+  @media (max-width: 900px){
+    .tg-pricing__grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tg-pricing-card--featured{ transform: none; }
+  }
+  @media (max-width: 600px){
+    .tg-pricing__grid{ grid-template-columns: 1fr; gap: 20px; }
+    .tg-pricing-card__body{ padding: 24px 20px 28px; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Tour Plans - Plans Grid",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Section heading", "default": "Get your guide plan" },
+    { "type": "text", "id": "subheading", "label": "Section subheading", "default": "Simple pricing. No lock-ins." },
+    { "type": "color", "id": "primary_color", "label": "Primary (purple)", "default": "#5b2bd8" },
+    { "type": "checkbox", "id": "show_tip", "label": "Show tip box", "default": true },
+    { "type": "text", "id": "tip_title", "label": "Tip title", "default": "Tip" },
+    { "type": "richtext", "id": "tip_text", "label": "Tip text", "default": "<p>Update button links in the theme editor to point to your checkout or product pages.</p>" }
+  ],
+  "blocks": [
+    {
+      "type": "plan",
+      "name": "Plan card",
+      "settings": [
+        { "type": "checkbox", "id": "featured", "label": "Most Popular (center card)", "default": false },
+        { "type": "text", "id": "badge_soft", "label": "Badge (non-featured)", "default": "BASIC" },
+        { "type": "text", "id": "badge_solid", "label": "Badge (featured)", "default": "MOST POPULAR" },
+        { "type": "text", "id": "title", "label": "Plan name", "default": "START" },
+        { "type": "textarea", "id": "desc", "label": "Description", "default": "Add a short description." },
+        { "type": "text", "id": "price_amount", "label": "Price amount", "default": "$99" },
+        { "type": "text", "id": "price_unit", "label": "Price unit", "default": "/ month" },
+        { "type": "textarea", "id": "features", "label": "Features (one per line)", "default": "Unlimited Users\n3 Projects\n3 components per project" },
+        { "type": "text", "id": "f1", "label": "Feature 1 (if features empty)", "default": "—" },
+        { "type": "text", "id": "f2", "label": "Feature 2", "default": "—" },
+        { "type": "text", "id": "f3", "label": "Feature 3", "default": "—" },
+        { "type": "text", "id": "f4", "label": "Feature 4", "default": "—" },
+        { "type": "text", "id": "button_label", "label": "Button label", "default": "Try for free" },
+        { "type": "url", "id": "button_link", "label": "Button link" },
+        { "type": "text", "id": "small_note", "label": "Small note", "default": "—" }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [
+    {
+      "name": "Tour Plans - Plans Grid",
+      "blocks": [
+        {
+          "type": "plan",
+          "settings": {
+            "featured": false,
+            "badge_soft": "BASIC",
+            "badge_solid": "POPULAR",
+            "title": "Guidebook ONLY",
+            "desc": "A PDF guidebook covering key routes, restaurants, and photo spots.",
+            "price_amount": "₩19,000",
+            "price_unit": "/ 1 trip",
+            "button_label": "Select plan",
+            "button_link": "shopify://collections/all",
+            "small_note": "* Instant download after payment (sample)",
+            "f1": "1-2 recommended routes by area",
+            "f2": "Includes Purple Map places (Kakao Map)",
+            "f3": "Budget and travel time guidance",
+            "f4": "Simple trip prep checklist"
+          }
+        },
+        {
+          "type": "plan",
+          "settings": {
+            "featured": true,
+            "badge_soft": "BASIC",
+            "badge_solid": "ALL-IN",
+            "title": "Korean Guide Kit",
+            "desc": "A PDF guidebook covering key routes, restaurants, and photo spots.",
+            "price_amount": "₩59,000",
+            "price_unit": "/ 1 trip",
+            "button_label": "Select plan",
+            "button_link": "shopify://products/korea-guide-kit",
+            "small_note": "* Provided by link (sample)",
+            "f1": "Video guide for key sections (for example, 20-40 minutes)",
+            "f2": "Captioned explanations by point (sample)",
+            "f3": "Route tips for common mistakes",
+            "f4": "Recommended shooting angles and times"
+          }
+        },
+        {
+          "type": "plan",
+          "settings": {
+            "featured": false,
+            "badge_soft": "ALL-IN",
+            "badge_solid": "BASIC",
+            "title": "Video Guide Only",
+            "desc": "A PDF guidebook covering key routes, restaurants, and photo spots.",
+            "price_amount": "₩39,000",
+            "price_unit": "/ 1 trip",
+            "button_label": "Select plan",
+            "button_link": "shopify://collections/all",
+            "small_note": "* Delivered as a kit (sample)",
+            "f1": "Guidebook + Video included",
+            "f2": "Korean phrases for restaurant and cafe reservations",
+            "f3": "30 essential phrases by situation (sample)",
+            "f4": "Tailored recommendations based on a short survey (sample)"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

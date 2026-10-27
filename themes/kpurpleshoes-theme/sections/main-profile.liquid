@@ -1,0 +1,710 @@
+{%- if customer or request.design_mode -%}
+{% comment %}
+  My Page — Profile Section
+  Sections: Profile Info · Contact Info · Password · Saved Cards
+{% endcomment %}
+
+{% render 'member-page-guard', gate_path: '/pages/members-only' %}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div class="mp-wrap section-{{ section.id }}-padding" data-mypage data-profile-root>
+  <div class="mp-grid">
+
+    {% render 'mypage-sidebar', active: 'profile' %}
+
+    <main class="mp-main">
+
+      <header class="ob-header">
+        <h2 class="mp-h2">Profile</h2>
+        <p class="ob-header__sub">Manage your personal information, password, and saved cards.</p>
+      </header>
+
+      {%- if customer -%}
+
+        <!-- ═══════════════════════════
+             FORM: Profile + Contact + Password
+             (single Shopify customer form)
+             ═══════════════════════════ -->
+        {%- form 'customer', customer -%}
+
+          {%- if form.errors -%}
+            <div class="pf-alert pf-alert--error" role="alert">
+              {%- for field in form.errors -%}
+                <p>{{ form.errors.messages[field] }}</p>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+
+          {%- if form.posted_successfully? -%}
+            <div class="pf-alert pf-alert--success" role="status">
+              Profile updated successfully.
+            </div>
+          {%- endif -%}
+
+          <!-- ── Profile Information ── -->
+          <div class="pf-card">
+            <h2 class="pf-card__title">Profile Information</h2>
+
+            <div class="pf-row pf-row--2">
+              <div class="pf-field">
+                <label class="pf-label" for="pf-first-name">First Name</label>
+                <input
+                  id="pf-first-name"
+                  class="pf-input"
+                  type="text"
+                  name="customer[first_name]"
+                  value="{{ customer.first_name | escape }}"
+                  autocomplete="given-name"
+                >
+              </div>
+              <div class="pf-field">
+                <label class="pf-label" for="pf-last-name">Last Name</label>
+                <input
+                  id="pf-last-name"
+                  class="pf-input"
+                  type="text"
+                  name="customer[last_name]"
+                  value="{{ customer.last_name | escape }}"
+                  autocomplete="family-name"
+                >
+              </div>
+            </div>
+
+            <div class="pf-row pf-row--2">
+              <div class="pf-field">
+                <label class="pf-label" for="pf-phone">Phone Number</label>
+                <input
+                  id="pf-phone"
+                  class="pf-input"
+                  type="tel"
+                  name="customer[phone]"
+                  value="{{ customer.phone | escape }}"
+                  placeholder="+1 234 567 8900"
+                  autocomplete="tel"
+                >
+              </div>
+              <div class="pf-field">
+                <label class="pf-label" for="pf-email">Email Address</label>
+                <div class="pf-input-wrap">
+                  <input
+                    id="pf-email"
+                    class="pf-input pf-input--readonly"
+                    type="email"
+                    value="{{ customer.email | escape }}"
+                    readonly
+                    aria-describedby="pf-email-note"
+                  >
+                  <span class="pf-input-lock" aria-hidden="true">🔒</span>
+                </div>
+                <p class="pf-note" id="pf-email-note">Cannot be changed. Contact support if needed.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Password ── -->
+          <div class="pf-card">
+            <h2 class="pf-card__title">Change Password</h2>
+            <p class="pf-card__sub">Leave blank to keep your current password.</p>
+
+            <div class="pf-row pf-row--2">
+              <div class="pf-field">
+                <label class="pf-label" for="pf-password">New Password</label>
+                <div class="pf-input-wrap">
+                  <input
+                    id="pf-password"
+                    class="pf-input"
+                    type="password"
+                    name="customer[password]"
+                    autocomplete="new-password"
+                    placeholder="Min 5 characters"
+                    data-pf-pw
+                  >
+                  <button class="pf-pw-toggle" type="button" aria-label="Show password" data-pf-pw-toggle>
+                    <svg class="pf-pw-icon pf-pw-icon--show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="pf-pw-icon pf-pw-icon--hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="pf-field">
+                <label class="pf-label" for="pf-password-confirm">Confirm New Password</label>
+                <div class="pf-input-wrap">
+                  <input
+                    id="pf-password-confirm"
+                    class="pf-input"
+                    type="password"
+                    name="customer[password_confirmation]"
+                    autocomplete="new-password"
+                    placeholder="Re-enter password"
+                    data-pf-pw-confirm
+                  >
+                  <button class="pf-pw-toggle" type="button" aria-label="Show confirm password" data-pf-pw-confirm-toggle>
+                    <svg class="pf-pw-icon pf-pw-icon--show" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="pf-pw-icon pf-pw-icon--hide" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Save Changes CTA ── -->
+          <div class="pf-save-row">
+            <button class="pf-btn-save" type="submit">Save Changes</button>
+          </div>
+
+        {%- endform -%}
+
+        <!-- ═══════════════════════════
+             SAVED CARDS (JS-managed)
+             ═══════════════════════════ -->
+        <div class="pf-card pf-card--cards" id="PfSavedCards">
+          <div class="pf-card__head">
+            <h2 class="pf-card__title">Saved Cards</h2>
+            <button class="pf-btn-add-card" type="button" id="PfAddCard">+ Add Card</button>
+          </div>
+
+          <!-- Card list (rendered by JS) -->
+          <div class="pf-card-list" id="PfCardList">
+            <p class="pf-card-empty" id="PfCardEmpty">No saved cards yet.</p>
+          </div>
+
+          <!-- Add card form (hidden by default) -->
+          <form class="pf-add-card-form" id="PfAddCardForm" hidden novalidate>
+            <h3 class="pf-add-card-form__title">New Card</h3>
+            <div class="pf-row pf-row--1">
+              <div class="pf-field">
+                <label class="pf-label" for="pfNewCardNum">Card Number</label>
+                <input id="pfNewCardNum" class="pf-input" type="text" inputmode="numeric" maxlength="19" placeholder="•••• •••• •••• ••••" data-card-num autocomplete="cc-number">
+              </div>
+            </div>
+            <div class="pf-row pf-row--3">
+              <div class="pf-field">
+                <label class="pf-label" for="pfNewCardExp">MM / YY</label>
+                <input id="pfNewCardExp" class="pf-input" type="text" inputmode="numeric" maxlength="5" placeholder="MM/YY" data-card-exp autocomplete="cc-exp">
+              </div>
+              <div class="pf-field">
+                <label class="pf-label" for="pfNewCardCvv">CVV</label>
+                <input id="pfNewCardCvv" class="pf-input" type="text" inputmode="numeric" maxlength="4" placeholder="•••" data-card-cvv autocomplete="cc-csc">
+              </div>
+              <div class="pf-field">
+                <label class="pf-label" for="pfNewCardName">Name on Card</label>
+                <input id="pfNewCardName" class="pf-input" type="text" placeholder="Full name" data-card-name autocomplete="cc-name">
+              </div>
+            </div>
+            <div class="pf-add-card-actions">
+              <button class="pf-btn-secondary" type="button" id="PfCancelCard">Cancel</button>
+              <button class="pf-btn-save" type="submit" id="PfSaveCard">Save Card</button>
+            </div>
+          </form>
+        </div>
+
+      {%- else -%}
+        <div class="pf-login-prompt">
+          <p>Please log in to view your profile.</p>
+          <a href="{{ routes.account_login_url }}" class="pf-btn-save">Login</a>
+        </div>
+      {%- endif -%}
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══════ DELETE CONFIRMATION MODAL ═══════ -->
+<div class="pf-modal" id="PfDeleteModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="PfDeleteModalTitle">
+  <div class="pf-modal__backdrop" id="PfModalBackdrop"></div>
+  <div class="pf-modal__card">
+    <h3 class="pf-modal__title" id="PfDeleteModalTitle">Delete Card</h3>
+    <p class="pf-modal__body">Are you sure you want to delete this card? This action cannot be undone.</p>
+    <div class="pf-modal__actions">
+      <button class="pf-btn-secondary" type="button" id="PfModalCancel">Cancel</button>
+      <button class="pf-btn-delete" type="button" id="PfModalConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── Layout ── */
+.mp-wrap {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --radius: 16px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: var(--bg);
+  color: var(--text);
+}
+.mp-main { min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+
+/* ── Alert banners ── */
+.pf-alert {
+  padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 600;
+  margin-bottom: 4px;
+}
+.pf-alert--error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.pf-alert--success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+
+/* ── Cards (sections) ── */
+.pf-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 28px;
+}
+.pf-card__head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.pf-card__title {
+  margin: 0 0 18px; font-size: 17px; font-weight: 800; color: var(--text);
+}
+.pf-card__head .pf-card__title { margin: 0; }
+.pf-card__sub { margin: -12px 0 18px; font-size: 13px; color: var(--muted); }
+
+/* ── Form grid ── */
+.pf-row { display: grid; gap: 16px; margin-bottom: 16px; }
+.pf-row--1 { grid-template-columns: 1fr; }
+.pf-row--2 { grid-template-columns: 1fr 1fr; }
+.pf-row--3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.pf-field { display: flex; flex-direction: column; }
+.pf-label {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  margin-bottom: 7px;
+}
+
+/* ── Inputs ── */
+.pf-input-wrap { position: relative; }
+.pf-input {
+  width: 100%; height: 46px;
+  padding: 0 14px; box-sizing: border-box;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  background: #fff; color: var(--text);
+  font-size: 14px; font-weight: 500;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  appearance: none;
+}
+.pf-input:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+.pf-input--readonly {
+  background: #f8fafc; color: var(--muted);
+  cursor: not-allowed; padding-right: 42px;
+}
+.pf-input-lock {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; pointer-events: none;
+}
+
+/* Password toggle */
+.pf-input-wrap .pf-input { padding-right: 46px; }
+.pf-pw-toggle {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; padding: 4px; color: var(--muted);
+  display: flex; align-items: center;
+}
+.pf-pw-toggle:hover { color: var(--primary); }
+.pf-pw-icon { display: block; }
+
+/* Select */
+.pf-select-wrap { position: relative; }
+.pf-select { padding-right: 36px; cursor: pointer; }
+.pf-select-chevron {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.pf-note { margin: 6px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* ── Save CTA ── */
+.pf-save-row { display: flex; justify-content: flex-end; }
+.pf-btn-save {
+  height: 48px; padding: 0 36px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: 999px;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  transition: background 0.18s, transform 0.15s;
+}
+.pf-btn-save:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+/* ── Add Card button ── */
+.pf-btn-add-card {
+  padding: 8px 18px; background: #f0f4ff; color: var(--primary);
+  border: 1.5px solid #c7d2fe; border-radius: 999px;
+  font-size: 13px; font-weight: 800; cursor: pointer;
+  transition: background 0.18s;
+}
+.pf-btn-add-card:hover { background: #e0e7ff; }
+
+/* ── Saved card items (JS rendered) ── */
+.pf-card-list { display: flex; flex-direction: column; gap: 12px; }
+.pf-card-empty { font-size: 14px; color: var(--muted); text-align: center; padding: 20px 0; margin: 0; }
+
+.pf-saved-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border: 1.5px solid var(--border);
+  border-radius: 12px; background: #fafbfc;
+}
+.pf-saved-card__chip {
+  width: 38px; height: 26px; border-radius: 5px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  flex-shrink: 0;
+}
+.pf-saved-card__info { flex: 1; min-width: 0; }
+.pf-saved-card__num { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: 0.1em; }
+.pf-saved-card__meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pf-saved-card__actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.pf-btn-edit {
+  padding: 6px 14px; border: 1.5px solid var(--border);
+  background: #fff; color: var(--text); border-radius: 8px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.pf-btn-edit:hover { border-color: var(--primary); color: var(--primary); }
+
+.pf-btn-delete-card {
+  padding: 6px 14px; border: 1.5px solid #fecaca;
+  background: #fff5f5; color: #dc2626; border-radius: 8px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s;
+}
+.pf-btn-delete-card:hover { background: #fee2e2; }
+
+/* ── Add card form ── */
+.pf-add-card-form {
+  margin-top: 18px; padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.pf-add-card-form__title {
+  margin: 0 0 16px; font-size: 15px; font-weight: 800; color: var(--text);
+}
+.pf-add-card-actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;
+}
+.pf-btn-secondary {
+  height: 44px; padding: 0 24px;
+  background: #f1f5f9; color: var(--text);
+  border: 1.5px solid var(--border); border-radius: 999px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s;
+}
+.pf-btn-secondary:hover { background: #e2e8f0; }
+
+/* ── Delete confirmation modal ── */
+.pf-modal {
+  position: fixed; inset: 0; z-index: 9999;
+  display: grid; place-items: center; padding: 20px;
+}
+.pf-modal[aria-hidden="true"] { display: none; }
+.pf-modal__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(15,23,42,0.55); backdrop-filter: blur(3px);
+}
+.pf-modal__card {
+  position: relative; width: min(460px, 100%);
+  background: #fff; border-radius: 20px;
+  padding: 30px; box-shadow: 0 24px 60px rgba(15,23,42,0.25);
+}
+.pf-modal__title {
+  margin: 0 0 10px; font-size: 19px; font-weight: 900; color: var(--text);
+}
+.pf-modal__body {
+  margin: 0 0 22px; font-size: 14px; color: var(--muted); line-height: 1.6;
+}
+.pf-modal__actions { display: flex; justify-content: flex-end; gap: 10px; }
+.pf-btn-delete {
+  height: 44px; padding: 0 24px;
+  background: #dc2626; color: #fff;
+  border: none; border-radius: 999px;
+  font-size: 14px; font-weight: 800; cursor: pointer;
+  transition: background 0.15s;
+}
+.pf-btn-delete:hover { background: #b91c1c; }
+
+/* ── Login prompt ── */
+.pf-login-prompt {
+  padding: 80px 20px; text-align: center;
+  background: var(--card); border-radius: var(--radius);
+  font-weight: 700;
+}
+.pf-login-prompt p { margin-bottom: 16px; }
+
+/* ── Responsive ── */
+@media (max-width: 749px) {
+  .pf-row--2 { grid-template-columns: 1fr; }
+  .pf-row--3 { grid-template-columns: 1fr 1fr; }
+  .pf-card { padding: 20px 16px; }
+  .pf-save-row { justify-content: stretch; }
+  .pf-btn-save { width: 100%; }
+  .pf-saved-card { flex-wrap: wrap; }
+}
+@media (max-width: 480px) {
+  .pf-row--3 { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+(function () {
+  'use strict';
+
+  var root = document.querySelector('[data-profile-root]');
+  if (!root) return;
+
+  /* ─────────────────────────────────────────
+     Password visibility toggles
+  ───────────────────────────────────────── */
+  function initPwToggle(toggleBtn, inputEl) {
+    if (!toggleBtn || !inputEl) return;
+    toggleBtn.addEventListener('click', function () {
+      var isHidden = inputEl.type === 'password';
+      inputEl.type = isHidden ? 'text' : 'password';
+      var showIcon = toggleBtn.querySelector('.pf-pw-icon--show');
+      var hideIcon = toggleBtn.querySelector('.pf-pw-icon--hide');
+      if (showIcon) showIcon.hidden = isHidden;
+      if (hideIcon) hideIcon.hidden = !isHidden;
+      toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    });
+  }
+  initPwToggle(root.querySelector('[data-pf-pw-toggle]'), root.querySelector('[data-pf-pw]'));
+  initPwToggle(root.querySelector('[data-pf-pw-confirm-toggle]'), root.querySelector('[data-pf-pw-confirm]'));
+
+  /* ─────────────────────────────────────────
+     Card number formatter (live input mask)
+  ───────────────────────────────────────── */
+  var cardNumInput = root.querySelector('[data-card-num]');
+  if (cardNumInput) {
+    cardNumInput.addEventListener('input', function () {
+      var digits = this.value.replace(/\D/g, '').slice(0, 16);
+      this.value = digits.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+
+  var cardExpInput = root.querySelector('[data-card-exp]');
+  if (cardExpInput) {
+    cardExpInput.addEventListener('input', function () {
+      var v = this.value.replace(/\D/g, '').slice(0, 4);
+      if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+      this.value = v;
+    });
+  }
+
+  /* ─────────────────────────────────────────
+     Saved Cards — localStorage demo
+     (replace with real API calls when payment
+     gateway integration is available)
+  ───────────────────────────────────────── */
+  var STORAGE_KEY = 'ps_saved_cards_{{ customer.id | default: "guest" }}';
+  var cardList    = document.getElementById('PfCardList');
+  var cardEmpty   = document.getElementById('PfCardEmpty');
+  var addCardBtn  = document.getElementById('PfAddCard');
+  var addCardForm = document.getElementById('PfAddCardForm');
+  var cancelCardBtn = document.getElementById('PfCancelCard');
+
+  function loadCards() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveCards(cards) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  }
+
+  function maskNum(num) {
+    var digits = num.replace(/\s/g, '');
+    return '•••• •••• •••• ' + digits.slice(-4);
+  }
+
+  function renderCards() {
+    var cards = loadCards();
+    /* Remove existing card rows */
+    Array.prototype.slice.call(cardList.querySelectorAll('.pf-saved-card')).forEach(function (el) {
+      el.remove();
+    });
+    cardEmpty.hidden = cards.length > 0;
+
+    cards.forEach(function (card, idx) {
+      var row = document.createElement('div');
+      row.className = 'pf-saved-card';
+      row.setAttribute('data-card-idx', idx);
+      row.innerHTML =
+        '<div class="pf-saved-card__chip" aria-hidden="true"></div>' +
+        '<div class="pf-saved-card__info">' +
+          '<div class="pf-saved-card__num">' + maskNum(card.num) + '</div>' +
+          '<div class="pf-saved-card__meta">' +
+            (card.name ? card.name + ' · ' : '') + 'Exp ' + card.exp +
+            (card.cvv ? ' · CVV •••' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="pf-saved-card__actions">' +
+          '<button class="pf-btn-edit" type="button" data-edit-idx="' + idx + '">Edit Card</button>' +
+          '<button class="pf-btn-delete-card" type="button" data-delete-idx="' + idx + '">Delete</button>' +
+        '</div>';
+      cardList.insertBefore(row, cardEmpty);
+    });
+  }
+
+  /* Show / hide add-card form */
+  if (addCardBtn && addCardForm) {
+    addCardBtn.addEventListener('click', function () {
+      addCardForm.hidden = !addCardForm.hidden;
+      if (!addCardForm.hidden) {
+        addCardBtn.textContent = '− Cancel';
+        addCardForm.querySelector('[data-card-num]').focus();
+      } else {
+        addCardBtn.textContent = '+ Add Card';
+        addCardForm.reset();
+      }
+    });
+  }
+  if (cancelCardBtn && addCardForm) {
+    cancelCardBtn.addEventListener('click', function () {
+      addCardForm.hidden = true;
+      if (addCardBtn) addCardBtn.textContent = '+ Add Card';
+      addCardForm.reset();
+    });
+  }
+
+  /* Save new card */
+  if (addCardForm) {
+    addCardForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var num  = (addCardForm.querySelector('[data-card-num]').value  || '').trim();
+      var exp  = (addCardForm.querySelector('[data-card-exp]').value  || '').trim();
+      var cvv  = (addCardForm.querySelector('[data-card-cvv]').value  || '').trim();
+      var name = (addCardForm.querySelector('[data-card-name]').value || '').trim();
+      if (!num || !exp) return;
+      var cards = loadCards();
+      cards.push({ num: num.replace(/\s/g, ''), exp: exp, cvv: cvv, name: name });
+      saveCards(cards);
+      addCardForm.hidden = true;
+      if (addCardBtn) addCardBtn.textContent = '+ Add Card';
+      addCardForm.reset();
+      renderCards();
+    });
+  }
+
+  /* ─────────────────────────────────────────
+     Delete confirmation modal
+  ───────────────────────────────────────── */
+  var deleteModal   = document.getElementById('PfDeleteModal');
+  var modalBackdrop = document.getElementById('PfModalBackdrop');
+  var modalCancel   = document.getElementById('PfModalCancel');
+  var modalConfirm  = document.getElementById('PfModalConfirm');
+  var pendingDeleteIdx = -1;
+
+  function openDeleteModal(idx) {
+    pendingDeleteIdx = idx;
+    deleteModal.setAttribute('aria-hidden', 'false');
+    modalConfirm.focus();
+  }
+  function closeDeleteModal() {
+    pendingDeleteIdx = -1;
+    deleteModal.setAttribute('aria-hidden', 'true');
+  }
+
+  if (modalBackdrop) modalBackdrop.addEventListener('click', closeDeleteModal);
+  if (modalCancel)   modalCancel.addEventListener('click', closeDeleteModal);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && deleteModal && deleteModal.getAttribute('aria-hidden') === 'false') {
+      closeDeleteModal();
+    }
+  });
+
+  if (modalConfirm) {
+    modalConfirm.addEventListener('click', function () {
+      if (pendingDeleteIdx < 0) return;
+      var cards = loadCards();
+      cards.splice(pendingDeleteIdx, 1);
+      saveCards(cards);
+      closeDeleteModal();
+      renderCards();
+    });
+  }
+
+  /* Delegate edit / delete clicks on card list */
+  if (cardList) {
+    cardList.addEventListener('click', function (e) {
+      var deleteBtn = e.target.closest('[data-delete-idx]');
+      if (deleteBtn) {
+        openDeleteModal(Number(deleteBtn.getAttribute('data-delete-idx')));
+        return;
+      }
+      var editBtn = e.target.closest('[data-edit-idx]');
+      if (editBtn) {
+        var idx   = Number(editBtn.getAttribute('data-edit-idx'));
+        var cards = loadCards();
+        var card  = cards[idx];
+        if (!card) return;
+        /* Populate form with existing card data */
+        var numInput  = addCardForm.querySelector('[data-card-num]');
+        var expInput  = addCardForm.querySelector('[data-card-exp]');
+        var cvvInput  = addCardForm.querySelector('[data-card-cvv]');
+        var nameInput = addCardForm.querySelector('[data-card-name]');
+        /* Format stored num into groups */
+        numInput.value  = card.num.replace(/(.{4})/g, '$1 ').trim();
+        expInput.value  = card.exp;
+        cvvInput.value  = card.cvv || '';
+        nameInput.value = card.name || '';
+        /* Remove old card and show form to "save" as new */
+        cards.splice(idx, 1);
+        saveCards(cards);
+        renderCards();
+        addCardForm.hidden = false;
+        if (addCardBtn) addCardBtn.textContent = '− Cancel';
+        numInput.focus();
+      }
+    });
+  }
+
+  /* Initial render */
+  renderCards();
+})();
+</script>
+
+
+{%- else -%}
+  {% render 'member-login-required' %}
+{%- endif -%}
+{% schema %}
+{
+  "name": "Profile",
+  "settings": [
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 36
+    }
+  ],
+  "presets": [{ "name": "Profile" }]
+}
+{% endschema %}

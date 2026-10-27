@@ -1,0 +1,62 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "theme",
+  "sections": {
+    "guide_thankyou": {
+      "type": "ps-guide-thankyou",
+      "settings": {
+        "headline": "Thanks for signing up!",
+        "sub": "You've taken the first step toward a smarter Korea trip.",
+        "step1_title": "Check Your Email",
+        "step1_desc": "Your free Korea travel info has been sent to your inbox.",
+        "step2_title": "Download Your Government-Certified Korea Guide",
+        "step2_desc": "The attached guide is provided exclusively for you. Please do not share it externally.",
+        "step2_note": "Do not share this content with others.",
+        "starter_video_title": "Watch the Starter Kit Video",
+        "starter_video_desc": "Open the video viewer to watch your Starter Kit.",
+        "starter_video_label": "Watch video",
+        "starter_video_url": "/pages/starter-kit-viewer",
+        "feature_eyebrow": "Everything You Need",
+        "feature_title": "Curious about Korean Food & Landmarks?",
+        "feature_desc": "From food and city landmarks to activities, traditional culture, and wellness — everything you need for your Korea trip is right here.",
+        "card1_title": "You Won't Be Clueless",
+        "card1_desc": "Basic etiquette, cultural know-how & local tips",
+        "card1_emoji": "🍽️",
+        "card2_title": "You're a Korean Food Master",
+        "card2_desc": "Signature dishes, noodles, soups, seafood, BBQ, drinks & desserts",
+        "card2_emoji": "🍜",
+        "card3_title": "You Won't Get Lost",
+        "card3_desc": "Transportation guide & must-have apps",
+        "card3_emoji": "🚇",
+        "card4_title": "Explore Diverse Cities",
+        "card4_desc": "Busan, Gyeongju, Jeju, Incheon, Gangwon",
+        "card4_emoji": "🏙️",
+        "card5_title": "City-by-City Landmarks",
+        "card5_desc": "Seoul, Gyeongju, Jeju, Incheon, Gangwon",
+        "card5_emoji": "🗺️",
+        "card6_title": "Korean Entertainment",
+        "card6_desc": "K-pop, theme parks, ski resorts, beauty & tradition",
+        "card6_emoji": "🎤",
+        "card7_title": "Traditional Korea Spots",
+        "card7_desc": "Curated heritage & cultural site recommendations",
+        "card7_emoji": "⛩️",
+        "card8_title": "Korean Wellness",
+        "card8_desc": "Hiking, yoga, spa & more",
+        "card8_emoji": "🧘",
+        "cta_title": "Ready to Start Planning Your Korea Trip?",
+        "cta_label": "Go to Main Page →"
+      }
+    }
+  },
+  "order": [
+    "guide_thankyou"
+  ]
+}

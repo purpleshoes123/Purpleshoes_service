@@ -1,0 +1,79 @@
+{% comment %}
+  Unified My Page sidebar navigation
+  active: orders | coupons | map | guide | help
+{% endcomment %}
+{% liquid
+  assign current_label = 'Orders & Bookings'
+  if active == 'coupons'
+    assign current_label = 'My Coupons'
+  elsif active == 'guide'
+    assign current_label = 'Guide Viewer'
+  elsif active == 'map'
+    assign current_label = 'Purple Map'
+  elsif active == 'help'
+    assign current_label = 'Help Center'
+  endif
+%}
+<div class="mp-mobile-nav" data-mp-mobile-nav>
+  <div class="mp-mobile-nav__header">
+    <label class="mp-mobile-nav__label" for="MpMobileNavSelect">My Page Menu</label>
+    {% if customer %}
+      {{ 'customer.log_out' | t | customer_logout_link | replace: 'id="customer_logout_link"', 'id="mobile_customer_logout_link" class="mp-mobile-nav__logout"' }}
+    {% endif %}
+  </div>
+  {% stylesheet %}
+    .mp-mobile-nav__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    [data-mypage] .mp-mobile-nav__header .mp-mobile-nav__label { margin: 0; }
+    .mp-mobile-nav__logout { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; flex-shrink: 0; padding: 0 16px; border: 1px solid #d8ccef; border-radius: 999px; background: #fff; color: #5929cc; font-size: 14px; font-weight: 700; text-decoration: none; }
+    .mp-mobile-nav__logout:hover { background: #f3efff; }
+    .mp-mobile-nav__logout:focus-visible { outline: 2px solid #5929cc; outline-offset: 3px; }
+  {% endstylesheet %}
+  <div class="mp-mobile-nav__control">
+    <select
+      id="MpMobileNavSelect"
+      class="mp-mobile-nav__select"
+      aria-label="My page navigation"
+      onchange="if (this.value) window.location.href = this.value;"
+    >
+      <option value="/pages/orders-bookings"{% if active == 'orders' %} selected{% endif %}>Orders &amp; Bookings</option>
+      <option value="/pages/coupons"{% if active == 'coupons' %} selected{% endif %}>My Coupons</option>
+      <option value="/pages/pdfviewer"{% if active == 'guide' %} selected{% endif %}>Guide Viewer</option>
+      <option value="/pages/tasty-map"{% if active == 'map' %} selected{% endif %}>Purple Map</option>
+      <option value="/pages/helpcenter"{% if active == 'help' %} selected{% endif %}>Help Center</option>
+    </select>
+    <span class="mp-mobile-nav__chevron" aria-hidden="true"></span>
+  </div>
+</div>
+<aside class="mp-side">
+  <div class="mp-side__hello">
+    <div class="mp-side__helloInner">
+      <p class="mp-hello">
+        Hello, Smart Traveler<br>
+        <strong>
+          {% if customer %}
+            {%- assign member_first_name = customer.first_name | strip -%}
+            {%- assign member_last_name = customer.last_name | strip -%}
+            {%- if member_first_name contains '@' -%}{%- assign member_first_name = '' -%}{%- endif -%}
+            {%- if member_last_name contains '@' -%}{%- assign member_last_name = '' -%}{%- endif -%}
+            {%- assign member_display_name = member_first_name | append: ' ' | append: member_last_name | strip -%}
+            {{- member_display_name | default: 'Traveler' | escape -}}
+          {% else %}
+            Traveler
+          {% endif %}
+        </strong>
+      </p>
+    </div>
+  </div>
+
+  <nav class="mp-nav" aria-label="My page navigation">
+    <a class="mp-navItem{% if active == 'orders' %} is-active{% endif %}" href="/pages/orders-bookings">Orders &amp; Bookings</a>
+    <a class="mp-navItem{% if active == 'coupons' %} is-active{% endif %}" href="/pages/coupons">My Coupons</a>
+    <a class="mp-navItem{% if active == 'guide' %} is-active{% endif %}" href="/pages/pdfviewer">Guide Viewer</a>
+    <a class="mp-navItem{% if active == 'map' %} is-active{% endif %}" href="/pages/tasty-map">Purple Map</a>
+    <a class="mp-navItem{% if active == 'help' %} is-active{% endif %}" href="/pages/helpcenter">Help Center</a>
+  </nav>
+
+  <div class="mp-logout-wrap">
+    {{ 'Logout' | customer_logout_link | replace: '<a ', '<a class="mp-logout" ' }}
+  </div>
+</aside>

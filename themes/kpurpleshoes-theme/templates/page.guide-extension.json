@@ -1,0 +1,26 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-guide-extension",
+      "settings": {
+        "eyebrow": "MY PAGE",
+        "title": "Extend Access Period",
+        "intro": "<p>The expiration date is updated only after payment is completed.</p><p>Unpaid draft orders do not affect the expiration date.</p><p>Expired entitlements cannot be extended.</p><p>Extensions are available in 1-month increments, up to 24 months at a time.</p>",
+        "login_prompt": "Please sign in to continue.",
+        "login_cta": "Sign in",
+        "padding_top": 0,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": ["main"]
+}

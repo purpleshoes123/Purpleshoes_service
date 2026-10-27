@@ -1,0 +1,171 @@
+{% liquid
+  assign return_to = request.path | default: '/'
+  assign encoded_return = return_to | url_encode
+  assign customer_auth_login_path = '/customer_authentication/login'
+  assign login_url = customer_auth_login_path | append: '?return_to=' | append: encoded_return
+  assign home_url = section.settings.home_url | default: routes.root_url
+%}
+
+<section class="member-gate page-width section-{{ section.id }}-padding">
+  <div class="member-gate__card">
+    <p class="member-gate__eyebrow">{{ section.settings.eyebrow }}</p>
+    <h1 class="member-gate__title">{{ section.settings.title }}</h1>
+    <p class="member-gate__body">{{ section.settings.body }}</p>
+    <div class="member-gate__actions">
+      <a class="button button--primary" href="{{ login_url }}" data-member-gate-login>
+        {{ section.settings.login_label }}
+      </a>
+      <a class="button button--secondary" href="{{ home_url }}">
+        {{ section.settings.home_label }}
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function() {
+    var loginLink = document.querySelector('[data-member-gate-login]');
+    if (!loginLink) return;
+
+    var params = new URLSearchParams(window.location.search);
+    var returnTo = params.get('return_to');
+    var fromQs = params.get('from_qs');
+    if (!returnTo) return;
+    if (fromQs) {
+      returnTo += (returnTo.indexOf('?') === -1 ? '?' : '&') + fromQs;
+    }
+
+    var base = {{ customer_auth_login_path | json }};
+    loginLink.href = base + '?return_to=' + encodeURIComponent(returnTo);
+  })();
+</script>
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .member-gate {
+    max-width: 760px;
+    text-align: center;
+  }
+
+  .member-gate__card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    padding: 40px 28px;
+  }
+
+  .member-gate__eyebrow {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6366f1;
+  }
+
+  .member-gate__title {
+    margin: 0 0 12px;
+    font-size: clamp(28px, 3.5vw, 40px);
+    line-height: 1.15;
+  }
+
+  .member-gate__body {
+    margin: 0 auto 28px;
+    max-width: 560px;
+    color: #475569;
+    line-height: 1.6;
+  }
+
+  .member-gate__actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+{%- endstyle -%}
+
+{% schema %}
+{
+  "name": "Members only gate",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "MEMBERS ONLY"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "This page is available to members only"
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Description",
+      "default": "Please sign in first. After login, you will be redirected back to the page you tried to open."
+    },
+    {
+      "type": "text",
+      "id": "login_label",
+      "label": "Login button label",
+      "default": "Sign in and continue"
+    },
+    {
+      "type": "text",
+      "id": "home_label",
+      "label": "Home button label",
+      "default": "Go to home"
+    },
+    {
+      "type": "url",
+      "id": "home_url",
+      "label": "Home URL"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 64
+    }
+  ],
+  "presets": [
+    {
+      "name": "Members only gate"
+    }
+  ]
+}
+{% endschema %}

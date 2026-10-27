@@ -1,0 +1,623 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model WebhookEvent {
+  id           String    @id @default(uuid())
+  topic        String
+  eventKey     String    @unique
+  orderId      String?
+  payloadJson  String    // JSON string of the raw payload
+  payloadHash  String    // SHA256 hash of raw body
+  normalizedStatus   String?  // TERMINAL_SUCCESS, TERMINAL_FAIL_RELEASE, TERMINAL_REFUND_RELEASE, NON_TERMINAL
+  extractedHoldIds   String?  // JSON array string
+  extractedAttemptIds String? // JSON array string
+  evaluationError    String?
+  releaseResults     String?  // JSON array string (per-hold release result)
+  releaseStatus      String?  // SUCCESS/SKIPPED/FAILED/PARTIAL/DRYRUN
+  releaseReason      String?  // normalizedStatus or skip reason
+  releaseRetryCount  Int      @default(0)
+  releaseLastError   String?
+  releaseLastAttemptAt DateTime?
+  status       String    @default("PENDING") // PENDING, PROCESSED, FAILED
+  error        String?
+  receivedAt   DateTime  @default(now())
+  processedAt  DateTime?
+
+  @@index([topic])
+  @@index([orderId])
+  @@index([eventKey])
+  @@index([status])
+  @@index([receivedAt])
+}
+
+model GuideEntitlementLog {
+  id               String   @id @default(cuid())
+  shop             String
+  topic            String
+  customerId       String
+  entitlementType  String
+  eventType        String
+  monthsDelta      Int
+  orderId          String?
+  refundId         String?
+  baseExpiresAt    DateTime?
+  previousExpiresAt DateTime?
+  newExpiresAt     DateTime?
+  status           String
+  errorCode        String?
+  errorMessage     String?
+  rawRef           String?
+  createdAt        DateTime @default(now())
+
+  @@index([shop, customerId, createdAt])
+  @@index([shop, orderId])
+  @@index([shop, refundId])
+  @@index([shop, status, createdAt])
+}
+
+// A durable, order-scoped outbox. Never automatically retry UNKNOWN delivery.
+model PurchaseEmailOutbox {
+  id               String    @id
+  shopDomain       String    @map("shop_domain")
+  orderId          String    @map("order_id")
+  kind             String
+  entitlementTypes String    @map("entitlement_types")
+  status           String    @default("PENDING")
+  attempts         Int       @default(0)
+  availableAt      DateTime  @default(now()) @map("available_at")
+  claimedAt        DateTime? @map("claimed_at")
+  claimToken       String?   @map("claim_token")
+  lastError        String?   @map("last_error")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@unique([shopDomain, orderId, kind], map: "ux_purchase_email_order_kind")
+  @@index([status, availableAt], map: "idx_purchase_email_pending")
+  @@map("purchase_email_outbox")
+}
+
+model MailTemplate {
+  id             String    @id @default(cuid())
+  shopDomain     String    @map("shop_domain")
+  name           String
+  slug           String
+  subject        String
+  htmlBody       String    @map("html_body")
+  textBody       String?   @map("text_body")
+  fromName       String?   @map("from_name")
+  replyTo        String?   @map("reply_to")
+  isActive       Boolean   @default(true) @map("is_active")
+  attachmentMode String    @default("NONE") @map("attachment_mode")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  @@index([shopDomain, isActive], map: "idx_mail_templates_shop_active")
+  @@index([shopDomain, updatedAt], map: "idx_mail_templates_shop_updated")
+  @@index([deletedAt], map: "idx_mail_templates_deleted")
+  @@map("mail_templates")
+}
+
+model MailTemplateAttachment {
+  id            String   @id @default(cuid())
+  templateId    String   @map("template_id")
+  storageType   String   @map("storage_type")
+  shopifyFileId String?  @map("shopify_file_id")
+  fileUrl       String   @map("file_url")
+  fileName      String   @map("file_name")
+  mimeType      String   @map("mime_type")
+  fileSizeBytes Int      @map("file_size_bytes")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([templateId], map: "idx_mail_template_attachments_template")
+  @@index([templateId, sortOrder], map: "idx_mail_template_attachments_template_sort")
+  @@map("mail_template_attachments")
+}
+
+model MailSendRequest {
+  id                String    @id @default(cuid())
+  shopDomain        String    @map("shop_domain")
+  templateId        String    @map("template_id")
+  requestSource     String    @default("STOREFRONT_PAGE") @map("request_source")
+  requestKey        String?   @map("request_key")
+  recipientEmail    String    @map("recipient_email")
+  recipientName     String?   @map("recipient_name")
+  recaptchaAction   String?   @map("recaptcha_action")
+  recaptchaScore    Float?    @map("recaptcha_score")
+  recaptchaSuccess  Boolean?  @map("recaptcha_success")
+  status            String    @default("PENDING")
+  failureCode       String?   @map("failure_code")
+  failureReason     String?   @map("failure_reason")
+  emailProvider     String    @default("AWS_SES") @map("email_provider")
+  providerMessageId String?   @map("provider_message_id")
+  userAgent         String?   @map("user_agent")
+  ipHash            String?   @map("ip_hash")
+  pagePath          String?   @map("page_path")
+  templateNameSnapshot String? @map("template_name_snapshot")
+  templateSlugSnapshot String? @map("template_slug_snapshot")
+  attachmentModeSnapshot String? @map("attachment_mode_snapshot")
+  subjectSnapshot   String?   @map("subject_snapshot")
+  htmlBodySnapshot  String?   @map("html_body_snapshot")
+  textBodySnapshot  String?   @map("text_body_snapshot")
+  fromNameSnapshot  String?   @map("from_name_snapshot")
+  replyToSnapshot   String?   @map("reply_to_snapshot")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  sentAt            DateTime? @map("sent_at")
+  metaLeadClaimedAt DateTime? @map("meta_lead_claimed_at")
+
+  @@index([shopDomain, createdAt], map: "idx_mail_send_requests_shop_created")
+  @@index([shopDomain, status, createdAt], map: "idx_mail_send_requests_shop_status_created")
+  @@index([shopDomain, templateId, createdAt], map: "idx_mail_send_requests_shop_template_created")
+  @@index([shopDomain, recipientEmail, createdAt], map: "idx_mail_send_requests_shop_recipient_created")
+  @@index([shopDomain, pagePath, createdAt], map: "idx_mail_send_requests_shop_page_created")
+  @@index([requestSource], map: "idx_mail_send_requests_source")
+  @@index([recaptchaScore], map: "idx_mail_send_requests_recaptcha_score")
+  @@map("mail_send_requests")
+}
+
+model MailSendRequestAttachment {
+  id                    String   @id @default(cuid())
+  sendRequestId         String   @map("send_request_id")
+  templateAttachmentId  String?  @map("template_attachment_id")
+  resolvedFileUrl       String   @map("resolved_file_url")
+  resolvedFileName      String   @map("resolved_file_name")
+  resolvedMimeType      String   @map("resolved_mime_type")
+  resolvedFileSizeBytes Int      @map("resolved_file_size_bytes")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  @@index([sendRequestId], map: "idx_mail_send_request_attachments_send_request")
+  @@index([templateAttachmentId], map: "idx_mail_send_request_attachments_template_attachment")
+  @@map("mail_send_request_attachments")
+}
+
+model MailRateLimitCounter {
+  id            String   @id @default(cuid())
+  shopDomain    String   @map("shop_domain")
+  targetType    String   @map("target_type")
+  targetKey     String   @map("target_key")
+  windowStartAt DateTime @map("window_start_at")
+  windowEndAt   DateTime @map("window_end_at")
+  requestCount  Int      @default(0) @map("request_count")
+  blockedCount  Int      @default(0) @map("blocked_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([shopDomain, targetType, targetKey, windowStartAt], map: "ux_mail_rate_limit_counters_scope_window")
+  @@index([shopDomain, targetType, windowEndAt], map: "idx_mail_rate_limit_counters_scope_end")
+  @@index([shopDomain, updatedAt], map: "idx_mail_rate_limit_counters_shop_updated")
+  @@map("mail_rate_limit_counters")
+}
+
+model MailRecipientSuppression {
+  id                  String   @id @default(cuid())
+  shopDomain          String   @map("shop_domain")
+  recipientEmail      String   @map("recipient_email")
+  sourceSendRequestId String?  @map("source_send_request_id")
+  unsubscribedAt      DateTime @default(now()) @map("unsubscribed_at")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@unique([shopDomain, recipientEmail], map: "ux_mail_recipient_suppressions_shop_email")
+  @@index([shopDomain, unsubscribedAt], map: "idx_mail_recipient_suppressions_shop_unsubscribed")
+  @@map("mail_recipient_suppressions")
+}
+
+model GkvCategory {
+  id        String   @id
+  kind      String   @default("SHARED")
+  parentId  String?  @map("parent_id")
+  depth     Int
+  name      String
+  slug      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  exposeAsGuide Boolean @default(false) @map("expose_as_guide")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([kind], map: "idx_gkv_categories_kind")
+  @@index([parentId], map: "idx_gkv_categories_parent")
+  @@index([depth], map: "idx_gkv_categories_depth")
+  @@index([exposeAsGuide], map: "idx_gkv_categories_expose")
+  @@map("gkv_categories")
+}
+
+model GkvAsset {
+  id                String   @id
+  kind              String
+  title             String
+  description       String?
+  isActive          Boolean  @default(true) @map("is_active")
+  s3Bucket          String   @map("s3_bucket")
+  s3Key             String   @map("s3_key")
+  mimeType          String   @map("mime_type")
+  sizeBytes         BigInt?  @map("size_bytes")
+  checksumSha256    String?  @map("checksum_sha256")
+  durationSec       Int?     @map("duration_sec")
+  thumbnailBucket   String?  @map("thumbnail_bucket")
+  thumbnailKey      String?  @map("thumbnail_key")
+  thumbnailMimeType String?  @map("thumbnail_mime_type")
+  thumbnailSizeBytes BigInt? @map("thumbnail_size_bytes")
+  status            String   @default("UPLOADING")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([kind], map: "idx_gkv_assets_kind")
+  @@index([isActive], map: "idx_gkv_assets_active")
+  @@index([status], map: "idx_gkv_assets_status")
+  @@map("gkv_assets")
+}
+
+model GkvAssetCategory {
+  assetId    String @map("asset_id")
+  categoryId String @map("category_id")
+
+  @@id([assetId, categoryId])
+  @@index([categoryId], map: "idx_gkv_asset_categories_category")
+  @@map("gkv_asset_categories")
+}
+
+model GkvGuide {
+  id           String   @id
+  title        String
+  type         String
+  thumbnailUrl String?  @map("thumbnail_url")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([type], map: "idx_gkv_guides_type")
+  @@index([isActive], map: "idx_gkv_guides_active")
+  @@map("gkv_guides")
+}
+
+model GkvGuideAsset {
+  guideId String @map("guide_id")
+  assetId String @map("asset_id")
+  role    String
+
+  @@id([guideId, role])
+  @@index([assetId], map: "idx_gkv_guide_assets_asset")
+  @@map("gkv_guide_assets")
+}
+
+model GkvRestaurantList {
+  id        String   @id
+  title     String
+  city      String?
+  country   String?
+  version   Int      @default(1)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive], map: "idx_gkv_restaurant_lists_active")
+  @@map("gkv_restaurant_lists")
+}
+
+model GkvRestaurantItem {
+  id                      String   @id
+  listId                  String   @map("list_id")
+  name                    String
+  category                String?
+  address                 String?
+  lat                     Float
+  lng                     Float
+  tags                    String?
+  memo                    String?
+  priority                Int      @default(0)
+  mapUrl                  String?  @map("map_url")
+  photoOriginalBucket     String?  @map("photo_original_bucket")
+  photoOriginalKey        String?  @map("photo_original_key")
+  photoOriginalMimeType   String?  @map("photo_original_mime_type")
+  photoOriginalSizeBytes  BigInt?  @map("photo_original_size_bytes")
+  photoThumbnailBucket    String?  @map("photo_thumbnail_bucket")
+  photoThumbnailKey       String?  @map("photo_thumbnail_key")
+  photoThumbnailMimeType  String?  @map("photo_thumbnail_mime_type")
+  photoThumbnailSizeBytes BigInt?  @map("photo_thumbnail_size_bytes")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  @@index([listId], map: "idx_gkv_restaurant_items_list")
+  @@index([listId, priority], map: "idx_gkv_restaurant_items_priority")
+  @@map("gkv_restaurant_items")
+}
+
+model GkvRestaurantDietary {
+  restaurantId     String  @id @map("restaurant_id")
+  isVeganOnly      Boolean @default(false) @map("is_vegan_only")
+  hasVeganOptions  Boolean @default(false) @map("has_vegan_options")
+  veganLevel       String  @default("UNKNOWN") @map("vegan_level")
+  meatTypes        String  @default("[\"UNKNOWN\"]") @map("meat_types")
+  halalLevel       String  @default("UNKNOWN") @map("halal_level")
+  notes            String?
+
+  @@index([isVeganOnly], map: "idx_gkv_restaurant_dietary_vegan_only")
+  @@index([hasVeganOptions], map: "idx_gkv_restaurant_dietary_vegan_opt")
+  @@index([halalLevel], map: "idx_gkv_restaurant_dietary_halal")
+  @@map("gkv_restaurant_dietary")
+}
+
+model GkvRestaurantCategory {
+  id        String   @id
+  name      String
+  slug      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive], map: "idx_gkv_restaurant_categories_active")
+  @@map("gkv_restaurant_categories")
+}
+
+model GkvArea {
+  id        String   @id
+  name      String
+  slug      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive], map: "idx_gkv_areas_active")
+  @@map("gkv_areas")
+}
+
+model GkvRestaurant {
+  id                      String   @id
+  name                    String
+  areaId                  String   @map("area_id")
+  address                 String
+  lat                     Float
+  lng                     Float
+  kakaoPlaceId            String?  @map("kakao_place_id")
+  naverPlaceUrl           String?  @map("naver_place_url")
+  tags                    String?
+  memo                    String?
+  priority                Int      @default(0)
+  isActive                Boolean  @default(true) @map("is_active")
+  veganRecommended        Boolean  @default(false) @map("vegan_recommended")
+  meatTypes               String   @default("[]") @map("meat_types")
+  photoOriginalBucket     String?  @map("photo_original_bucket")
+  photoOriginalKey        String?  @map("photo_original_key")
+  photoOriginalMimeType   String?  @map("photo_original_mime_type")
+  photoOriginalSizeBytes  BigInt?  @map("photo_original_size_bytes")
+  photoThumbnailBucket    String?  @map("photo_thumbnail_bucket")
+  photoThumbnailKey       String?  @map("photo_thumbnail_key")
+  photoThumbnailMimeType  String?  @map("photo_thumbnail_mime_type")
+  photoThumbnailSizeBytes BigInt?  @map("photo_thumbnail_size_bytes")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  @@index([areaId], map: "idx_gkv_restaurants_area")
+  @@index([isActive], map: "idx_gkv_restaurants_active")
+  @@index([priority], map: "idx_gkv_restaurants_priority")
+  @@index([veganRecommended], map: "idx_gkv_restaurants_vegan")
+  @@map("gkv_restaurants")
+}
+
+model GkvRestaurantCategoryMap {
+  restaurantId String @map("restaurant_id")
+  categoryId   String @map("category_id")
+
+  @@id([restaurantId, categoryId])
+  @@index([categoryId], map: "idx_gkv_restaurant_category_map_category")
+  @@map("gkv_restaurant_category_map")
+}
+
+model GkvGuideRestaurantList {
+  guideId          String @id @map("guide_id")
+  restaurantListId String @map("restaurant_list_id")
+
+  @@index([restaurantListId], map: "idx_gkv_guide_restaurant_list_list")
+  @@map("gkv_guide_restaurant_list")
+}
+
+model GkvCustomer {
+  customerId  String   @id @map("customer_id")
+  email       String?
+  displayName String?  @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("gkv_customers")
+}
+
+model GkvEntitlement {
+  customerId    String   @map("customer_id")
+  guideId       String   @map("guide_id")
+  expiresAt     DateTime @map("expires_at")
+  sourceOrderId String?  @map("source_order_id")
+  status        String   @default("ACTIVE")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@id([customerId, guideId])
+  @@index([customerId], map: "idx_gkv_entitlements_customer")
+  @@index([status, expiresAt], map: "idx_gkv_entitlements_active")
+  @@map("gkv_entitlements")
+}
+
+model GkvDevice {
+  customerId String   @map("customer_id")
+  deviceId   String   @map("device_id")
+  deviceName String?  @map("device_name")
+  platform   String?
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@id([customerId, deviceId])
+  @@map("gkv_devices")
+}
+
+model GkvSession {
+  id         String    @id
+  customerId String    @map("customer_id")
+  deviceId   String    @map("device_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  @@index([customerId, createdAt], map: "idx_gkv_sessions_customer")
+  @@index([revokedAt], map: "idx_gkv_sessions_revoked")
+  @@map("gkv_sessions")
+}
+
+model GkvFavorite {
+  id             String    @id @default(cuid())
+  customerId     String    @map("customer_id")
+  type           String
+  targetId       String    @map("target_id")
+  state          String    @default("ACTIVE")
+  displayJson    String    @map("display_json")
+  contentRefJson String    @map("content_ref_json")
+  lastChangedAt  DateTime  @map("last_changed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  @@unique([customerId, type, targetId], map: "gkv_favorites_customer_type_target")
+  @@index([customerId, lastChangedAt], map: "idx_gkv_favorites_customer_changed")
+  @@index([customerId, type, lastChangedAt], map: "idx_gkv_favorites_customer_type_changed")
+  @@map("gkv_favorites")
+}
+
+model GkvFavoriteChange {
+  id                String   @id @default(cuid())
+  customerId         String   @map("customer_id")
+  clientChangeId     String   @map("client_change_id")
+  deviceId           String?  @map("device_id")
+  type               String
+  targetId           String   @map("target_id")
+  action             String
+  changedAt          DateTime @map("changed_at")
+  effectiveChangedAt DateTime @map("effective_changed_at")
+  payloadHash        String   @map("payload_hash")
+  payloadJson        String   @map("payload_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@unique([customerId, clientChangeId], map: "gkv_favorite_changes_customer_change")
+  @@index([customerId, createdAt], map: "idx_gkv_favorite_changes_customer_created")
+  @@map("gkv_favorite_changes")
+}
+
+/// A short-lived checkout reservation. Expired rows are intentionally retained
+/// for auditability but are excluded from all availability calculations.
+// Durable state for the new fleet; populated and verified before traffic cutover.
+model BookingMutationJournal {
+  sequence BigInt @unique @default(autoincrement())
+  id String @id
+  shop String
+  bookingId String @map("booking_id")
+  kind String
+  state String
+  beforeRecord Json? @db.JsonB @map("before_record")
+  afterRecord Json? @db.JsonB @map("after_record")
+  lineItemIds Json @default("[]") @db.JsonB @map("line_item_ids")
+  createdAt DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([shop, bookingId, sequence(sort: Desc)], map: "booking_mutation_latest")
+  @@index([state, createdAt], map: "booking_mutation_pending")
+  @@map("booking_mutation_journal")
+}
+
+model DurableCouponState {
+  stateKey String @id @map("state_key")
+  fields Json @db.JsonB
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@map("durable_coupon_state")
+}
+
+model DurableCouponRevocation {
+  scope String
+  code String
+
+  @@id([scope, code])
+  @@map("durable_coupon_revocations")
+}
+
+model FleetStateMigration {
+  id String @id
+  sourceDigest String @map("source_digest")
+  details Json @db.JsonB
+  verifiedAt DateTime @map("verified_at")
+
+  @@map("fleet_state_migrations")
+}
+
+model BookingHold {
+  holdId         String   @id @map("hold_id")
+  slotKey        String   @map("slot_key")
+  poolDayKey     String?  @map("pool_day_key")
+  pax            Int
+  units          Int      @default(1)
+  customerName   String   @map("customer_name")
+  customerPhone  String?  @map("customer_phone")
+  customerEmail  String?  @map("customer_email")
+  expiresAt      DateTime @map("expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  idempotencyKey String?  @unique @map("idempotency_key")
+  orderDraftKey  String?  @map("order_draft_key")
+
+  @@index([slotKey, expiresAt], map: "idx_booking_holds_slot_expiry")
+  @@index([poolDayKey, expiresAt], map: "idx_booking_holds_pool_expiry")
+  @@map("booking_holds")
+}
+
+/// Durable booking ledger. Redis remains suitable for short-lived locks and
+/// caches, while this table is the source of truth for confirmed reservations.
+model ConfirmedBooking {
+  id                 String   @id @default(cuid())
+  shop               String
+  orderId            String   @map("order_id")
+  lineItemId         String   @map("line_item_id")
+  groupKey           String?  @map("group_key")
+  slotKey            String   @map("slot_key")
+  productId          String   @map("product_id")
+  date               String
+  bookingMode        String   @map("booking_mode")
+  poolKey            String   @map("pool_key")
+  guideUnitsRequired Int      @map("guide_units_required")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@unique([shop, orderId, lineItemId], map: "ux_confirmed_bookings_line_item")
+  @@unique([shop, orderId, groupKey], map: "ux_confirmed_bookings_group")
+  @@index([slotKey], map: "idx_confirmed_bookings_slot")
+  @@index([poolKey, date], map: "idx_confirmed_bookings_pool_date")
+  @@map("confirmed_bookings")
+}

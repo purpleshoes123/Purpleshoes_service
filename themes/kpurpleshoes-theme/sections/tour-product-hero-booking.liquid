@@ -1,0 +1,433 @@
+{% comment %}
+  Tour Product Hero + Booking Card (UI only)
+  - Left: gallery (main + thumbs)
+  - Right: sticky booking card (price + people/date selects + CTA + perks)
+{% endcomment %}
+
+{%- liquid
+  assign featured = product.featured_image
+  assign images = product.images
+  assign travel_gallery = product.metafields.custom.travel_gallery.value
+  assign total_slides = 0
+  if featured != blank
+    assign total_slides = total_slides | plus: 1
+  endif
+  if travel_gallery != blank
+    assign total_slides = total_slides | plus: travel_gallery.size
+  endif
+  assign money_price = product.price | money
+-%}
+
+<section class="tgpd-hero {% if section.settings.hero_style == 'yellow_cream' %}tgpd-hero--yellow{% endif %}" style="
+  --tg-bg: {{ section.settings.bg }};
+  --tg-card: {{ section.settings.card_bg }};
+  --tg-border: rgba(0,0,0,.10);
+  --tg-text: {{ section.settings.text }};
+  --tg-muted: {{ section.settings.muted }};
+  --tg-btn: {{ section.settings.btn_bg }};
+  --tg-btn_text: {{ section.settings.btn_text }};
+  --tg-radius: {{ section.settings.radius }}px;
+">
+  <div class="page-width tgpd-hero__inner">
+    {% if section.settings.section_title != blank %}
+      <h2 class="tgpd-hero__sectionTitle">{{ section.settings.section_title | escape }}</h2>
+    {% endif %}
+    <div class="tgpd-hero__grid">
+      {% if section.settings.hero_style == 'yellow_cream' %}
+        <!-- Layout: Text left, Image right (reference design) -->
+        <div class="tgpd-hero__text">
+          {% if section.settings.hero_heading != blank %}
+            <h1 class="tgpd-hero__headline">{{ section.settings.hero_heading | escape }}</h1>
+          {% else %}
+            <h1 class="tgpd-hero__headline">{{ product.title | escape }}</h1>
+          {% endif %}
+          {% if section.settings.hero_sub != blank %}
+            <p class="tgpd-hero__sub">{{ section.settings.hero_sub | escape }}</p>
+          {% endif %}
+          {% if section.settings.hero_desc != blank %}
+            <div class="tgpd-hero__desc">{{ section.settings.hero_desc }}</div>
+          {% endif %}
+          <a class="tgpd-cta tgpd-cta--block" href="{{ section.settings.cta_link | default: product.url }}" data-product-url="{{ product.url }}">
+            {{ section.settings.cta_label | default: 'BOOK NOW' }}
+          </a>
+        </div>
+        <div class="tgpd-gal" aria-label="Product image gallery" data-tgpd-slider>
+          <div class="tgpd-gal__main">
+            {% if total_slides > 0 %}
+              <div class="tgpd-gal__track" data-tgpd-track>
+                {% if featured %}
+                  <div class="tgpd-gal__slide">
+                    {{ featured | image_url: width: 1600 | image_tag: loading: 'eager', class: 'tgpd-gal__mainImg', alt: featured.alt | default: product.title }}
+                  </div>
+                {% endif %}
+                {% if travel_gallery != blank %}
+                  {% for gallery_image in travel_gallery %}
+                    <div class="tgpd-gal__slide">
+                      {{ gallery_image | image_url: width: 1600 | image_tag: loading: 'lazy', class: 'tgpd-gal__mainImg', alt: gallery_image.alt | default: product.title }}
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+              {% if total_slides > 1 %}
+                <button class="tgpd-gal__nav tgpd-gal__nav--prev" type="button" data-tgpd-prev aria-label="Previous image">‹</button>
+                <button class="tgpd-gal__nav tgpd-gal__nav--next" type="button" data-tgpd-next aria-label="Next image">›</button>
+                <div class="tgpd-gal__dots" data-tgpd-dots>
+                  {% for i in (1..total_slides) %}
+                    <button type="button" class="tgpd-gal__dot{% if forloop.first %} is-active{% endif %}" data-tgpd-dot="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }}"></button>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="tgpd-ph"></div>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+      <!-- LEFT: Gallery -->
+      <div class="tgpd-gal" aria-label="Product gallery" data-tgpd-slider>
+        <div class="tgpd-gal__main">
+          {% if total_slides > 0 %}
+            <div class="tgpd-gal__track" data-tgpd-track>
+              {% if featured %}
+                <div class="tgpd-gal__slide">
+                  {{ featured | image_url: width: 1600 | image_tag: loading: 'eager', class: 'tgpd-gal__mainImg', alt: featured.alt | default: product.title }}
+                </div>
+              {% endif %}
+              {% if travel_gallery != blank %}
+                {% for gallery_image in travel_gallery %}
+                  <div class="tgpd-gal__slide">
+                    {{ gallery_image | image_url: width: 1600 | image_tag: loading: 'lazy', class: 'tgpd-gal__mainImg', alt: gallery_image.alt | default: product.title }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            {% if total_slides > 1 %}
+              <button class="tgpd-gal__nav tgpd-gal__nav--prev" type="button" data-tgpd-prev aria-label="Previous image">‹</button>
+              <button class="tgpd-gal__nav tgpd-gal__nav--next" type="button" data-tgpd-next aria-label="Next image">›</button>
+              <div class="tgpd-gal__dots" data-tgpd-dots>
+                {% for i in (1..total_slides) %}
+                  <button type="button" class="tgpd-gal__dot{% if forloop.first %} is-active{% endif %}" data-tgpd-dot="{{ forloop.index0 }}" aria-label="View image {{ forloop.index }}"></button>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="tgpd-ph"></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- RIGHT: Booking Card -->
+      <aside class="tgpd-book" aria-label="Booking panel">
+        <div class="tgpd-book__card">
+          <div class="tgpd-book__top">
+            <div class="tgpd-book__priceRow">
+              <div class="tgpd-book__price">
+                <span class="tgpd-book__priceNow">{{ money_price }}</span>
+                {% if section.settings.price_suffix != blank %}
+                  <span class="tgpd-book__priceSuffix">{{ section.settings.price_suffix }}</span>
+                {% endif %}
+              </div>
+              {% if section.settings.show_compare and product.compare_at_price > product.price %}
+                <div class="tgpd-book__compare">{{ product.compare_at_price | money }}</div>
+              {% endif %}
+            </div>
+
+            {% if section.settings.note != blank %}
+              <p class="tgpd-book__note">{{ section.settings.note }}</p>
+            {% endif %}
+          </div>
+
+          <div class="tgpd-book__fields">
+            {% assign people_opts = section.settings.people_options | split: ',' %}
+            {% assign date_opts = section.settings.date_options | split: ',' %}
+
+            <label class="tgpd-field">
+              <span class="tgpd-field__label">{{ section.settings.people_label }}</span>
+              <select class="tgpd-field__select">
+                {% for opt in people_opts %}
+                  {% assign o = opt | strip %}
+                  {% if o != blank %}
+                    <option value="{{ o | escape }}">{{ o }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </label>
+
+            <label class="tgpd-field">
+              <span class="tgpd-field__label">{{ section.settings.date_label }}</span>
+              <select class="tgpd-field__select">
+                {% for opt in date_opts %}
+                  {% assign o = opt | strip %}
+                  {% if o != blank %}
+                    <option value="{{ o | escape }}">{{ o }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </label>
+
+            <a class="tgpd-cta" href="{{ section.settings.cta_link | default: product.url }}">
+              {{ section.settings.cta_label }}
+            </a>
+          </div>
+
+          {% if section.blocks.size > 0 %}
+            <div class="tgpd-perks" aria-label="Perks">
+              {% for block in section.blocks %}
+                <div class="tgpd-perk" {{ block.shopify_attributes }}>
+                  <span class="tgpd-perk__dot" aria-hidden="true"></span>
+                  <div class="tgpd-perk__text">
+                    <div class="tgpd-perk__title">{{ block.settings.title }}</div>
+                    {% if block.settings.desc != blank %}
+                      <div class="tgpd-perk__desc">{{ block.settings.desc }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </aside>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<style>
+  .tgpd-hero{ background: var(--tg-bg); padding: 62px 0 124px; color: var(--tg-text); }
+  .tgpd-hero--yellow{ background: linear-gradient(180deg, #ffd400 0%, #faf8f5 55%); }
+  .tgpd-hero__text{ display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+  .tgpd-hero__headline{ font-size: clamp(28px, 3.5vw, 44px); font-weight: 900; color: #111; margin: 0; line-height: 1.1; letter-spacing: -0.02em; }
+  .tgpd-hero__sub{ font-size: 18px; color: #111; margin: 0; font-weight: 600; }
+  .tgpd-hero__desc{ font-size: 15px; color: #333; line-height: 1.6; margin: 0; }
+  .tgpd-cta--block{ width: fit-content; margin-top: 8px; padding: 14px 32px; background: #e85d3c !important; color: #fff !important; border-radius: 999px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tgpd-hero__sectionTitle{
+    margin: 0 0 18px;
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 800;
+    text-align: left;
+    color: #111;
+  }
+  .tgpd-hero__grid{
+    display:grid;
+    grid-template-columns: 1.25fr .75fr;
+    gap: 22px;
+    align-items:start;
+  }
+
+  .tgpd-gal__main{
+    position: relative;
+    border-radius: var(--tg-radius);
+    overflow:hidden;
+    background: rgba(0,0,0,.04);
+    aspect-ratio: 16 / 10;
+  }
+  .tgpd-gal__track{
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transform: translateX(0);
+    transition: transform .45s ease;
+    will-change: transform;
+  }
+  .tgpd-gal__slide{
+    flex: 0 0 100%;
+    min-width: 100%;
+    height: 100%;
+  }
+  .tgpd-gal__mainImg{ width:100%; height:100%; object-fit: cover; display:block; }
+  .tgpd-ph{ width:100%; height:100%; background: linear-gradient(135deg, rgba(0,0,0,.06), rgba(0,0,0,.02)); }
+
+  .tgpd-gal__nav{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(17,17,17,.45);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    font-size: 26px;
+    line-height: 1;
+  }
+  .tgpd-gal__nav--prev{ left: 10px; }
+  .tgpd-gal__nav--next{ right: 10px; }
+  .tgpd-gal__dots{
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 3;
+  }
+  .tgpd-gal__dot{
+    width: 8px;
+    height: 8px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255,255,255,.55);
+    padding: 0;
+    cursor:pointer;
+  }
+  .tgpd-gal__dot.is-active{
+    background: #fff;
+  }
+
+  .tgpd-book__card{
+    position: sticky;
+    top: 16px;
+    background: var(--tg-card);
+    border: 1px solid var(--tg-border);
+    border-radius: var(--tg-radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    overflow:hidden;
+  }
+  .tgpd-book__top{ padding: 18px 18px 8px; }
+  .tgpd-book__priceRow{ display:flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .tgpd-book__priceNow{ font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .tgpd-book__priceSuffix{ font-size: 12px; color: var(--tg-muted); margin-left: 6px; }
+  .tgpd-book__compare{ font-size: 12px; color: var(--tg-muted); text-decoration: line-through; }
+
+  .tgpd-book__note{ margin: 10px 0 0; font-size: 12px; color: var(--tg-muted); line-height: 1.5; }
+
+  .tgpd-book__fields{ padding: 10px 18px 18px; display:flex; flex-direction: column; gap: 10px; }
+  .tgpd-field{ display:flex; flex-direction: column; gap: 6px; }
+  .tgpd-field__label{ font-size: 12px; color: var(--tg-muted); }
+  .tgpd-field__select{
+    height: 44px;
+    border: 1px solid var(--tg-border);
+    border-radius: 12px;
+    padding: 0 12px;
+    background: #fff;
+    color: var(--tg-text);
+  }
+  .tgpd-cta{
+    margin-top: 4px;
+    display:flex; align-items:center; justify-content:center;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--tg-btn);
+    color: var(--tg-btn_text);
+    text-decoration:none;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .tgpd-perks{ border-top: 1px solid var(--tg-border); padding: 14px 18px 18px; display:flex; flex-direction: column; gap: 12px; }
+  .tgpd-perk{ display:flex; gap: 10px; align-items:flex-start; }
+  .tgpd-perk__dot{ width: 18px; height: 18px; border-radius: 999px; background: rgba(0,0,0,.07); margin-top: 2px; flex: 0 0 auto; }
+  .tgpd-perk__title{ font-weight: 750; font-size: 13px; }
+  .tgpd-perk__desc{ font-size: 12px; color: var(--tg-muted); margin-top: 2px; line-height: 1.5; }
+
+  @media (max-width: 990px){
+    .tgpd-hero{ padding: 36px 0 28px; }
+    .tgpd-hero__sectionTitle{ margin-bottom: 14px; font-size: 24px; }
+    .tgpd-hero__grid{ grid-template-columns: 1fr; }
+    .tgpd-book__card{ position: static; }
+  }
+</style>
+
+<script>
+  (function(){
+    var sliders = document.querySelectorAll('.tgpd-gal[data-tgpd-slider]');
+    if (!sliders.length) return;
+
+    sliders.forEach(function(slider){
+      var track = slider.querySelector('[data-tgpd-track]');
+      var slides = track ? track.querySelectorAll('.tgpd-gal__slide') : [];
+      var prev = slider.querySelector('[data-tgpd-prev]');
+      var next = slider.querySelector('[data-tgpd-next]');
+      var dots = slider.querySelectorAll('[data-tgpd-dot]');
+      var index = 0;
+
+      if (!track || slides.length <= 1) return;
+
+      function render(){
+        track.style.transform = 'translateX(-' + (index * 100) + '%)';
+        dots.forEach(function(dot, i){
+          dot.classList.toggle('is-active', i === index);
+        });
+      }
+
+      function goTo(i){
+        index = (i + slides.length) % slides.length;
+        render();
+      }
+
+      if (prev) prev.addEventListener('click', function(){ goTo(index - 1); });
+      if (next) next.addEventListener('click', function(){ goTo(index + 1); });
+
+      dots.forEach(function(dot){
+        dot.addEventListener('click', function(){
+          var target = Number(dot.getAttribute('data-tgpd-dot') || 0);
+          goTo(target);
+        });
+      });
+
+      render();
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Tour Hero + Booking",
+  "settings": [
+    { "type": "text", "id": "section_title", "label": "Section title", "default": "Experience Tour" },
+    { "type": "select", "id": "hero_style", "label": "Hero layout", "options": [
+      { "value": "default", "label": "Gallery + Booking card" },
+      { "value": "yellow_cream", "label": "Yellow/Cream (title left, image right)" }
+    ], "default": "default" },
+    { "type": "text", "id": "hero_heading", "label": "Hero headline (yellow layout)", "default": "KOREA DISCOVERY TOUR" },
+    { "type": "text", "id": "hero_sub", "label": "Hero subheading", "default": "Travel the local way." },
+    { "type": "richtext", "id": "hero_desc", "label": "Hero description" },
+    { "type": "color", "id": "bg", "label": "Background", "default": "#ffffff" },
+    { "type": "color", "id": "card_bg", "label": "Booking card background", "default": "#ffffff" },
+    { "type": "color", "id": "text", "label": "Text", "default": "#111111" },
+    { "type": "color", "id": "muted", "label": "Muted", "default": "#6b6b6b" },
+
+    { "type": "checkbox", "id": "show_compare", "label": "Show compare-at price (if exists)", "default": true },
+    { "type": "text", "id": "price_suffix", "label": "Price suffix text", "default": "(per person)" },
+    { "type": "text", "id": "note", "label": "Small note under price", "default": "This is example UI. Connect the real booking logic later." },
+
+    { "type": "text", "id": "people_label", "label": "People label", "default": "Travelers" },
+    { "type": "text", "id": "people_options", "label": "People options (comma separated)", "default": "Adult x 1, Adult x 2, Adult x 3, Adult x 4" },
+
+    { "type": "text", "id": "date_label", "label": "Date label", "default": "Select date" },
+    { "type": "text", "id": "date_options", "label": "Date options (comma separated)", "default": "Select date, 2026-01-03, 2026-01-04, 2026-01-05" },
+
+    { "type": "text", "id": "cta_label", "label": "CTA label", "default": "Check availability" },
+    { "type": "url", "id": "cta_link", "label": "CTA link (UI only)" },
+
+    { "type": "range", "id": "radius", "label": "Radius", "min": 0, "max": 28, "step": 1, "default": 16 },
+    { "type": "color", "id": "btn_bg", "label": "CTA background", "default": "#1677ff" },
+    { "type": "color", "id": "btn_text", "label": "CTA text", "default": "#ffffff" }
+  ],
+  "blocks": [
+    {
+      "type": "perk",
+      "name": "Perk item",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Title", "default": "Free cancellation" },
+        { "type": "textarea", "id": "desc", "label": "Description", "default": "Cancel up to 24 hours in advance for a full refund." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Tour product hero + booking (UI)",
+      "blocks": [
+        { "type": "perk" },
+        { "type": "perk", "settings": { "title": "Reserve first, pay later", "desc": "Example copy for payment after reservation confirmation." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

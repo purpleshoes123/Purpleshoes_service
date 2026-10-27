@@ -1,0 +1,111 @@
+<section class="guidekit-banner">
+  <div class="page-width guidekit-banner__inner">
+    <div class="guidekit-banner__copy">
+      <h2 class="guidekit-banner__heading">{{ section.settings.heading | escape | newline_to_br }}</h2>
+      {% if section.settings.subheading != blank %}
+        <p class="guidekit-banner__subheading">{{ section.settings.subheading | escape | newline_to_br }}</p>
+      {% endif %}
+    </div>
+    <div class="guidekit-banner__media">
+      {% if section.settings.image != blank %}
+        {% assign banner_image_alt = section.settings.image.alt | default: section.settings.heading | escape %}
+        {{
+          section.settings.image
+          | image_url: width: 1200
+          | image_tag:
+            class: 'guidekit-banner__image',
+            loading: 'lazy',
+            sizes: '(min-width: 990px) 520px, 92vw',
+            widths: '360, 540, 720, 960, 1200',
+            alt: banner_image_alt
+        }}
+      {% else %}
+        <img
+          class="guidekit-banner__image"
+          src="{{ 'guidekit-banner-map-default.png' | asset_url }}"
+          alt="{{ section.settings.heading | escape }}"
+          loading="lazy"
+          width="1200"
+          height="574"
+        >
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<style>
+  .guidekit-banner {
+    background: #35107f;
+    padding: clamp(32px, 5vw, 64px) 0;
+  }
+  .guidekit-banner__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
+    align-items: center;
+    gap: clamp(24px, 4vw, 56px);
+  }
+  .guidekit-banner__heading {
+    margin: 0 0 12px;
+    color: #fff;
+    font-size: clamp(20px, 2.4vw, 34px);
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+  }
+  .guidekit-banner__subheading {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.84);
+    font-size: clamp(16px, 1.5vw, 22px);
+    font-weight: 700;
+    line-height: 1.45;
+  }
+  .guidekit-banner__media {
+    overflow: hidden;
+    border-radius: 18px;
+    box-shadow: 0 22px 56px rgba(0, 0, 0, 0.28);
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .guidekit-banner__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1200 / 574;
+    object-fit: cover;
+  }
+  @media (max-width: 749px) {
+    .guidekit-banner__inner {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Guide Kit Banner",
+  "settings": [
+    {
+      "type": "textarea",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Stop Searching.\nStart Seeing."
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Get Exclusive Knowledge\nfrom Korean Insiders."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Right image"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Guide Kit Banner"
+    }
+  ]
+}
+{% endschema %}

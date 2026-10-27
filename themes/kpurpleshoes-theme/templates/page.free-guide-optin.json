@@ -1,0 +1,37 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "theme",
+  "sections": {
+    "free_guide_optin": {
+      "type": "ps-free-guide-optin",
+      "settings": {
+        "section_label": "FREE KOREA TRAVEL STARTER KIT",
+        "headline": "The Essentials for Your First Korea Trip\n— in One Free Starter Kit.",
+        "subtext": "No more jumping between blogs, maps, and random tips.\nGet the practical basics on entry, packing, transportation, must-have apps,\nKorean culture, and useful phrases — all in one free Starter Kit.",
+        "video_url": "",
+        "media_badge": "Preview",
+        "media_placeholder_text": "Video: Navigating Korea's top spots using in-app map pins — screen recorded for you.",
+        "cta_eyebrow": "FREE • NO CREDIT CARD REQUIRED",
+        "cta_title": "Get Instant Access to the Free Starter Kit",
+        "email_placeholder": "Enter your email address",
+        "cta_label": "Unlock My Free Starter Kit",
+        "mailer_template_slug": "squeeze",
+        "mail_recaptcha_site_key": "6LelFbgsAAAAAKyC8KJCdKv_mk1ulO2AEa7qihcW",
+        "mail_recaptcha_action": "mail_request_submit",
+        "klaviyo_api_key": "XNA6Kz",
+        "klaviyo_list_id": "VkipLH"
+      }
+    }
+  },
+  "order": [
+    "free_guide_optin"
+  ]
+}

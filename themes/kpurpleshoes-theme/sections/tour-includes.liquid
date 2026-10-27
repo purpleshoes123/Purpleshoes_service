@@ -1,0 +1,341 @@
+<section class="ti-section section-{{ section.id }}-padding">
+  {%- style -%}
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+      padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+    }
+    @media screen and (min-width: 750px) {
+      .section-{{ section.id }}-padding {
+        padding-top: {{ section.settings.padding_top }}px;
+        padding-bottom: {{ section.settings.padding_bottom }}px;
+      }
+    }
+  {%- endstyle -%}
+
+  <div class="page-width">
+
+    {%- comment -%} ── Includes / Excludes ── {%- endcomment -%}
+    {% if section.settings.heading_includes != blank %}
+      <div class="ps-section-heading ti-heading-wrap">
+        <h2 class="ps-section-heading__title ti-main-heading">{{ section.settings.heading_includes | escape }}</h2>
+        <div class="ps-section-heading__rule"></div>
+      </div>
+    {% endif %}
+
+    <div class="ti-grid">
+      {%- comment -%} Included {%- endcomment -%}
+      <div class="ti-col">
+        <div class="ti-col__head ti-col__head--yes">
+          <span class="ti-col__head-icon">✓</span> Included
+        </div>
+        <ul class="ti-list" role="list">
+          {% assign inc_lines = section.settings.included_items | newline_to_br | split: '<br />' %}
+          {% for line in inc_lines %}
+            {% assign l = line | strip %}
+            {% if l != blank %}
+              <li class="ti-item ti-item--yes">
+                <span class="ti-item__icon ti-item__icon--yes" aria-hidden="true">✅</span>
+                <span class="ti-item__text">{{ l | escape }}</span>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+
+      {%- comment -%} Not Included {%- endcomment -%}
+      <div class="ti-col">
+        <div class="ti-col__head ti-col__head--no">
+          <span class="ti-col__head-icon">✗</span> Not Included
+        </div>
+        <ul class="ti-list" role="list">
+          {% assign exc_lines = section.settings.excluded_items | newline_to_br | split: '<br />' %}
+          {% for line in exc_lines %}
+            {% assign l = line | strip %}
+            {% if l != blank %}
+              <li class="ti-item ti-item--no">
+                <span class="ti-item__icon ti-item__icon--no" aria-hidden="true">❌</span>
+                <span class="ti-item__text">{{ l | escape }}</span>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    {%- comment -%} ── Important Information ── {%- endcomment -%}
+    {% if section.settings.bring_items != blank or section.settings.know_items != blank %}
+      {% if section.settings.heading_important != blank %}
+        <div class="ps-section-heading ti-heading-wrap ti-heading-wrap--info">
+          <h2 class="ps-section-heading__title ti-main-heading">{{ section.settings.heading_important | escape }}</h2>
+          <div class="ps-section-heading__rule"></div>
+        </div>
+      {% endif %}
+
+      <div class="ti-info-grid">
+        {% if section.settings.bring_items != blank %}
+          <div class="ti-info-col">
+            <div class="ti-info-col__title">What to bring</div>
+            <ul class="ti-info-list" role="list">
+              {% assign bring_lines = section.settings.bring_items | newline_to_br | split: '<br />' %}
+              {% for line in bring_lines %}
+                {% assign l = line | strip %}
+                {% if l != blank %}
+                  <li class="ti-info-item">
+                    <span class="ti-info-item__dot" aria-hidden="true"></span>
+                    <span>{{ l | escape }}</span>
+                  </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        {% if section.settings.know_items != blank %}
+          <div class="ti-info-col">
+            <div class="ti-info-col__title">Know before you go</div>
+            <ul class="ti-info-list" role="list">
+              {% assign know_lines = section.settings.know_items | newline_to_br | split: '<br />' %}
+              {% for line in know_lines %}
+                {% assign l = line | strip %}
+                {% if l != blank %}
+                  <li class="ti-info-item">
+                    <span class="ti-info-item__dot" aria-hidden="true"></span>
+                    <span>{{ l | escape }}</span>
+                  </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<style>
+.ti-section {
+  background: #fff;
+}
+
+.ti-heading-wrap {
+  margin-bottom: 24px;
+}
+
+.ti-heading-wrap--info {
+  margin-top: 52px;
+}
+
+.ti-main-heading {
+  margin: 0 0 10px;
+  font-size: clamp(20px, 2.2vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111;
+  line-height: 1.2;
+}
+
+/* ── Includes grid ── */
+.ti-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ti-col {
+  border: 1.5px solid rgba(0,0,0,.07);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.ti-col__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ti-col__head--yes {
+  background: #f0fdf4;
+  color: #15803d;
+  border-bottom: 1px solid #bbf7d0;
+}
+
+.ti-col__head--no {
+  background: #fff5f5;
+  color: #dc2626;
+  border-bottom: 1px solid #fecaca;
+}
+
+.ti-col__head-icon {
+  font-size: 15px;
+}
+
+.ti-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.ti-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.ti-item__icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Important Information ── */
+.ti-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.ti-info-col {
+  background: #f9fafb;
+  border: 1.5px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.ti-info-col__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,.07);
+}
+
+.ti-info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ti-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.ti-info-item__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9ca3af;
+  margin-top: 7px;
+}
+
+@media screen and (max-width: 749px) {
+  .ti-grid {
+    grid-template-columns: 1fr;
+  }
+  .ti-info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "Tour Includes",
+  "settings": [
+    {
+      "type": "header",
+      "content": "What's Included"
+    },
+    {
+      "type": "text",
+      "id": "heading_includes",
+      "label": "Section heading",
+      "default": "What's Included"
+    },
+    {
+      "type": "textarea",
+      "id": "included_items",
+      "label": "Included items (one per line)",
+      "default": "Door-to-door service\nPrivate Transportation\nEnglish-speaking guide\nLunch & dinner\nRefreshments\nAll admission & entrance fees"
+    },
+    {
+      "type": "textarea",
+      "id": "excluded_items",
+      "label": "Not included items (one per line)",
+      "default": "Personal shopping expenses\nSwimsuit"
+    },
+    {
+      "type": "header",
+      "content": "Important Information"
+    },
+    {
+      "type": "text",
+      "id": "heading_important",
+      "label": "Section heading",
+      "default": "Important Information"
+    },
+    {
+      "type": "textarea",
+      "id": "bring_items",
+      "label": "What to bring (one per line)",
+      "default": "Swimsuit"
+    },
+    {
+      "type": "textarea",
+      "id": "know_items",
+      "label": "Know before you go (one per line)",
+      "default": "Pets are not permitted\nChildren must be accompanied by an adult\nPlease consult your doctor if you have heart conditions or other serious medical issues\nPregnant travelers should consult a doctor before joining"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 60
+    }
+  ],
+  "presets": [
+    {
+      "name": "Tour Includes"
+    }
+  ]
+}
+{% endschema %}

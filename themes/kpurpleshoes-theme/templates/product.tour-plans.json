@@ -1,0 +1,558 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "tour_hero": {
+      "type": "tour-plans-hero",
+      "settings": {
+        "hero_image": "shopify://shop_images/4bda8907d9c7235be77c08639c36fbe5.png",
+        "hero_height": 260,
+        "use_page_title": false,
+        "heading": "Your First Korea Trip,\nMade Clearer from the Start.",
+        "overlay_top": 0.3,
+        "overlay_mid": 1,
+        "overlay_bottom": 0.3,
+        "title_font": "heading",
+        "title_size": 72,
+        "title_weight": 900,
+        "title_letter_spacing": 0,
+        "title_transform": "none",
+        "title_align": "center",
+        "title_max_width": 28,
+        "title_bg_enable": false,
+        "title_bg_opacity": 0.2,
+        "title_bg_radius": 16,
+        "title_pad_x": 6,
+        "title_pad_y": 4
+      }
+    },
+    "tour_plans_grid": {
+      "type": "tour-plans-grid-product",
+      "blocks": {
+        "plan_image_YL9gbC": {
+          "type": "plan_image",
+          "settings": {
+            "image": "shopify://shop_images/bukhansan-mountains-autumn-seoul-south-korea.jpg",
+            "override_title": "",
+            "override_subtitle": "",
+            "override_tag": "",
+            "override_badge": "",
+            "override_cta": "",
+            "override_price": ""
+          }
+        },
+        "plan_image_zGmzWP": {
+          "type": "plan_image",
+          "settings": {
+            "image": "shopify://shop_images/downtown-cityscape-night-seoul-south-korea_1.jpg",
+            "override_title": "",
+            "override_subtitle": "",
+            "override_tag": "",
+            "override_badge": "",
+            "override_cta": "",
+            "override_price": ""
+          }
+        },
+        "plan_image_xbQPgi": {
+          "type": "plan_image",
+          "settings": {
+            "image": "shopify://shop_images/closeup-red-emperor-maple-tree.jpg",
+            "override_title": "",
+            "override_subtitle": "",
+            "override_tag": "",
+            "override_badge": "",
+            "override_cta": "",
+            "override_price": ""
+          }
+        }
+      },
+      "block_order": [
+        "plan_image_YL9gbC",
+        "plan_image_zGmzWP",
+        "plan_image_xbQPgi"
+      ],
+      "disabled": true,
+      "settings": {
+        "background_color_1": "#1e3a5f",
+        "background_color_2": "#1e1b4b",
+        "background_color_3": "#2e1065",
+        "heading_color": "#ffffff",
+        "text_color": "#bfbfbf",
+        "primary_color": "#5b2bd8",
+        "section_label": "",
+        "section_badge": "",
+        "heading": "Get your guide plan",
+        "subheading": "",
+        "show_compare": true,
+        "compare_title": "Compare Plans",
+        "price_unit": "No subscription. Pay once.",
+        "default_discount_code": "",
+        "show_discount_banner": false,
+        "auto_apply_discount": false,
+        "upsell_enabled": true,
+        "upsell_timer_duration_seconds": 3600,
+        "upsell_countdown_label": "LIMITED-TIME OFFER",
+        "upsell_countdown_headline": "Your 50% upgrade offer expires in",
+        "upsell_countdown_expired_text": "This offer has expired.",
+        "upsell_confirm_headline": "Are you sure you want to miss this 50% discount?",
+        "upsell_confirm_subtext": "This special upgrade offer expires soon, and you may not see this price again.",
+        "upsell_confirm_back_label": "Wait, add it to my order",
+        "upsell_confirm_decline_label": "No thanks, continue without the upgrade",
+        "upsell_sale_enabled": false,
+        "upsell_sale_ends_at": "",
+        "upsell_headline": "24-Hour Flash Sale",
+        "upsell_subheadline": "Wait! Upgrade to the Full Kit & Save 50%",
+        "upsell_timer_label": "Time Remaining",
+        "upsell_upgrade_label": "YES! Upgrade my order",
+        "upsell_pass_label": "No, I will pass",
+        "upsell_continue_label": "Continue to checkout",
+        "upsell_footer_text": "Don't travel blindly. Get the full stress-free package.",
+        "show_tip": false,
+        "tip_title": "Tip",
+        "tip_text": "<p>Update the button links (/collections/all) to your real sales page, collection, product, or external checkout link.</p>"
+      }
+    },
+    "tour_plans_grid_DtdxpE": {
+      "type": "tour-plans-grid-product",
+      "blocks": {
+        "plan_GeqjVp": {
+          "type": "plan_image",
+          "settings": {
+            "image": "shopify://shop_images/bukhansan-mountains-autumn-seoul-south-korea.jpg",
+            "override_title": "Guidebook ONLY",
+            "override_subtitle": "For travelers who want a trusted local map and practical Korea trip prep in one PDF guide.",
+            "override_tag": "LOCAL PICKS",
+            "override_badge": "",
+            "override_cta": "Choose the Guidebook",
+            "override_price": ""
+          }
+        },
+        "plan_yQQXUf": {
+          "type": "plan_image",
+          "settings": {
+            "image": "shopify://shop_images/downtown-cityscape-night-seoul-south-korea_1.jpg",
+            "override_title": "Korea Guide Kit",
+            "override_subtitle": "1,500+ handpicked spots — all in one map (Restaurants, cafés, and landmarks — just open the app and go.)",
+            "override_tag": "BEST VALUE",
+            "override_badge": "",
+            "override_cta": "Get My Complete Korea Kit",
+            "override_price": ""
+          }
+        },
+        "plan_NxcQjX": {
+          "type": "plan_image",
+          "settings": {
+            "image": "shopify://shop_images/closeup-red-emperor-maple-tree.jpg",
+            "override_title": "Video Guide Only",
+            "override_subtitle": "Visual lessons from locals so you can navigate, order, and enjoy Korea with confidence.",
+            "override_tag": "VISUAL LEARNER",
+            "override_badge": "",
+            "override_cta": "Choose the Video Guide",
+            "override_price": ""
+          }
+        }
+      },
+      "block_order": [
+        "plan_GeqjVp",
+        "plan_yQQXUf",
+        "plan_NxcQjX"
+      ],
+      "name": "Tour Plans - Plans Grid",
+      "settings": {
+        "background_color_1": "#1e3a5f",
+        "background_color_2": "#1e1b4b",
+        "background_color_3": "#2e1065",
+        "heading_color": "#ffffff",
+        "text_color": "#bfbfbf",
+        "primary_color": "#5b2bd8",
+        "section_label": "",
+        "section_badge": "",
+        "heading": "Choose Your Korea Guide",
+        "subheading": "All prices are in USD.",
+        "show_compare": true,
+        "compare_title": "Compare Plans",
+        "price_unit": "No subscription. Pay once.",
+        "default_discount_code": "",
+        "show_discount_banner": false,
+        "auto_apply_discount": false,
+        "upsell_enabled": true,
+        "upsell_timer_duration_seconds": 3600,
+        "upsell_countdown_label": "24-Hour Flash Sale",
+        "upsell_countdown_headline": "Your 50% upgrade offer expires in",
+        "upsell_countdown_expired_text": "This offer has expired.",
+        "upsell_confirm_headline": "Are you sure you want to miss this 50% discount?",
+        "upsell_confirm_subtext": "This special upgrade offer expires soon, and you may not see this price again.",
+        "upsell_confirm_back_label": "Wait, add it to my order",
+        "upsell_confirm_decline_label": "No thanks, continue without the upgrade",
+        "upsell_sale_enabled": false,
+        "upsell_sale_ends_at": "",
+        "upsell_headline": "24-Hour Flash Sale",
+        "upsell_subheadline": "Wait! Upgrade to the Full Kit & Save 50%",
+        "upsell_timer_label": "Time Remaining",
+        "upsell_upgrade_label": "YES! Upgrade my order",
+        "upsell_pass_label": "No, I will pass",
+        "upsell_continue_label": "Continue to checkout",
+        "upsell_footer_text": "Don't travel blindly. Get the full stress-free package.",
+        "show_tip": false,
+        "tip_title": "Tip",
+        "tip_text": "<p>Update the button links (/collections/all) to your real sales page, collection, product, or external checkout link.</p>"
+      }
+    },
+    "guidekit_banner_tour_plans": {
+      "type": "guidekit-banner",
+      "settings": {
+        "heading": "Stop Searching.\nStart Seeing.",
+        "subheading": "Get Exclusive Knowledge\nfrom Korean Insiders.",
+        "image": "shopify://shop_images/purple-map-naver-banner-20260911.png"
+      }
+    },
+    "pricing_comparison_table_KHFqPa": {
+      "type": "pricing-comparison-table",
+      "blocks": {
+        "feature_row_iTFMYi": {
+          "type": "feature_row",
+          "settings": {
+            "feature_name": "Unlimited Users",
+            "start_plan": true,
+            "scale_plan": true,
+            "transform_plan": true
+          }
+        },
+        "feature_row_3yhUGA": {
+          "type": "feature_row",
+          "settings": {
+            "feature_name": "Projects",
+            "start_plan": true,
+            "scale_plan": true,
+            "transform_plan": true
+          }
+        },
+        "feature_row_azJnLV": {
+          "type": "feature_row",
+          "settings": {
+            "feature_name": "Revision history",
+            "start_plan": true,
+            "scale_plan": true,
+            "transform_plan": true
+          }
+        },
+        "feature_row_kybtNR": {
+          "type": "feature_row",
+          "settings": {
+            "feature_name": "Shareable links",
+            "start_plan": false,
+            "scale_plan": true,
+            "transform_plan": true
+          }
+        },
+        "feature_row_VPih3H": {
+          "type": "feature_row",
+          "settings": {
+            "feature_name": "Single sign-on",
+            "start_plan": false,
+            "scale_plan": false,
+            "transform_plan": true
+          }
+        }
+      },
+      "block_order": [
+        "feature_row_iTFMYi",
+        "feature_row_3yhUGA",
+        "feature_row_azJnLV",
+        "feature_row_kybtNR",
+        "feature_row_VPih3H"
+      ],
+      "disabled": true,
+      "name": "Pricing comparison table",
+      "settings": {
+        "table_title": "Compare plans",
+        "col_feature": "Feature",
+        "col_start": "Start",
+        "col_scale": "Scale",
+        "col_transform": "Transform",
+        "check_color": "#5b2bd8"
+      }
+    },
+    "toc_grid_jeV4aL": {
+      "type": "toc-grid",
+      "blocks": {
+        "item_gX4yyX": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "TRIP ESSENTIALS",
+            "list": "Entry Checklist\nTransportation Guide\nMust-Have Apps\nand More",
+            "link": ""
+          }
+        },
+        "item_34mpac": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "FOOD & CAFÉS",
+            "list": "Korean BBQ\nSeafood\nSoup & Stew\nand More",
+            "link": ""
+          }
+        },
+        "item_qJxBXk": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "Photo Spots",
+            "list": "Sunset Views\nCityscapes & Night Views\nKorean Aesthetic Spots\nand More",
+            "link": ""
+          }
+        },
+        "item_UF8gBw": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "Activities",
+            "list": "K-Culture Experiences\nLocal Cultural Activities\nMega Complexes Resorts\nand More",
+            "link": ""
+          }
+        },
+        "item_Aggnie": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "Shopping",
+            "list": "Drugstores\nHypermarkets\nDepartment Stores\nand More",
+            "link": ""
+          }
+        },
+        "item_PeUCPV": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "HISTORY & CULTURE",
+            "list": "Palaces\nTemples\nMuseums\nand More",
+            "link": ""
+          }
+        },
+        "item_DKJA6k": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "WELLNESS & NATURE",
+            "list": "Hiking & Scenic Trails\nTemple Stays\nKorean Spa\nand More",
+            "link": ""
+          }
+        },
+        "item_QpMmBA": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "Seoul",
+            "list": "Explore by District\nLandmarks\nFood\nExperiences\nand More",
+            "link": ""
+          }
+        },
+        "item_jNFdbd": {
+          "type": "item",
+          "settings": {
+            "number": "",
+            "item_title": "BEYOND SEOUL",
+            "list": "Incheon\nBusan\nJeju\nGyeongju\nGangwon",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "item_gX4yyX",
+        "item_34mpac",
+        "item_qJxBXk",
+        "item_UF8gBw",
+        "item_Aggnie",
+        "item_PeUCPV",
+        "item_DKJA6k",
+        "item_QpMmBA",
+        "item_jNFdbd"
+      ],
+      "name": "TOC Grid (Table of Contents)",
+      "settings": {
+        "eyebrow": "Inside the Korea Guide Kit",
+        "heading": "PURPLE MAP — 1,500+ HANDPICKED SPOTS",
+        "subtext": "<p>Skip hours of searching.</p><p>Every spot is carefully selected by a local and organized by category,<br>so you can quickly find where to go<br>and start navigation when you’re ready.</p>",
+        "show_title_rule": true,
+        "max_width": 1040,
+        "gap_x": 40,
+        "gap_y": 40,
+        "bg_color": "#fafafa",
+        "text_color": "#222222",
+        "muted_color": "#333333",
+        "line_color": "#2f5fa7"
+      }
+    },
+    "what_youll_do_WAqFqi": {
+      "type": "what-youll-do",
+      "blocks": {
+        "item_guide_1": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/20260616_101713.jpg",
+            "title": "",
+            "desc": "<strong>Start with the guidebook & video</strong>\n\nGet a quick overview of Korea and see what fits your travel style.\n\n<strong>Save the spots you love</strong>\n\nBookmark the places and foods that catch your eye as you go.\n\n<strong>Plan your route with the all-in-one map</strong>\n\nUse our map to connect local-favorite restaurants and must-visit landmarks — all in one smooth route."
+          }
+        },
+        "item_guide_2": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/5e2b979dfa99797b42d5e78468c8471c.png",
+            "title": "",
+            "desc": "<strong>Maximize Your Flight Time: Watch Offline, Even Without WiFi.</strong>\n\n<strong>All content is available through our dedicated App & Web.</strong>"
+          }
+        }
+      },
+      "block_order": [
+        "item_guide_1",
+        "item_guide_2"
+      ],
+      "name": "What you'll do (list)",
+      "settings": {
+        "heading": "How to Master Your Korea Guide Kit",
+        "note": "",
+        "heading_color": "#111111",
+        "title_color": "#1a1a1a",
+        "desc_color": "#6b7280",
+        "note_color": "#6b7280",
+        "thumb_bg": "#f3f4f6",
+        "padding_top": 28,
+        "padding_bottom": 28
+      }
+    },
+    "travel_reviews_VWfUaW": {
+      "type": "travel-reviews",
+      "blocks": {
+        "review_aLiGEb": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "name": "Mackenzie H.",
+            "country": "",
+            "date": "26.05.19.",
+            "variant": "-",
+            "quote": "Amazing experience! Highly recommend."
+          }
+        }
+      },
+      "block_order": [
+        "review_aLiGEb"
+      ],
+      "name": "Travel Reviews (List)",
+      "settings": {
+        "heading": "Reviews",
+        "review_limit": 10,
+        "proxy_prefix": "bta-booking",
+        "empty_text": "No reviews yet.",
+        "padding_top": 40,
+        "padding_bottom": 40
+      }
+    },
+    "ready_cta_tour_plans": {
+      "type": "ps-big-cta",
+      "settings": {
+        "heading": "Ready to Make Your First Korea Trip Easier?",
+        "guest_button_label": "Get My Complete Korea Kit",
+        "guest_button_link": "/account/login",
+        "customer_button_label": "Get My Complete Korea Kit",
+        "customer_button_link": "/products/korea-guide-kit#choose-your-best-plan"
+      }
+    },
+    "tour_faq": {
+      "type": "tour-plans-faq",
+      "blocks": {
+        "qa_48FfpY": {
+          "type": "qa",
+          "settings": {
+            "q": "Changed your mind?",
+            "a": "<p>No problem!<br>If you haven’t opened or downloaded the content yet,<br>we are happy to offer a 100% refund within 48 hours of purchase.</p>"
+          }
+        },
+        "qa_N7TPD3": {
+          "type": "qa",
+          "settings": {
+            "q": "Once Accessed",
+            "a": "<p>Since these are digital products,<br>please understand that we cannot offer refunds<br>once you have started downloading or streaming the content.</p>"
+          }
+        },
+        "qa_FyJBV4": {
+          "type": "qa",
+          "settings": {
+            "q": "Package Note",
+            "a": "<p>The Korea Guide Kit is a special package deal,<br>so we are unable to refund individual items<br>(e.g., cancelling just the video) separately.</p>"
+          }
+        },
+        "qa_cwQqEH": {
+          "type": "qa",
+          "settings": {
+            "q": "Can I use it without an internet connection? (Offline Viewing)",
+            "a": "<p>Absolutely!<br>We know data roaming can be tricky.</p><p>Once you download the content in the Purpleshoes App,<br>you can enjoy the Guidebook and watch the Videos anytime, anywhere - even without Wi-Fi!</p>"
+          }
+        },
+        "qa_multi_device": {
+          "type": "qa",
+          "settings": {
+            "q": "Can I use it on multiple devices?",
+            "a": "<p>Yes, you can! Just keep in mind the device limits for your plan:</p><p>Single Item (Guidebook or Video): Up to 2 devices<br>Korea Guide Kit: Up to 3 devices</p>"
+          }
+        },
+        "qa_address_search": {
+          "type": "qa",
+          "settings": {
+            "q": "Do I need to search for the addresses manually?",
+            "a": "<p>No. Once you purchase the Korea Guide Kit, you'll get access to our app with 1,500+ saved locations.</p><p>Just open the map, tap a spot, and go - no need to search or type any addresses.</p><p>For the best navigation experience, we recommend downloading Naver Map in advance.</p>"
+          }
+        },
+        "qa_support": {
+          "type": "qa",
+          "settings": {
+            "q": "I'm having trouble with the app. How can I get help?",
+            "a": "<p>We are here to help!<br>If you experience any technical issues or have questions, please contact our support team at <a href=\"mailto:support@kpurpleshoes.com\">support@kpurpleshoes.com</a>.</p><p>We try to respond as quickly as possible to get you back on your trip!</p>"
+          }
+        },
+        "qa_currency": {
+          "type": "qa",
+          "settings": {
+            "q": "What currency will I be charged in?",
+            "a": "<p>All prices are listed and charged in USD.<br>Please check with your bank regarding exchange rates if you are using a non-USD card.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "qa_48FfpY",
+        "qa_N7TPD3",
+        "qa_FyJBV4",
+        "qa_cwQqEH",
+        "qa_multi_device",
+        "qa_address_search",
+        "qa_support",
+        "qa_currency"
+      ],
+      "settings": {
+        "heading": "FAQ",
+        "subheading": "We want you to have the best experience with Purpleshoes.\n\nHowever, since we offer different types of services,\nthe policy varies slightly. Here is everything you need to know:",
+        "bg_color": "#f2f3f5"
+      }
+    }
+  },
+  "order": [
+    "tour_hero",
+    "tour_plans_grid",
+    "tour_plans_grid_DtdxpE",
+    "guidekit_banner_tour_plans",
+    "pricing_comparison_table_KHFqPa",
+    "toc_grid_jeV4aL",
+    "what_youll_do_WAqFqi",
+    "travel_reviews_VWfUaW",
+    "ready_cta_tour_plans",
+    "tour_faq"
+  ]
+}

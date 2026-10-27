@@ -1,0 +1,268 @@
+{% comment %}
+Footer: Logo + business info + social + legal links (horizontal)
+{% endcomment %}
+
+{%- style -%}
+.psf-{{ section.id }}{
+  padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px;
+  border-top: 1px solid rgba(var(--color-foreground), 0.08);
+  background: var(--ps-surface, #f5f6f8);
+}
+
+.psf__inner{
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Logo ── */
+.psf__logo-link{
+  display: inline-block;
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+
+.psf__logo-link img{
+  display: block;
+  width: {{ section.settings.logo_width }}px;
+  height: auto;
+}
+
+.psf__logo-text{
+  display: inline-block;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ps-text, #111827);
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+
+/* ── Business info ── */
+.psf__company-list{
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.psf__company-list li{
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: rgba(var(--color-foreground), 0.5);
+}
+
+.psf__company-list li a{
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.psf__company-list li a:hover{
+  opacity: 0.85;
+}
+
+/* ── Social icons ── */
+.psf__social{
+  margin-bottom: 28px;
+}
+
+.psf__social .list-social{
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+/* ── Bottom: legal links + copyright ── */
+.psf__bottom{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(var(--color-foreground), 0.08);
+}
+
+.psf__legal-links{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+}
+
+.psf__legal-links a{
+  font-size: 12px;
+  color: rgba(var(--color-foreground), 0.52);
+  text-decoration: none;
+}
+
+.psf__legal-links a:hover{
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.psf__legal-links span{
+  font-size: 12px;
+  color: rgba(var(--color-foreground), 0.3);
+  padding: 0 8px;
+}
+
+.psf__copyright{
+  font-size: 12px;
+  color: rgba(var(--color-foreground), 0.45);
+}
+
+@media (max-width: 600px){
+  .psf__bottom{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+{%- endstyle -%}
+
+<footer class="psf-{{ section.id }} color-{{ section.settings.color_scheme }} gradient" role="contentinfo">
+  <div class="psf__inner">
+
+    {%- comment -%} Logo {%- endcomment -%}
+    <a class="psf__logo-link" href="{{ section.settings.brand_link | default: routes.root_url }}">
+      {%- if section.settings.logo != blank -%}
+        {%- assign logo_url = section.settings.logo | image_url: width: 320 -%}
+        <img
+          src="{{ logo_url }}"
+          alt="{{ shop.name }}"
+          loading="lazy"
+          width="{{ section.settings.logo_width }}"
+          height="auto"
+        >
+      {%- else -%}
+        <span class="psf__logo-text">{{ section.settings.brand_text | default: shop.name }}</span>
+      {%- endif -%}
+    </a>
+
+    {%- comment -%} Business info {%- endcomment -%}
+    <ul class="psf__company-list">
+      <li>BRP Corporation Co., Ltd. &nbsp;|&nbsp; Brand: Purple Shoes &nbsp;|&nbsp; CEO: Hwa Min Byun</li>
+      <li>Business Registration No.: 223-87-03708 &nbsp;|&nbsp; Mail-Order Sales No.: 2026-Seoul Jongno-0127</li>
+      <li>Travel Business Registration No.: 2025-000053 &nbsp;|&nbsp; Tour Operator Bond: Korea Tourism Association</li>
+      <li>Address: 403, 4F, 118 Supyo-ro, Jongno-gu, Seoul, Republic of Korea &nbsp;|&nbsp; Postal Code: 03139</li>
+      <li>Customer Support: <a href="mailto:support@kpurpleshoes.com">support@kpurpleshoes.com</a></li>
+    </ul>
+
+    {%- comment -%} Social icons {%- endcomment -%}
+    {%- if section.settings.show_social -%}
+      <div class="psf__social">
+        {% render 'social-icons' %}
+      </div>
+    {%- endif -%}
+
+    {%- comment -%} Bottom bar: legal links + copyright {%- endcomment -%}
+    <div class="psf__bottom">
+      <div class="psf__legal-links">
+        <a href="{{ shop.url }}/policies/privacy-policy">Privacy Policy</a>
+        <span aria-hidden="true">·</span>
+        <a href="{{ shop.url }}/policies/terms-of-service">Terms of Service</a>
+        <span aria-hidden="true">·</span>
+        <a href="{{ shop.url }}/policies/refund-policy">Refund Policy</a>
+      </div>
+      <p class="psf__copyright">
+        {%- if section.settings.copyright_text != blank -%}
+          {{ section.settings.copyright_text }}
+        {%- else -%}
+          &copy; {{ 'now' | date: '%Y' }} Purple Shoes. All rights reserved.
+        {%- endif -%}
+      </p>
+    </div>
+
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Brand"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo image"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 60,
+      "max": 260,
+      "step": 5,
+      "unit": "px",
+      "label": "Logo width",
+      "default": 140
+    },
+    {
+      "type": "text",
+      "id": "brand_text",
+      "label": "Brand text (when no logo)",
+      "default": "purpleshoes"
+    },
+    {
+      "type": "url",
+      "id": "brand_link",
+      "label": "Logo link"
+    },
+    {
+      "type": "header",
+      "content": "Bottom"
+    },
+    {
+      "type": "text",
+      "id": "copyright_text",
+      "label": "Copyright text",
+      "default": "© 2026 purpleshoes. All rights reserved."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_social",
+      "label": "Show social icons",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 32
+    }
+  ],
+  "presets": [
+    {
+      "name": "Footer"
+    }
+  ]
+}
+{% endschema %}

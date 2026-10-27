@@ -1,0 +1,297 @@
+{%- if customer or request.design_mode -%}
+{{ 'purple-map.css' | asset_url | stylesheet_tag }}
+{{ 'mypage-guide-viewer.css' | asset_url | stylesheet_tag }}
+{% render 'member-page-guard', gate_path: '/pages/members-only' %}
+<script>document.title = 'Guide Viewer – {{ shop.name | escape }}';</script>
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+{%- endstyle -%}
+
+<section
+  class="pv-wrap tm-wrap section-{{ section.id }}-padding"
+  id="pv-{{ section.id }}"
+  data-pv-root
+  data-pv-section
+  data-tm-label-collapse="{{ section.settings.toggle_collapse_label | escape }}"
+  data-tm-label-expand="{{ section.settings.toggle_expand_label | escape }}"
+  data-api-base="/apps/bta-booking/mypage"
+  data-categories-endpoint="/categories"
+  data-category-viewer-template="/categories/{id}/viewer"
+  data-loading-text="{{ section.settings.loading_text | escape }}"
+  data-empty-guides-text="{{ section.settings.empty_guides_text | escape }}"
+  data-empty-state-text="{{ section.settings.empty_state_text | escape }}"
+  data-protection-notice-text="Protected guide. Download and print are intentionally limited on this page."
+  data-print-blocked-text="Printing is disabled on this guide viewer."
+  data-shortcut-blocked-text="Download, save, print, and right-click are intentionally limited on this page."
+  {% if section.settings.view_all_pdf_id != blank %}data-view-all-pdf-id="{{ section.settings.view_all_pdf_id | escape }}"{% endif %}
+  {% if section.settings.view_all_video_id != blank %}data-view-all-video-id="{{ section.settings.view_all_video_id | escape }}"{% endif %}
+  {% if customer %}data-customer-id="{{ customer.id }}" data-customer-gid="gid://shopify/Customer/{{ customer.id }}"{% endif %}
+>
+  <header class="tm-topbar">
+    <div class="tm-topbar__brand">
+      <a href="{{ routes.root_url }}" class="tm-topbar__logo-link">
+        {% if section.settings.logo != blank %}
+          <img
+            class="tm-topbar__logo"
+            src="{{ section.settings.logo | image_url: width: 400 }}"
+            alt="{{ shop.name | escape }}"
+            width="{{ section.settings.logo_width }}"
+            height="auto"
+            loading="eager"
+          >
+        {% elsif settings.logo != blank %}
+          <img
+            class="tm-topbar__logo"
+            src="{{ settings.logo | image_url: width: 400 }}"
+            alt="{{ shop.name | escape }}"
+            width="{{ section.settings.logo_width }}"
+            height="auto"
+            loading="eager"
+          >
+        {% else %}
+          <span class="tm-topbar__title-fallback">{{ shop.name | escape }}</span>
+        {% endif %}
+      </a>
+    </div>
+    <div class="tm-topbar__actions">
+      <button
+        type="button"
+        class="tm-topbar__toggle tm-sidebar-toggle tm-sidebar-toggle--mobile"
+        data-tm-sidebar-toggle
+        aria-expanded="true"
+        aria-controls="pv-sidebar-{{ section.id }}"
+      >
+        <span class="tm-sidebar-toggle__text tm-sidebar-toggle__text--collapse">{{ section.settings.toggle_collapse_label | escape }}</span>
+        <span class="tm-sidebar-toggle__text tm-sidebar-toggle__text--expand" hidden>{{ section.settings.toggle_expand_label | escape }}</span>
+      </button>
+      {% if section.settings.back_label != blank %}
+        <a class="tm-topbar__link" href="{{ section.settings.back_url | default: routes.root_url }}">{{ section.settings.back_label | escape }}</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="pv-layout tm-layout">
+    <aside
+      class="pv-sidebar pv-sidebar--mypage-style tm-sidebar"
+      id="pv-sidebar-{{ section.id }}"
+      role="navigation"
+      aria-label="{{ section.settings.sidebar_aria_label | escape }}"
+    >
+      <div class="pv-sidebar__inner">
+        <nav class="pv-toc" data-pv-toc></nav>
+        <p class="pv-sidebar__empty" data-pv-sidebar-empty hidden>{{ section.settings.empty_guides_text }}</p>
+
+        <div class="pv-sidebar__favorites" data-pv-favorites-panel aria-hidden="true" hidden>
+          <p class="pv-sidebar__favorites-label">Bookmarks</p>
+          <div class="pv-sidebar__favorites-list" data-pv-favorites-list role="list"></div>
+          <p class="pv-sidebar__favorites-empty" data-pv-favorites-empty>No favorites yet. Tap the heart on any item to add it here.</p>
+          <button type="button" class="pv-sidebar__back-btn" data-pv-show-all>Show all</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="pv-main pv-main--tm" role="main">
+      <button
+        type="button"
+        class="tm-sidebar-toggle tm-sidebar-toggle--edge"
+        data-tm-sidebar-toggle
+        aria-expanded="true"
+        aria-controls="pv-sidebar-{{ section.id }}"
+        title="{{ section.settings.toggle_collapse_label | escape }}"
+      >
+        <span class="tm-sidebar-toggle__chev" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ section.settings.toggle_collapse_label | escape }}</span>
+      </button>
+      <div class="pv-viewer-wrap">
+        <div class="pv-viewer__current-row">
+          <p class="pv-viewer__current" data-pv-current-label aria-live="polite"></p>
+          <button type="button" class="pv-viewer__current-fav-btn" data-pv-show-favorites aria-pressed="false">
+            <span class="pv-sidebar__fav-btn-heart" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </span>
+            <span class="pv-viewer__current-fav-label">Bookmarks</span>
+          </button>
+        </div>
+        <div class="pv-viewer__header-format-actions" data-pv-header-format-actions hidden>
+          <div
+            class="pv-viewer__header-format-inner pv-toc__row-actions"
+            data-pv-item-buttons
+            data-pv-item-buttons-for=""
+          ></div>
+          <button type="button" class="pv-toc__format-btn pv-toc__format-btn--full" data-pv-open-full hidden>
+            {{ section.settings.full_version_label | default: 'View Full Version' }}
+          </button>
+          <div class="pv-viewer__zoom-controls" data-pv-zoom-controls hidden aria-label="PDF zoom controls">
+            <button type="button" class="pv-viewer__zoom-btn" data-pv-zoom-action="out" aria-label="Zoom out">-</button>
+            <button type="button" class="pv-viewer__zoom-btn pv-viewer__zoom-btn--value" data-pv-zoom-action="reset" aria-label="Reset zoom to 100%">
+              <span data-pv-zoom-value>100%</span>
+            </button>
+            <button type="button" class="pv-viewer__zoom-btn" data-pv-zoom-action="in" aria-label="Zoom in">+</button>
+            <button type="button" class="pv-viewer__zoom-btn pv-viewer__zoom-btn--reset" data-pv-zoom-action="reset" aria-label="Reset zoom">Reset</button>
+          </div>
+        </div>
+        <div class="pv-viewer__request-status" data-pv-request-status hidden role="status" aria-live="polite">
+          <span data-pv-request-status-text></span>
+          <button type="button" class="pv-viewer__retry-btn" data-pv-retry-action hidden>Try again</button>
+        </div>
+        <div class="pv-viewer__warning" data-pv-protection-warning hidden role="status" aria-live="polite"></div>
+        <div class="pv-viewer" data-pv-viewer>
+          <div class="pv-viewer__empty" data-pv-empty>
+            <p class="pv-viewer__empty-text" data-pv-empty-text>{{ section.settings.empty_state_text }}</p>
+          </div>
+          <div class="pv-viewer__frame-wrap" data-pv-frame-wrap style="display: none;">
+            <div class="pv-viewer__pdf-shield" data-pv-pdf-shield hidden aria-hidden="true">
+              <p class="pv-viewer__pdf-shield-text">Protected guide. Download and print are intentionally limited.</p>
+              <span class="pv-viewer__pdf-shield-blocker" aria-hidden="true"></span>
+            </div>
+            <div class="pv-viewer__frame-stage" data-pv-frame-stage>
+              <iframe class="pv-viewer__frame" data-pv-frame title="Guide PDF viewer" src="about:blank" referrerpolicy="no-referrer"></iframe>
+            </div>
+          </div>
+          <div class="pv-viewer__video-wrap" data-pv-video-wrap style="display: none;">
+            <video class="pv-viewer__video" data-pv-video controls playsinline preload="metadata" controlsList="nodownload nofullscreen noremoteplayback" disablepictureinpicture disableremoteplayback></video>
+          </div>
+          <div class="pv-viewer__loading" data-pv-loading style="display: none;" aria-hidden="true">
+            <span class="pv-viewer__loading-text">{{ section.settings.loading_text }}</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script src="{{ 'account-favorites.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'mypage-guide-viewer.js' | asset_url }}" defer="defer"></script>
+
+
+{%- else -%}
+  {% render 'member-login-required' %}
+{%- endif -%}
+{% schema %}
+{
+  "name": "PDF Viewer Page",
+  "tag": "section",
+  "class": "section-pdf-viewer",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo",
+      "info": "Leave empty to use the theme header logo."
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 80,
+      "max": 280,
+      "step": 4,
+      "unit": "px",
+      "label": "Logo max width",
+      "default": 160
+    },
+    {
+      "type": "text",
+      "id": "back_url",
+      "label": "Back link URL",
+      "default": "/pages/mypage"
+    },
+    {
+      "type": "text",
+      "id": "back_label",
+      "label": "Back link label",
+      "default": "Back to My Page"
+    },
+    {
+      "type": "text",
+      "id": "toggle_collapse_label",
+      "label": "Sidebar toggle — hide list",
+      "default": "Hide list"
+    },
+    {
+      "type": "text",
+      "id": "toggle_expand_label",
+      "label": "Sidebar toggle — show list",
+      "default": "Show list"
+    },
+    {
+      "type": "text",
+      "id": "sidebar_aria_label",
+      "label": "Sidebar aria label",
+      "default": "Guide categories"
+    },
+    {
+      "type": "text",
+      "id": "empty_state_text",
+      "label": "Empty state text",
+      "default": "Select a category from the left panel."
+    },
+    {
+      "type": "text",
+      "id": "empty_guides_text",
+      "label": "No guides text",
+      "default": "You do not have an active guide yet. Purchase a guide to open the viewer."
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Loading text",
+      "default": "Loading your guide..."
+    },
+    {
+      "type": "text",
+      "id": "full_version_label",
+      "label": "Full version button label",
+      "default": "View Full Version"
+    },
+    {
+      "type": "header",
+      "content": "View All"
+    },
+    {
+      "type": "text",
+      "id": "view_all_pdf_id",
+      "label": "View All — PDF category ID",
+      "info": "Enter the category ID to use as the All PDF in the bta-booking admin. Leave blank for name-based auto search."
+    },
+    {
+      "type": "text",
+      "id": "view_all_video_id",
+      "label": "View All — MOV category ID",
+      "info": "Enter the category ID to use as the All video in the bta-booking admin. Leave blank for name-based auto search."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding top",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding bottom",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "PDF Viewer Page"
+    }
+  ]
+}
+{% endschema %}

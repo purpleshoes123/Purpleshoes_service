@@ -1,0 +1,478 @@
+{% comment %}
+  Section: TOC Grid (Table of Contents)
+  - Landing: What You Get / 1000+ Local Foodie Hidden Gems List + 3x3 TOC grid with inline SVG icons
+{% endcomment %}
+
+<section
+  class="toc-grid-section"
+  style="
+    --toc-bg: {{ section.settings.bg_color }};
+    --toc-text: {{ section.settings.text_color }};
+    --toc-muted: {{ section.settings.muted_color }};
+    --toc-line: {{ section.settings.line_color }};
+    --toc-max: {{ section.settings.max_width }}px;
+    --toc-gap-x: {{ section.settings.gap_x }}px;
+    --toc-gap-y: {{ section.settings.gap_y }}px;
+  "
+>
+  <div class="toc-grid__inner">
+    {% assign eyebrow_text = section.settings.eyebrow | strip %}
+    {% if eyebrow_text != blank %}
+      <p class="toc-grid__eyebrow">{{ section.settings.eyebrow }}</p>
+    {% endif %}
+
+    {% if section.settings.heading != blank %}
+      <h2 class="toc-grid__title">{{ section.settings.heading }}</h2>
+    {% endif %}
+
+    {% if section.settings.subtext != blank %}
+      <div class="toc-grid__desc rte">
+        {{ section.settings.subtext }}
+      </div>
+    {% endif %}
+
+    {% if section.settings.show_title_rule %}
+      <div class="toc-grid__title-rule" aria-hidden="true"></div>
+    {% endif %}
+
+    <div class="toc-grid__items">
+      {% for block in section.blocks %}
+        {% assign link = block.settings.link %}
+        {% assign tag = 'div' %}
+        {% if link != blank %}
+          {% assign tag = 'a' %}
+        {% endif %}
+
+        <{{ tag }}
+          class="toc-item"
+          {% if link != blank %}href="{{ link }}"{% endif %}
+          {{ block.shopify_attributes }}
+        >
+          {% assign num = block.settings.number | strip %}
+          {% if num != blank %}
+            <div class="toc-item__number">{{ block.settings.number }}</div>
+          {% endif %}
+
+          {% if block.settings.item_title != blank %}
+            <div class="toc-item__header">
+              {% if block.settings.icon != blank %}
+                <div class="toc-item__icon-wrap">
+                  <img class="toc-item__icon" src="{{ block.settings.icon | image_url: width: 80 }}" alt="" width="20" height="20" loading="lazy">
+                </div>
+              {% else %}
+                <span class="toc-item__icon-svg" aria-hidden="true">
+                  {% case block.settings.item_title %}
+                    {% when 'Preparing for Your Trip' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L4 6v14a2 2 0 002 2h12a2 2 0 002-2V6l-2-4z"/><path d="M4 6h16"/><path d="M12 10v6"/><path d="M9 13h6"/></svg>
+                    {% when 'Food' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
+                    {% when 'Photo Spots' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M16 6l2-2 2 2"/><path d="M2 18l2-2 2 2"/></svg>
+                    {% when 'Activities' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 013-3h2a3 3 0 013 3v6a3 3 0 01-3 3H5a3 3 0 01-3-3V9z"/><path d="M13 5h4l2 4-2 4h-4"/><path d="M13 13h2"/></svg>
+                    {% when 'Shopping' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                    {% when 'Tradition' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16"/><path d="M5 22V10l7-4 7 4v12"/><path d="M9 22v-6h6v6"/><path d="M12 6v4"/></svg>
+                    {% when 'Wellness' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 8 4 12 4 17c0 2.8 2.2 5 5 5h6c2.8 0 5-2.2 5-5 0-5-4-9-8-15z"/><path d="M12 22V12"/><path d="M9 15h6"/></svg>
+                    {% when 'Seoul' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {% when 'Outside of Seoul' or 'outside of Seoul' %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg>
+                    {% else %}
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                  {% endcase %}
+                </span>
+              {% endif %}
+              <h3 class="toc-item__title">{{ block.settings.item_title }}</h3>
+            </div>
+            <div class="toc-item__underline" aria-hidden="true"></div>
+            <div class="toc-item__divider" aria-hidden="true"></div>
+          {% endif %}
+
+          {% if block.settings.list != blank %}
+            <div class="toc-item__body">
+              {% assign normalized = block.settings.list | strip | newline_to_br | replace: '<br>', '<br />' %}
+              {% assign lines = normalized | split: '<br />' %}
+              <ul class="toc-item__list">
+                {% for line in lines %}
+                  {% assign t = line | strip %}
+                  {% if t != blank %}
+                    <li>{{ t }}</li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+        </{{ tag }}>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<style>
+  .toc-grid-section {
+    background: var(--toc-bg);
+    color: var(--toc-text);
+    padding: clamp(124px, 6vw, 124px) 24px clamp(56px, 8vw, 124px);
+  }
+
+  .toc-grid__inner {
+    max-width: min(var(--toc-max), 100%);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .toc-grid__eyebrow {
+    font-size: clamp(18px, 1.8vw, 22px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 0 0 12px;
+    color: var(--toc-text);
+  }
+
+  .toc-grid__title {
+    font-size: clamp(26px, 3vw, 38px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--toc-text);
+  }
+
+  .toc-grid__desc {
+    margin: 18px auto 56px;
+    max-width: 980px;
+    color: var(--toc-muted);
+    font-size: clamp(16px, 1.05vw, 22px);
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  .toc-grid__desc.rte p { margin: 0 0 12px; }
+  .toc-grid__desc.rte p:first-child {
+    margin-bottom: 10px;
+    font-size: clamp(20px, 2vw, 30px);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--toc-text);
+  }
+  .toc-grid__desc.rte p:last-child { margin-bottom: 0; }
+  .toc-grid__desc.rte strong { color: var(--toc-text); font-weight: 700; }
+  .toc-grid__desc.rte em { font-style: italic; }
+  .toc-grid__desc.rte a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+  .toc-grid__title-rule {
+    width: min(360px, 70%);
+    height: 2px;
+    background: var(--toc-line);
+    margin: 32px auto 48px;
+    opacity: 0.9;
+  }
+
+  .toc-grid__items {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--toc-gap-y) var(--toc-gap-x);
+    align-items: start;
+    text-align: left;
+    margin-top: 10px;
+  }
+
+  .toc-item {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    outline: none;
+  }
+
+  .toc-item:hover {
+    opacity: 0.92;
+  }
+
+  .toc-item:focus-visible {
+    box-shadow: 0 0 0 2px var(--toc-line);
+    border-radius: 6px;
+  }
+
+  .toc-item__number {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-bottom: 8px;
+    color: var(--toc-muted);
+  }
+
+  .toc-item__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    margin-bottom: 0;
+  }
+
+  .toc-item__icon-svg {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--toc-line);
+    opacity: 0.95;
+  }
+
+  .toc-item__icon-svg svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .toc-item__icon-wrap {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .toc-item__icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: block;
+    opacity: 0.95;
+  }
+
+  .toc-item__title {
+    font-size: clamp(14px, 1vw, 17px);
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--toc-text);
+  }
+
+  .toc-item__underline {
+    width: 80px;
+    height: 2px;
+    background: #2f5fa7;
+    margin-top: 10px;
+    margin-bottom: 0;
+    border-radius: 0;
+  }
+
+  .toc-item__divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.06);
+    margin-top: 14px;
+    margin-bottom: 0;
+  }
+
+  .toc-item__body {
+    padding-top: 14px;
+    margin-top: 0;
+  }
+
+  .toc-item__list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    font-size: clamp(14px, 0.9vw, 15px);
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .toc-item__list li {
+    margin-bottom: 6px;
+  }
+
+  .toc-item__list li:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 900px) {
+    .toc-grid__items {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 36px;
+    }
+    .toc-grid__title-rule {
+      margin: 28px auto 40px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .toc-grid__items {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+    .toc-grid-section {
+      padding-left: 20px;
+      padding-right: 20px;
+      padding-bottom: 64px;
+    }
+    .toc-grid__desc {
+      text-align: left;
+      margin-bottom: 36px;
+    }
+    .toc-grid__title-rule {
+      margin: 24px auto 36px;
+    }
+    .toc-item__header {
+      gap: 8px;
+    }
+    .toc-item__title {
+      font-size: 14px;
+    }
+    .toc-item__body {
+      padding-top: 12px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "TOC Grid",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Top Small Text (optional)",
+      "default": "What You Get"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Title",
+      "default": "1000+ Local Foodie Hidden Gems List"
+    },
+    {
+      "type": "richtext",
+      "id": "subtext",
+      "label": "Description below title (line break / bold / links supported)",
+      "default": "<p>The only Seoul food list you can trust: 1,000+ hidden gems I've personally visited and carefully selected, all hand-picked by a lifelong local who actually knows the city — each available in Purple Map using Kakao Map, so you never have to search or type an address again.</p>"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_title_rule",
+      "label": "Show horizontal line below title",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum width (px)",
+      "min": 720,
+      "max": 1400,
+      "step": 20,
+      "default": 1040
+    },
+    {
+      "type": "range",
+      "id": "gap_x",
+      "label": "Horizontal gap (px)",
+      "min": 12,
+      "max": 80,
+      "step": 4,
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "gap_y",
+      "label": "Vertical gap (px)",
+      "min": 12,
+      "max": 80,
+      "step": 4,
+      "default": 40
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background color",
+      "default": "#fafafa"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#222222"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Description / list text color",
+      "default": "#333333"
+    },
+    {
+      "type": "color",
+      "id": "line_color",
+      "label": "Line color",
+      "default": "#2f5fa7"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Table of contents item",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Icon image"
+        },
+        {
+          "type": "text",
+          "id": "number",
+          "label": "Number / page (optional)",
+          "default": "01"
+        },
+        {
+          "type": "text",
+          "id": "item_title",
+          "label": "Item title",
+          "default": "Section Title"
+        },
+        {
+          "type": "textarea",
+          "id": "list",
+          "label": "List (one line = one item)",
+          "default": "First item\nSecond item\nThird item"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link (optional)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "TOC Grid (Table of Contents)",
+      "settings": {
+        "eyebrow": "What You Get",
+        "heading": "1000+ Local Foodie Hidden Gems List",
+        "subtext": "<p>The only Seoul food list you can trust: 1,000+ hidden gems I've personally visited and carefully selected, all hand-picked by a lifelong local who actually knows the city — each available in Purple Map using Kakao Map, so you never have to search or type an address again.</p>",
+        "show_title_rule": true,
+        "max_width": 1040,
+        "gap_x": 40,
+        "gap_y": 40,
+        "bg_color": "#fafafa",
+        "text_color": "#222222",
+        "muted_color": "#333333",
+        "line_color": "#2f5fa7"
+      },
+      "blocks": [
+        { "type": "item", "settings": { "item_title": "Preparing for Your Trip", "list": "Entry Checklist\nTransportation Guide\nMust-Have Apps\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Food", "list": "Korean BBQ\nSeafood\nSoup & Stew\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Photo Spots", "list": "Sunset Views\nCityscapes & Night Views\nKorean Aesthetic Spots\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Activities", "list": "K-Culture Experiences\nLocal Cultural Activities\nAmusement Parks\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Shopping", "list": "Drugstores\nHypermarkets\nDepartment Stores\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Tradition", "list": "Palaces\nTemples\nMuseums\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Wellness", "list": "Hiking & Scenic Trails\nTemple Stay\nKorean Spa\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Seoul", "list": "By District\nLandmarks\nFood\nExperiences\nMore inside" } },
+        { "type": "item", "settings": { "item_title": "Outside of Seoul", "list": "Incheon\nBusan\nJeju\nGyeongju\nGangwon" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

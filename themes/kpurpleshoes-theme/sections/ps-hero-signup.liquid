@@ -1,0 +1,224 @@
+{% comment %}
+  Purpleshoes Hero (Dawn)
+  - left image, right title with accent word, newsletter email form
+{% endcomment %}
+
+<section class="ps-hero">
+  <div class="ps-container">
+    <div class="ps-hero__grid">
+      <div class="ps-hero__img">
+        {% if section.settings.image != blank %}
+          {{ section.settings.image | image_url: width: 1600 | image_tag: loading: 'lazy', sizes: '(min-width: 990px) 650px, 90vw', widths: '800,1000,1200,1600' }}
+        {% else %}
+          <img src="https://cdn.shopify.com/s/files/1/0000/0000/0000/files/placeholder.png" alt="" loading="lazy">
+        {% endif %}
+      </div>
+
+      <div class="ps-hero__copy">
+        {% assign title = section.settings.title | escape %}
+        {% assign accent = section.settings.accent | escape %}
+        {% liquid
+          assign cta_href = '/pages/starter-kit-viewer'
+          assign cta_label = 'Open My Free Guide'
+
+          unless customer
+            assign cta_href = '/customer_authentication/login?return_to=%2Fpages%2Fstarter-kit-viewer'
+            assign cta_label = section.settings.button_label | default: 'Get My Free Guide'
+          endunless
+        %}
+
+        <h1 class="ps-hero__title">
+          <span class="ps-hero__title-line1">{{ section.settings.title_line1 | escape }}</span>
+          <span class="ps-hero__title-line2">
+            <span class="accent ps-hero__typewriter" data-ps-hero-typewriter aria-live="polite"></span>
+          </span>
+        </h1>
+
+        {% if section.settings.subtext != blank %}
+          <p class="ps-hero__sub">{{ section.settings.subtext }}</p>
+        {% endif %}
+
+        {% if section.settings.form_label != blank %}
+          <span class="ps-hero__label">{{ section.settings.form_label }}</span>
+        {% endif %}
+
+        <div class="ps-hero__cta-wrap ps-hero__cta-wrap--logged-in">
+          <a href="{{ cta_href }}" class="ps-btn ps-btn--purple ps-btn--large">
+            {{ cta_label }}
+          </a>
+        </div>
+
+        <div class="ps-hero__fine ps-hero__fine--popover">
+          <div class="ps-hero__fine-line">
+            {% if section.settings.fine_text != blank %}
+              {{ section.settings.fine_text }}
+            {% else %}
+              <p>What do you get for free?</p>
+            {% endif %}
+            <span class="ps-hero__fine-trigger-wrap">
+              <button type="button" class="ps-hero__fine-learn" id="PsHeroFineLearn-{{ section.id }}" aria-expanded="false" aria-controls="PsHeroFineBubble-{{ section.id }}">
+                Learn more
+              </button>
+              <div
+                id="PsHeroFineBubble-{{ section.id }}"
+                class="ps-hero__fine-bubble"
+                role="tooltip"
+                aria-hidden="true"
+              >
+                <div class="ps-hero__fine-bubble-inner">
+                  <p class="ps-hero__fine-bubble-lead">What's inside your free sample guide</p>
+                  <div class="ps-hero__fine-bubble-block">
+                    <p class="ps-hero__fine-bubble-heading">Pre-Trip Made Simple</p>
+                    <ul>
+                      <li>Travel Prep Summary</li>
+                      <li>Entry Checklist</li>
+                      <li>Packing Guide</li>
+                      <li>Map of Korea</li>
+                    </ul>
+                  </div>
+                  <div class="ps-hero__fine-bubble-block">
+                    <p class="ps-hero__fine-bubble-heading">Travel Like a Local</p>
+                    <ul>
+                      <li>Korea Travel Hacks</li>
+                      <li>Essential Manners &amp; Etiquette</li>
+                      <li>What Makes Korea Special</li>
+                      <li>Must-Have Apps</li>
+                    </ul>
+                  </div>
+                  <div class="ps-hero__fine-bubble-block">
+                    <p class="ps-hero__fine-bubble-heading">Plan Without Stress</p>
+                    <ul>
+                      <li>Korea’s Seasons &amp; Weather</li>
+                      <li>Korea Festival Calendar</li>
+                      <li>Transportation Guide</li>
+                      <li>Essential Korean for Happy Travel</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function() {
+  var el = document.querySelector('[data-ps-hero-typewriter]');
+  if (!el) return;
+
+  var phrases = [
+    'knowing exactly where to start',
+    'ready to explore with confidence',
+    'with local favorites already saved',
+    'excited, not overwhelmed',
+    'ready to enjoy more of Korea'
+  ];
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = phrases[0];
+    return;
+  }
+
+  var i = 0;
+  var charIndex = 0;
+  var deleting = false;
+  var typeDelay = 48;
+  var deleteDelay = 28;
+  var pauseAfterType = 2200;
+  var pauseBeforeNext = 420;
+
+  function step() {
+    var phrase = phrases[i];
+    if (!deleting) {
+      if (charIndex < phrase.length) {
+        charIndex += 1;
+        el.textContent = phrase.slice(0, charIndex);
+        setTimeout(step, typeDelay);
+      } else {
+        setTimeout(function() {
+          deleting = true;
+          step();
+        }, pauseAfterType);
+      }
+    } else {
+      if (charIndex > 0) {
+        charIndex -= 1;
+        el.textContent = phrase.slice(0, charIndex);
+        setTimeout(step, deleteDelay);
+      } else {
+        deleting = false;
+        i = (i + 1) % phrases.length;
+        setTimeout(step, pauseBeforeNext);
+      }
+    }
+  }
+
+  step();
+})();
+</script>
+
+<script>
+(function() {
+  var wrap = document.querySelector('.ps-hero__fine-trigger-wrap');
+  if (!wrap) return;
+  var btn = wrap.querySelector('.ps-hero__fine-learn');
+  var bubble = wrap.querySelector('.ps-hero__fine-bubble');
+  if (!btn || !bubble) return;
+
+  var touchOnly = window.matchMedia && window.matchMedia('(hover: none)').matches;
+
+  function setOpen(open) {
+    wrap.classList.toggle('is-open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    bubble.setAttribute('aria-hidden', open ? 'false' : 'true');
+  }
+
+  if (touchOnly) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(!wrap.classList.contains('is-open'));
+    });
+    document.addEventListener('click', function() {
+      setOpen(false);
+    });
+    wrap.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "PS Hero (Signup)",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Left image" },
+
+    { "type": "text", "id": "title_line1", "label": "Title line 1", "default": "Your journey start", "info": "Line 2 cycles: Here / with real local experiences / … (typewriter)" },
+    { "type": "text", "id": "title_line2", "label": "Title line 2 (legacy)", "default": "Here", "info": "Unused. Second line uses animated phrases in the theme." },
+
+    { "type": "richtext", "id": "subtext", "label": "Sub text", "default": "<p></p>" },
+
+    { "type": "text", "id": "form_label", "label": "Form label", "default": "Sign up to get your free sample guide" },
+    { "type": "text", "id": "email_placeholder", "label": "Email placeholder", "default": "Enter your Email Address" },
+    { "type": "text", "id": "button_label", "label": "Button label (when not logged in)", "default": "get my free guide" },
+    { "type": "url", "id": "signup_step1_url", "label": "Signup Step 1 page URL", "info": "Where to send when guest clicks Sign in" },
+    { "type": "url", "id": "guidebook_url", "label": "Guidebook page URL", "info": "When logged in, button links here" },
+    { "type": "text", "id": "logged_in_button_label", "label": "Button label (when logged in)", "default": "Open My Free Guide" },
+
+    { "type": "richtext", "id": "fine_text", "label": "Fine text (before Learn more)", "default": "<p>What do you get for free?</p>", "info": "Learn more opens a popover with the free guide list." },
+    { "type": "url", "id": "fine_link", "label": "Fine link URL (legacy)", "info": "Not shown when Learn more popover is enabled." },
+    { "type": "text", "id": "fine_link_label", "label": "Fine link label (legacy)", "default": "Learn More" }
+  ],
+  "presets": [
+    { "name": "PS Hero (Signup)" }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,26 @@
+<section class="ps-member-intro page-width">
+  {% if section.settings.show_title %}<h1>{{ page.title | escape }}</h1>{% endif %}
+  {% if section.settings.image != blank %}
+    {{ section.settings.image | image_url: width: 1600 | image_tag: class: 'ps-member-intro__image', loading: 'eager', alt: page.title }}
+  {% endif %}
+  <div class="rte">{{ page.content }}</div>
+  {% liquid
+    assign purchase_path = page.url | append: '#member-purchase'
+    assign purchase_url = '#member-purchase'
+    unless customer
+      assign encoded_path = purchase_path | url_encode
+      assign purchase_url = '/customer_authentication/login?return_to=' | append: encoded_path
+    endunless
+  %}
+  {% unless customer %}<p>{{ 'public_intro.signin_hint' | t }}</p>{% endunless %}
+  <a class="button" href="{{ purchase_url }}">{% if customer %}{{ 'public_intro.member_action' | t }}{% else %}{{ 'public_intro.signin' | t }}{% endif %}</a>
+</section>
+{% stylesheet %}
+  .ps-member-intro { padding-block: 48px 24px; max-width: 1160px; }
+  .ps-member-intro h1 { font-size: clamp(28px, 4vw, 46px); line-height: 1.2; }
+  .ps-member-intro .rte { max-width: 80ch; line-height: 1.7; }
+  .ps-member-intro__image { display: block; width: 100%; height: auto; max-height: 560px; object-fit: cover; border-radius: 20px; margin-block: 16px 32px; }
+{% endstylesheet %}
+{% schema %}
+{"name":"Member product intro","settings":[{"type":"checkbox","id":"show_title","label":"Show page title","default":true},{"type":"image_picker","id":"image","label":"Introduction image"}],"presets":[{"name":"Member product intro"}]}
+{% endschema %}

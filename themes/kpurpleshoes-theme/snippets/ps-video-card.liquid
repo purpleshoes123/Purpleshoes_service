@@ -1,0 +1,53 @@
+{% comment %}
+  Params:
+  - image
+  - video_url
+  - heading
+  - subheading
+  - desc
+  - cta_label
+  - cta_link
+{% endcomment %}
+
+<div class="ps-videoCard">
+  <div class="ps-videoCard__media">
+    {% if image != blank %}
+      {{ image | image_url: width: 1600 | image_tag: loading: 'lazy', sizes: '(min-width: 990px) 650px, 92vw', widths: '800,1000,1200,1600' }}
+    {% else %}
+      <img src="https://cdn.shopify.com/s/files/1/0000/0000/0000/files/placeholder.png" alt="" loading="lazy">
+    {% endif %}
+
+    <div class="ps-play">
+      {% if video_url != blank %}
+        <a class="ps-play__btn" href="{{ video_url }}" aria-label="Play" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 7.5v9l8-4.5-8-4.5Z" fill="#fff"></path>
+          </svg>
+        </a>
+      {% else %}
+        <div class="ps-play__btn" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M9 7.5v9l8-4.5-8-4.5Z" fill="#fff"></path>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ps-videoCard__body">
+    <p class="ps-videoCard__kicker">
+      {{ heading | escape }}
+      <span>{{ subheading | escape }}</span>
+    </p>
+
+    {% if desc != blank %}
+      <p class="ps-videoCard__desc">{{ desc }}</p>
+    {% endif %}
+
+    {% if cta_label != blank and cta_link != blank %}
+      <div class="ps-videoCard__cta">
+        <a class="ps-btn ps-btn--yellow" href="{{ cta_link }}">{{ cta_label | escape }}</a>
+      </div>
+    {% endif %}
+  </div>
+</div>

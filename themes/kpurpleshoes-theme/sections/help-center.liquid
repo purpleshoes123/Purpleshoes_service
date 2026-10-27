@@ -1,0 +1,163 @@
+{% comment %}
+  Help Center / FAQ Section
+  - Accordion style, one item open at a time
+  - Editable via Shopify theme editor
+  - Includes unified mypage sidebar
+{% endcomment %}
+
+<section class="mp-wrap hc-wrap" id="help-center-{{ section.id }}" data-mypage>
+  <div class="mp-grid">
+    {% render 'mypage-sidebar', active: 'help' %}
+    <main class="mp-main">
+      <div class="hc-inner page-width">
+    <div class="ps-section-heading hc-head">
+      <h1 class="ps-section-heading__title hc-title">{{ section.settings.heading | default: 'FAQ' }}</h1>
+      {% if section.settings.intro != blank %}
+        <p class="ps-section-heading__sub hc-intro">{{ section.settings.intro }}</p>
+      {% endif %}
+      <div class="ps-section-heading__rule"></div>
+    </div>
+
+    <div class="hc-accordion" data-accordion>
+      {% for block in section.blocks %}
+        {% case block.type %}
+          {% when 'section_header' %}
+            <div class="hc-section" {{ block.shopify_attributes }}>
+              <h2 class="hc-section__title">{{ block.settings.title }}</h2>
+            </div>
+          {% when 'qa' %}
+            <details class="hc-item" {{ block.shopify_attributes }}>
+              <summary class="hc-q">
+                <span class="hc-q__text">{{ block.settings.question }}</span>
+                <span class="hc-q__icon" aria-hidden="true"></span>
+              </summary>
+              <div class="hc-a">
+                <div class="hc-a__content rte">{{ block.settings.answer }}</div>
+              </div>
+            </details>
+        {% endcase %}
+      {% endfor %}
+    </div>
+  </div>
+    </main>
+  </div>
+</section>
+
+<style>
+.hc-wrap {
+  --primary: #6366f1;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #f1f5f9;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+.hc-inner { max-width: 720px; margin: 0 auto; padding: 0; }
+.hc-intro { text-align: center; max-width: 560px; margin-left: auto; margin-right: auto; }
+.hc-accordion { margin-top: 32px; }
+.hc-section { margin: 32px 0 16px; }
+.hc-section:first-child { margin-top: 0; }
+.hc-section__title { font-size: 18px; font-weight: 800; color: var(--ps-text); margin: 0; letter-spacing: -0.02em;text-align:center; }
+.hc-item { border: 1px solid rgba(17,24,39,0.1); border-radius: 14px; overflow: hidden; background: #fff; margin-bottom: 10px; }
+.hc-q {
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: clamp(16px, 1.8vw, 19px);
+  color: var(--ps-text);
+}
+.hc-q::-webkit-details-marker { display: none; }
+.hc-q__text { flex: 1; }
+.hc-q__icon {
+  width: 10px; height: 10px;
+  border-right: 2px solid rgba(17,24,39,0.5);
+  border-bottom: 2px solid rgba(17,24,39,0.5);
+  transform: rotate(45deg);
+  transition: transform .2s ease;
+  flex-shrink: 0;
+}
+details[open] .hc-q__icon { transform: rotate(225deg); }
+.hc-a { border-top: 1px solid rgba(17,24,39,0.08); }
+.hc-a__content { padding: 18px 20px 22px; font-size: clamp(15px, 1.5vw, 17px); line-height: 1.7; color: var(--ps-muted); }
+.hc-a__content a { color: var(--ps-purple); text-decoration: underline; }
+.hc-a__content a:hover { opacity: 0.85; }
+.hc-a__content p { margin: 0 0 10px; }
+.hc-a__content p:last-child { margin-bottom: 0; }
+.hc-a__content ul, .hc-a__content ol { margin: 8px 0; padding-left: 20px; }
+</style>
+
+<script>
+(function(){
+  var root = document.querySelector('#help-center-{{ section.id }} [data-accordion]');
+  if(!root) return;
+  var items = root.querySelectorAll('details.hc-item');
+  items.forEach(function(d){
+    d.addEventListener('toggle', function(){
+      if(!d.open) return;
+      items.forEach(function(other){ if(other !== d) other.removeAttribute('open'); });
+    });
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Help Center",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "FAQ" },
+    { "type": "textarea", "id": "intro", "label": "Intro text", "default": "Find answers about your Guide content, tour bookings, cancellations, and payments." }
+  ],
+  "blocks": [
+    {
+      "type": "section_header",
+      "name": "Section header",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Section title", "default": "Guide Content" }
+      ]
+    },
+    {
+      "type": "qa",
+      "name": "Q&A",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Question", "default": "Question?" },
+        { "type": "richtext", "id": "answer", "label": "Answer", "default": "<p>Answer here.</p>" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Help Center",
+      "blocks": [
+        { "type": "section_header", "settings": { "title": "Guide Content" } },
+        { "type": "qa", "settings": { "question": "Changed your mind?", "answer": "<p>No problem! If you haven't opened or downloaded the content yet, we are happy to offer a 100% refund within 48 hours of purchase.</p>" } },
+        { "type": "qa", "settings": { "question": "Once Accessed", "answer": "<p>Since these are digital products, please understand that we cannot offer refunds once you have started downloading or streaming the content.</p>" } },
+        { "type": "qa", "settings": { "question": "Package Note", "answer": "<p>The Korea Guide Kit is a special package deal, so we are unable to refund individual items (e.g., cancelling just the video) separately.</p>" } },
+        { "type": "qa", "settings": { "question": "Can I use it without an internet connection? (Offline Viewing)", "answer": "<p>Absolutely! We know data roaming can be tricky. Once you download the content in the Purpleshoes App, you can enjoy the Guidebook and watch the Videos anytime, anywhere—even without Wi-Fi!</p>" } },
+        { "type": "qa", "settings": { "question": "Can I use it on multiple devices?", "answer": "<p>Yes, you can! Just keep in mind the device limits for your plan:</p><ul><li>Single Item (Guidebook or Video): Up to 2 devices</li><li>Korea Guide Kit: Up to 3 devices</li></ul>" } },
+        { "type": "qa", "settings": { "question": "Do I need to search for the addresses manually?", "answer": "<p>If you purchase the Korea Guide Kit, the Purple Map provides over 1,500 saved locations through Kakao Map, so you can find hidden gems with just one click. No typing needed!</p>" } },
+        { "type": "qa", "settings": { "question": "I'm having trouble with the app. How can I get help?", "answer": "<p>We are here to help! If you experience any technical issues or have questions, please contact our support team at <a href=\"mailto:support@kpurpleshoes.com\">support@kpurpleshoes.com</a>. We try to respond as quickly as possible to get you back on your trip!</p>" } },
+        { "type": "qa", "settings": { "question": "What currency will I be charged in?", "answer": "<p>All prices are listed and charged in USD. Please check with your bank regarding exchange rates if you are using a non-USD card.</p>" } },
+        { "type": "section_header", "settings": { "title": "Experience Tours" } },
+        { "type": "qa", "settings": { "question": "How do I cancel or reschedule my tour?", "answer": "<p>We understand that plans can change.</p><p>Cancellations and refunds follow the policy below:</p><p>7 days before (by 9:00 AM KST): 100% refund<br>6–3 days before (by 9:00 AM KST): 50% refund<br>2 days before or later (after 9:00 AM KST): No refund</p><p>Rescheduling may be possible depending on availability and timing.</p><p>If rescheduling is not available, refund rules will apply.</p>" } },
+        { "type": "qa", "settings": { "question": "What happens if I cancel late or don't show up?", "answer": "<p>Cancellations made after 9:00 AM (KST), 2 days before the tour, or no-shows are non-refundable.</p><p>This includes:</p><ul><li>Late arrival</li><li>No contact with the guide</li><li>Incorrect pickup information</li><li>Personal schedule changes (e.g., flight delays)</li></ul>" } },
+        { "type": "qa", "settings": { "question": "What if the tour is canceled by the company?", "answer": "<p>Your safety always comes first.</p><p>If we must cancel due to weather, safety concerns, or other unavoidable situations, we will provide a full refund or alternative arrangements, depending on the situation.</p>" } },
+        { "type": "qa", "settings": { "question": "Can I reschedule my tour?", "answer": "<p>Rescheduling is possible in some cases, but it depends on:</p><ul><li>Time remaining before the tour</li><li>Availability</li><li>Local reservation conditions</li></ul><p>We’ll do our best to help, but if rescheduling is not possible, standard cancellation rules will apply.</p>" } },
+        { "type": "qa", "settings": { "question": "I need to change my pickup location. What should I do?", "answer": "<p>No problem! After your booking is confirmed, your guide will contact you directly.<br>You can coordinate your pickup location with them.<br>Alternatively, you can email us at <a href=\"mailto:support@kpurpleshoes.com\">support@kpurpleshoes.com</a>.</p>" } },
+        { "type": "qa", "settings": { "question": "What if I leave the tour early or skip part of it?", "answer": "<p>No refunds are provided for:</p><ul><li>Early departure</li><li>Skipping parts of the itinerary.</li></ul><p>However, in some cases, the itinerary may be adjusted due to weather, safety, or local conditions.</p>" } },
+        { "type": "qa", "settings": { "question": "Can I change the number of people in my group?", "answer": "<p>Yes, adjustments may be possible.</p><p>Decreasing guests:<br>Partial cancellation may apply based on our refund policy</p><p>Increasing guests:<br>Subject to availability. Please contact us first</p><p>Contact: <a href=\"mailto:support@kpurpleshoes.com\">support@kpurpleshoes.com</a></p>" } },
+        { "type": "qa", "settings": { "question": "What currency will I be charged in?", "answer": "<p>All prices are listed and charged in USD.</p><p>Please check with your bank regarding exchange rates if you are using a non-USD card.</p>" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

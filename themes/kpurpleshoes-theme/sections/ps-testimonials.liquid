@@ -1,0 +1,201 @@
+{%- liquid
+  assign review_limit = section.settings.review_limit | default: 10
+  assign proxy_prefix = section.settings.proxy_prefix | default: 'bta-booking'
+  assign reviews_endpoint = '/apps/' | append: proxy_prefix | append: '/reviews'
+  comment
+    Homepage testimonials are curated by staff only. Product/tour review lists
+    explicitly request `all` through the public review API.
+  endcomment
+  assign review_type = 'admin'
+-%}
+
+<section
+  class="ps-testimonials"
+  data-ps-testimonials
+  data-ps-testimonials-id="{{ section.id }}"
+  data-reviews-endpoint="{{ reviews_endpoint }}"
+  data-review-limit="{{ review_limit }}"
+  data-review-type="{{ review_type }}"
+>
+  <div class="ps-testimonials__wrap">
+    <div class="ps-tCards" aria-label="Testimonials" role="region">
+      <div class="ps-tCards__track" data-ps-testimonials-track>
+        {%- for block in section.blocks -%}
+          {%- if block.settings.quote != blank -%}
+            <div class="ps-tCard" {{ block.shopify_attributes }}>
+              <p class="ps-tText">"{{ block.settings.quote | escape }}"</p>
+              <div class="ps-tName">{{ block.settings.name | default: 'Customer' | escape }}</div>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+        {%- for block in section.blocks -%}
+          {%- if block.settings.quote != blank -%}
+            <div class="ps-tCard" aria-hidden="true">
+              <p class="ps-tText">"{{ block.settings.quote | escape }}"</p>
+              <div class="ps-tName">{{ block.settings.name | default: 'Customer' | escape }}</div>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function() {
+    // Fix loop pixel offset after render
+    function fixTrackOffset() {
+      var track = document.querySelector('[data-ps-testimonials-track]');
+      if (!track || !track.children.length) return;
+      var half = track.scrollWidth / 2;
+      if (half > 0) {
+        track.style.setProperty('--ps-tCards-half', '-' + half + 'px');
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fixTrackOffset);
+    } else {
+      fixTrackOffset();
+    }
+
+    // Explicitly selected editorial blocks must not be overwritten by API reviews.
+    if ({{ section.settings.use_curated_blocks | default: false | json }}) return;
+
+    // API upgrade: replace server-rendered cards with live reviews if available
+    var root = document.querySelector('[data-ps-testimonials-id="{{ section.id }}"]');
+    if (!root) return;
+    var endpoint = root.getAttribute('data-reviews-endpoint') || '';
+    var limit = parseInt(root.getAttribute('data-review-limit') || '10', 10);
+    var reviewType = root.getAttribute('data-review-type') || 'admin';
+    if (!Number.isFinite(limit) || limit < 1) limit = 10;
+    if (limit > 10) limit = 10;
+
+    function createCard(text, author, hidden) {
+      var card = document.createElement('div');
+      card.className = 'ps-tCard';
+      if (hidden) card.setAttribute('aria-hidden', 'true');
+      var quote = document.createElement('p');
+      quote.className = 'ps-tText';
+      quote.textContent = '“' + (text || '') + '”';
+      var name = document.createElement('div');
+      name.className = 'ps-tName';
+      name.textContent = author || 'Customer';
+      card.appendChild(quote);
+      card.appendChild(name);
+      return card;
+    }
+
+    function normalizeReview(item) {
+      if (!item || typeof item !== 'object') return null;
+      var body = (item.body || '').toString().trim();
+      if (!body) return null;
+      var author = (item.authorDisplayName || item.label || 'Customer').toString().trim();
+      return { body: body, author: author || 'Customer' };
+    }
+
+    function buildReviewsUrl() {
+      try {
+        var url = new URL(endpoint, window.location.origin);
+        url.searchParams.set('reviewType', reviewType);
+        url.searchParams.set('placement', 'homepage');
+        url.searchParams.set('limit', String(limit));
+        return url.toString();
+      } catch (error) {
+        var separator = endpoint.indexOf('?') === -1 ? '?' : '&';
+        return endpoint + separator + 'reviewType=' + encodeURIComponent(reviewType) + '&placement=homepage&limit=' + encodeURIComponent(String(limit));
+      }
+    }
+
+    if (endpoint) {
+      fetch(buildReviewsUrl(), {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' }
+      })
+        .then(function(r) { return r.json().catch(function() { return null; }); })
+        .then(function(payload) {
+          if (!payload || !payload.ok) return;
+          var items = (payload.data && Array.isArray(payload.data.items)) ? payload.data.items : [];
+          var normalized = items.map(normalizeReview).filter(Boolean);
+          if (!normalized.length) return;
+
+          var track = root.querySelector('[data-ps-testimonials-track]');
+          if (!track) return;
+          track.innerHTML = '';
+          var fragment = document.createDocumentFragment();
+          for (var i = 0; i < normalized.length; i++) {
+            fragment.appendChild(createCard(normalized[i].body, normalized[i].author, false));
+          }
+          for (var j = 0; j < normalized.length; j++) {
+            fragment.appendChild(createCard(normalized[j].body, normalized[j].author, true));
+          }
+          track.appendChild(fragment);
+          track.style.animation = 'none';
+          track.offsetWidth;
+          track.style.animation = '';
+          fixTrackOffset();
+        })
+        .catch(function() {});
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "PS Testimonials",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "use_curated_blocks",
+      "label": "Use theme-editor testimonials",
+      "default": false,
+      "info": "Keep the approved testimonial blocks instead of replacing them with app reviews."
+    },
+    {
+      "type": "range",
+      "id": "review_limit",
+      "label": "Review limit",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "type": "text",
+      "id": "proxy_prefix",
+      "label": "App proxy prefix",
+      "default": "bta-booking"
+    },
+    {
+      "type": "text",
+      "id": "empty_text",
+      "label": "Empty review text",
+      "default": "No reviews yet."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Testimonial",
+      "settings": [
+        { "type": "range", "id": "stars", "label": "Stars", "min": 3, "max": 5, "step": 1, "default": 5 },
+        { "type": "textarea", "id": "quote", "label": "Quote", "default": "Great spots, yes. Too many amazing places, actually..." },
+        { "type": "text", "id": "name", "label": "Name", "default": "Mackenzie H. (USA)" }
+      ]
+    }
+  ],
+  "max_blocks": 20,
+  "presets": [
+    {
+      "name": "PS Testimonials",
+      "blocks": [
+        { "type": "testimonial" },
+        { "type": "testimonial" },
+        { "type": "testimonial" },
+        { "type": "testimonial" }
+      ]
+    }
+  ]
+}
+{% endschema %}

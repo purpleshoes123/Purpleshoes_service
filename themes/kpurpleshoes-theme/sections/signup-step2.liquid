@@ -1,0 +1,700 @@
+{% comment %}
+  Signup Step 2 of 2 — Create account + optional payment.
+  Two-column: left = form, right = value checklist.
+  Placeholder palette: primary blue, accent darker blue, background light gray.
+  Components: SignupHeader, ProgressBar, SignupForm, ValueSection
+{% endcomment %}
+
+<section class="s2-wrap" data-signup-step2>
+  <div class="s2-container">
+
+    <div class="s2-grid">
+      {% comment %} LEFT COLUMN – Signup form {% endcomment %}
+      <div class="s2-form-col">
+        <header class="s2-header">
+          <p class="s2-logo">{{ section.settings.logo_text | default: 'Logo / Purple Shoes' }}</p>
+          <h1 class="s2-headline">{{ section.settings.headline | default: 'Create Your Account and<br>Start Your Korea Trip' }}</h1>
+          <div class="s2-progress-wrap">
+            <div class="s2-progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+              <span class="s2-progress-fill" style="width: 100%;"></span>
+            </div>
+            <p class="s2-progress-label">Sign Up: Step 2 of 2</p>
+          </div>
+        </header>
+
+        {%- comment -%} New customer accounts: no create_customer form. We collect info then redirect to Shopify login; first sign-in creates the account. {%- endcomment -%}
+          {%- assign signup_return_url = section.settings.return_to -%}
+          {%- if signup_return_url == blank -%}
+            {%- assign signup_return_url = '/pages/thankyou' -%}
+          {%- endif -%}
+          {%- comment -%} Use /customer_authentication/login with return_to so Shopify redirects to thank you page after sign-in. (account_login_url often ignores return_to.) {%- endcomment -%}
+          <div id="SignupStep2Form" class="s2-form" data-s2-return-to="{{ signup_return_url }}">
+          {% comment %} SECTION 1 — Basic Info {% endcomment %}
+          <div class="s2-form-group">
+            <h3 class="s2-group-title">Basic Info</h3>
+            <div class="s2-field-row s2-field-row--2">
+              <div class="s2-field">
+                <label class="s2-label" for="s2-first_name">First Name</label>
+                <input type="text" id="s2-first_name" class="s2-input" autocomplete="given-name" placeholder="First Name" aria-required="true">
+                <span class="s2-error" data-error="first_name" role="alert"></span>
+              </div>
+              <div class="s2-field">
+                <label class="s2-label" for="s2-last_name">Last Name</label>
+                <input type="text" id="s2-last_name" class="s2-input" autocomplete="family-name" placeholder="Last Name" aria-required="true">
+                <span class="s2-error" data-error="last_name" role="alert"></span>
+              </div>
+            </div>
+            <div class="s2-field-row s2-email-row">
+              <div class="s2-field s2-field--grow">
+                <label class="s2-label" for="s2-email">Email</label>
+                <div class="s2-input-wrap">
+                  <input type="email" id="s2-email" class="s2-input" autocomplete="email" placeholder="Email (from Step 1)" aria-required="true">
+                  <span class="s2-success-icon" id="s2-email-success" aria-hidden="true" title="Verified">✓</span>
+                </div>
+                <span class="s2-error" data-error="email" role="alert"></span>
+              </div>
+              <div class="s2-field s2-field--button">
+                <label class="s2-label s2-label--invisible" for="s2-verify-btn">Verify email</label>
+                <button type="button" class="s2-btn s2-btn--secondary" id="s2-verify-btn">Verify</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="s2-form-group s2-form-group--note">
+            <p class="s2-helper">On the next step you'll sign in with this email. We'll send you a verification code—no password needed.</p>
+          </div>
+
+          {% comment %} SECTION 3 — Contact Info {% endcomment %}
+          <div class="s2-form-group">
+            <h3 class="s2-group-title">Contact Info</h3>
+            <div class="s2-field-row s2-field-row--2">
+              <div class="s2-field">
+                <label class="s2-label" for="s2-country">Country</label>
+                <select id="s2-country" name="contact_country" class="s2-input s2-select" autocomplete="country-name" aria-describedby="s2-contact-help">
+                  <option value="">Select country</option>
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                  <option value="CA">Canada</option>
+                  <option value="AU">Australia</option>
+                  <option value="KR">South Korea</option>
+                  <option value="DE">Germany</option>
+                  <option value="FR">France</option>
+                  <option value="JP">Japan</option>
+                  <option value="SG">Singapore</option>
+                  <option value="IN">India</option>
+                  <option value="BR">Brazil</option>
+                  <option value="ES">Spain</option>
+                  <option value="IT">Italy</option>
+                  <option value="NL">Netherlands</option>
+                  <option value="OTHER">Other</option>
+                </select>
+                <span class="s2-error" data-error="country" role="alert"></span>
+              </div>
+              <div class="s2-field">
+                <label class="s2-label" for="s2-phone">Phone Number</label>
+                <input type="tel" id="s2-phone" name="contact_phone" class="s2-input" autocomplete="tel" placeholder="Phone Number">
+                <span class="s2-error" data-error="phone" role="alert"></span>
+              </div>
+            </div>
+            <p class="s2-help" id="s2-contact-help">Your email and phone help keep your account secure and allow us to send important updates during your experience.</p>
+          </div>
+
+          {% comment %} Primary CTA — redirect to Shopify login (email verification creates account) {% endcomment %}
+          <div class="s2-cta-wrap">
+            <button type="button" class="s2-cta" id="s2-submit">
+              {{ section.settings.cta_label | default: 'Get Free Info & Start Your Smart Korea Trip' }}
+            </button>
+          </div>
+
+          {% comment %} Secondary option {% endcomment %}
+          <p class="s2-secondary-cta">
+            <button type="button" class="s2-link-btn" id="s2-submit-alt">Continue without adding a card</button>
+          </p>
+
+          {% comment %} Optional payment — hidden (not used with New customer accounts flow) {% endcomment %}
+          <div class="s2-payment-optional" style="display: none;">
+            <button type="button" class="s2-payment-toggle" id="s2-payment-toggle" aria-expanded="false" aria-controls="s2-card-section">
+              Add Payment Method (Optional)
+            </button>
+            <div class="s2-card-collapse" id="s2-card-section" aria-hidden="true">
+              <div class="s2-card-inner">
+                <div class="s2-field">
+                  <label class="s2-label" for="s2-card-number">Card Number</label>
+                  <input type="text" id="s2-card-number" class="s2-input" inputmode="numeric" autocomplete="cc-number" placeholder="Card Number" maxlength="19" data-card-number>
+                </div>
+                <div class="s2-field-row s2-field-row--2">
+                  <div class="s2-field">
+                    <label class="s2-label" for="s2-expiry">MM / YY</label>
+                    <input type="text" id="s2-expiry" class="s2-input" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5" data-card-expiry>
+                  </div>
+                  <div class="s2-field">
+                    <label class="s2-label" for="s2-cvv">CVV</label>
+                    <input type="text" id="s2-cvv" class="s2-input" inputmode="numeric" autocomplete="off" placeholder="CVV" maxlength="4" data-card-cvv>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="s2-terms">
+            <label class="s2-checkbox-label">
+              <input type="checkbox" class="s2-checkbox" id="s2-terms-check" aria-describedby="s2-terms-text">
+              <span id="s2-terms-text">I agree to the <a href="{{ section.settings.terms_url | default: '/policies/terms-of-service' }}">Terms of Service</a> and <a href="{{ section.settings.privacy_url | default: '/policies/privacy-policy' }}">Privacy Policy</a>.</span>
+            </label>
+            <span class="s2-error" data-error="terms" role="alert"></span>
+          </p>
+          </div>
+      </div>
+
+      {% comment %} RIGHT COLUMN – Value section {% endcomment %}
+      <aside class="s2-value-col" aria-label="What you'll receive">
+        <div class="s2-value-card">
+          <h2 class="s2-value-title">{{ section.settings.value_title | default: 'Get Free Korea Travel Info Delivered' }}</h2>
+          <p class="s2-value-subtitle">{{ section.settings.value_subtitle | default: "What you'll receive by email" }}</p>
+
+          <div class="s2-value-list">
+            <div class="s2-value-group">
+              <h3 class="s2-value-group-title">Pre-Trip Preparation</h3>
+              <ul class="s2-value-items">
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Travel Prep Summary</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Entry Checklist</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Packing Guide</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Map of Korea</li>
+              </ul>
+            </div>
+            <div class="s2-value-group">
+              <h3 class="s2-value-group-title">Local Culture</h3>
+              <ul class="s2-value-items">
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Korea Travel Hacks</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Essential Manners & Etiquette</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> What Makes Korea Special</li>
+              </ul>
+            </div>
+            <div class="s2-value-group">
+              <h3 class="s2-value-group-title">Planning & Logistics</h3>
+              <ul class="s2-value-items">
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Korea's Seasons & Weather</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Korea Festival Calendar</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Transportation Guide</li>
+                <li><span class="s2-value-icon" aria-hidden="true">✓</span> Essential Korean for Happy Travel</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="s2-value-trust" aria-hidden="true">
+            {% comment %} Optional: trust badges or testimonials can be added here later {% endcomment %}
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .s2-wrap {
+    --s2-primary: #2563eb;
+    --s2-accent: #1e40af;
+    --s2-bg: #f1f5f9;
+    --s2-card: #ffffff;
+    --s2-text: #1e293b;
+    --s2-muted: #64748b;
+    --s2-border: #e2e8f0;
+    --s2-radius: 12px;
+    --s2-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    background: var(--s2-bg);
+    padding: 40px 20px 56px;
+    min-height: 100vh;
+  }
+
+  .s2-container { max-width: 1100px; margin: 0 auto; }
+  .s2-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .s2-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .s2-field-row--2 .s2-field { flex: 1 1 100%; }
+    .s2-email-row { flex-direction: column; align-items: stretch; }
+    .s2-form { padding: 24px 20px; }
+  }
+
+  /* Header */
+  .s2-header { margin-bottom: 28px; }
+  .s2-logo {
+    font-size: 14px;
+    color: var(--s2-muted);
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .s2-headline {
+    font-size: clamp(24px, 3.2vw, 30px);
+    font-weight: 800;
+    color: var(--s2-text);
+    margin: 0 0 20px;
+    line-height: 1.25;
+  }
+  .s2-headline br { display: none; }
+  @media (min-width: 600px) { .s2-headline br { display: block; } }
+
+  .s2-progress-wrap { margin-top: 16px; }
+  .s2-progress-bar {
+    height: 8px;
+    background: var(--s2-border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .s2-progress-fill {
+    display: block;
+    height: 100%;
+    background: var(--s2-primary);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  .s2-progress-label {
+    font-size: 14px;
+    color: var(--s2-muted);
+    margin: 8px 0 0;
+  }
+
+  /* Form */
+  .s2-form {
+    background: var(--s2-card);
+    border-radius: var(--s2-radius);
+    padding: 32px 28px;
+    box-shadow: var(--s2-shadow);
+  }
+
+  .s2-form-group {
+    margin-bottom: 28px;
+  }
+  .s2-form-group:last-of-type { margin-bottom: 24px; }
+  .s2-form-group--note .s2-helper { margin: 0; font-size: 13px; color: var(--s2-muted); }
+  .s2-group-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--s2-muted);
+    margin: 0 0 14px;
+  }
+
+  .s2-field { margin-bottom: 18px; }
+  .s2-field-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .s2-field-row .s2-field { flex: 1 1 0; min-width: 0; }
+  .s2-field-row--2 .s2-field { flex: 1 1 calc(50% - 8px); }
+  .s2-field--grow { flex: 1 1 auto; min-width: 0; }
+  .s2-field--button { flex: 0 0 auto; }
+  .s2-email-row { align-items: flex-end; }
+  .s2-email-row .s2-field--button { padding-bottom: 2px; }
+
+  .s2-input-wrap { position: relative; }
+  .s2-input-wrap .s2-input { padding-right: 44px; }
+  .s2-success-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    background: #16a34a;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .s2-success-icon.is-visible { display: inline-flex; }
+
+  .s2-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--s2-text);
+    margin-bottom: 6px;
+  }
+  .s2-label--invisible { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  .s2-input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    border: 1px solid var(--s2-border);
+    border-radius: 10px;
+    background: var(--s2-card);
+    color: var(--s2-text);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .s2-input:focus {
+    outline: none;
+    border-color: var(--s2-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+  .s2-input::placeholder { color: var(--s2-muted); opacity: 0.8; }
+  .s2-input.is-error { border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15); }
+  .s2-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  .s2-helper {
+    font-size: 13px;
+    color: var(--s2-muted);
+    margin: 6px 0 0;
+    line-height: 1.4;
+  }
+  .s2-error {
+    display: block;
+    font-size: 13px;
+    color: #dc2626;
+    margin-top: 4px;
+  }
+  .s2-error:empty { display: none; }
+
+  .s2-btn {
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+  .s2-btn--secondary {
+    background: var(--s2-card);
+    color: var(--s2-primary);
+    border: 1px solid var(--s2-primary);
+  }
+  .s2-btn--secondary:hover { background: rgba(37, 99, 235, 0.06); }
+
+  .s2-help {
+    font-size: 14px;
+    color: var(--s2-muted);
+    margin: 4px 0 0;
+    line-height: 1.5;
+  }
+
+  /* Primary CTA */
+  .s2-cta-wrap { margin: 8px 0 12px; }
+  .s2-secondary-cta {
+    text-align: center;
+    margin: 0 0 24px;
+  }
+  .s2-link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    color: var(--s2-muted);
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .s2-link-btn:hover { color: var(--s2-primary); }
+
+  /* Optional payment — expandable */
+  .s2-payment-optional {
+    margin-bottom: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--s2-border);
+  }
+  .s2-payment-toggle {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--s2-muted);
+    background: transparent;
+    border: 1px dashed var(--s2-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .s2-payment-toggle:hover {
+    border-color: var(--s2-muted);
+    color: var(--s2-text);
+    background: rgba(0,0,0,0.02);
+  }
+  .s2-payment-toggle[aria-expanded="true"] {
+    border-style: solid;
+    border-color: var(--s2-border);
+    margin-bottom: 16px;
+  }
+  .s2-card-collapse {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+  .s2-card-collapse.is-open {
+    max-height: 280px;
+  }
+  .s2-card-inner {
+    padding: 4px 0 0;
+  }
+  .s2-card-inner .s2-field { margin-bottom: 18px; }
+  .s2-card-inner .s2-field-row:last-child { margin-bottom: 0; }
+
+  .s2-cta {
+    display: block;
+    width: 100%;
+    padding: 18px 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--s2-primary);
+    border: none;
+    border-radius: var(--s2-radius);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .s2-cta:hover { background: var(--s2-accent); transform: translateY(-1px); }
+  .s2-cta:focus { outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4); }
+
+  .s2-terms { margin-bottom: 0; }
+  .s2-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--s2-muted);
+    line-height: 1.5;
+    cursor: pointer;
+  }
+  .s2-checkbox { margin-top: 4px; flex-shrink: 0; }
+  .s2-terms a { color: var(--s2-primary); text-decoration: underline; }
+  .s2-terms a:hover { opacity: 0.9; }
+
+  .s2-form-errors {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #dc2626;
+  }
+
+  /* Right column – Value section */
+  .s2-value-col { position: sticky; top: 24px; }
+  .s2-value-card {
+    background: var(--s2-card);
+    border-radius: var(--s2-radius);
+    padding: 28px 24px;
+    box-shadow: var(--s2-shadow);
+  }
+  .s2-value-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--s2-text);
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+  .s2-value-subtitle {
+    font-size: 15px;
+    color: var(--s2-muted);
+    margin: 0 0 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--s2-border);
+  }
+  .s2-value-list { display: flex; flex-direction: column; gap: 24px; }
+  .s2-value-group-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--s2-primary);
+    margin: 0 0 12px;
+  }
+  .s2-value-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .s2-value-items li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: var(--s2-text);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .s2-value-items li:last-child { margin-bottom: 0; }
+  .s2-value-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: #16a34a;
+    color: #fff;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .s2-value-trust { margin-top: 24px; }
+</style>
+
+<script>
+(function() {
+  var SECTION_KEY = 'signup_step1_data';
+  var section = document.querySelector('[data-signup-step2]');
+  if (!section) return;
+
+  var emailEl = section.querySelector('#s2-email');
+  var firstEl = section.querySelector('#s2-first_name');
+  var lastEl = section.querySelector('#s2-last_name');
+
+  function applyStep1Data(data) {
+    if (data.email && emailEl && !emailEl.value) emailEl.value = data.email;
+    if (data.name && (firstEl || lastEl)) {
+      var parts = (data.name || '').trim().split(/\s+/);
+      var first = parts[0] || '';
+      var last = parts.slice(1).join(' ') || '';
+      if (firstEl && !firstEl.value) firstEl.value = first;
+      if (lastEl && !lastEl.value) lastEl.value = last;
+    }
+  }
+
+  // Prefill from URL params (step 1 → step 2 with ?email= & name=)
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var emailFromUrl = params.get('email');
+    var nameFromUrl = params.get('name');
+    if (emailFromUrl || nameFromUrl) {
+      applyStep1Data({ email: emailFromUrl || '', name: nameFromUrl || '' });
+    }
+  } catch (e) {}
+
+  // Prefill from Step 1 (sessionStorage) when URL had no params
+  try {
+    var stored = sessionStorage.getItem(SECTION_KEY);
+    if (stored) {
+      var data = JSON.parse(stored);
+      applyStep1Data(data);
+    }
+  } catch (e) {}
+
+  var form = section.querySelector('#SignupStep2Form');
+  var cardSection = section.querySelector('#s2-card-section');
+  var paymentToggle = section.querySelector('#s2-payment-toggle');
+  var verifyBtn = section.querySelector('#s2-verify-btn');
+  var emailSuccess = section.querySelector('#s2-email-success');
+  var termsCheck = section.querySelector('#s2-terms-check');
+
+  // Optional payment — expand/collapse with smooth animation
+  if (paymentToggle && cardSection) {
+    paymentToggle.addEventListener('click', function() {
+      var expanded = this.getAttribute('aria-expanded') === 'true';
+      this.setAttribute('aria-expanded', !expanded);
+      cardSection.setAttribute('aria-hidden', expanded);
+      cardSection.classList.toggle('is-open', !expanded);
+    });
+  }
+
+  // Email verify — show success indicator after "verification"
+  if (verifyBtn) {
+    verifyBtn.addEventListener('click', function() {
+      var emailInput = section.querySelector('#s2-email');
+      if (emailInput && !emailInput.value.trim()) {
+        emailInput.focus();
+        return;
+      }
+      verifyBtn.textContent = 'Sending…';
+      verifyBtn.disabled = true;
+      setTimeout(function() {
+        verifyBtn.textContent = 'Verified';
+        verifyBtn.disabled = false;
+        if (emailSuccess) emailSuccess.classList.add('is-visible');
+      }, 1200);
+    });
+  }
+
+  // Card input formatting (placeholder)
+  var cardNumber = section.querySelector('[data-card-number]');
+  if (cardNumber) {
+    cardNumber.addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19);
+    });
+  }
+  var expiry = section.querySelector('[data-card-expiry]');
+  if (expiry) {
+    expiry.addEventListener('input', function() {
+      var v = this.value.replace(/\D/g, '');
+      if (v.length >= 2) this.value = v.slice(0, 2) + '/' + v.slice(2, 4);
+      else this.value = v;
+    });
+  }
+
+  // Redirect to Shopify login (New customer accounts). return_to = thank you page, login_hint = email.
+  function goToLogin() {
+    var formEl = section.querySelector('#SignupStep2Form');
+    var first = section.querySelector('#s2-first_name');
+    var last = section.querySelector('#s2-last_name');
+    var email = section.querySelector('#s2-email');
+    var errors = section.querySelectorAll('.s2-error');
+    errors.forEach(function(el) { el.textContent = ''; });
+    if (first) first.classList.remove('is-error');
+    if (last) last.classList.remove('is-error');
+    if (email) email.classList.remove('is-error');
+
+    var valid = true;
+    if (!first || !first.value.trim()) { if (first) { first.classList.add('is-error'); var e = first.closest('.s2-field'); if (e) e.querySelector('[data-error="first_name"]').textContent = 'First name is required.'; } valid = false; }
+    if (!last || !last.value.trim()) { if (last) { last.classList.add('is-error'); var e = last.closest('.s2-field'); if (e) e.querySelector('[data-error="last_name"]').textContent = 'Last name is required.'; } valid = false; }
+    if (!email || !email.value.trim()) { if (email) { email.classList.add('is-error'); var e = email.closest('.s2-field'); if (e) e.querySelector('[data-error="email"]').textContent = 'Email is required.'; } valid = false; }
+    if (termsCheck && !termsCheck.checked) {
+      var termsErr = section.querySelector('[data-error="terms"]');
+      if (termsErr) termsErr.textContent = 'Please agree to the Terms and Privacy Policy.';
+      valid = false;
+    }
+    if (!valid) return;
+
+    var returnTo = formEl.getAttribute('data-s2-return-to') || '/pages/thankyou';
+    // Build absolute return_to URL — required for Shopify New Customer Accounts
+    var returnToAbs = (returnTo.indexOf('http') === 0)
+      ? returnTo
+      : window.location.origin + returnTo;
+    var emailVal = (email && email.value) ? email.value.trim() : '';
+    var loginUrl = window.location.origin + '/customer_authentication/login?return_to=' + encodeURIComponent(returnToAbs);
+    if (emailVal) loginUrl += '&login_hint=' + encodeURIComponent(emailVal);
+    window.location.href = loginUrl;
+  }
+
+  var submitBtn = section.querySelector('#s2-submit');
+  var submitAlt = section.querySelector('#s2-submit-alt');
+  if (submitBtn) submitBtn.addEventListener('click', goToLogin);
+  if (submitAlt) submitAlt.addEventListener('click', goToLogin);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Signup Step 2",
+  "settings": [
+    { "type": "text", "id": "logo_text", "label": "Logo text", "default": "Logo / Purple Shoes" },
+    { "type": "text", "id": "headline", "label": "Headline", "default": "Create Your Account and\nStart Your Korea Trip" },
+    { "type": "text", "id": "value_title", "label": "Value section title", "default": "Get Free Korea Travel Info Delivered" },
+    { "type": "text", "id": "value_subtitle", "label": "Value section subtitle", "default": "What you'll receive by email" },
+    { "type": "text", "id": "cta_label", "label": "Primary CTA label", "default": "Get Free Info & Start Your Smart Korea Trip" },
+    { "type": "url", "id": "return_to", "label": "Thank you page (after signup)", "info": "Redirect here when signup succeeds. Default: /pages/thankyou" },
+    { "type": "url", "id": "terms_url", "label": "Terms of Service URL" },
+    { "type": "url", "id": "privacy_url", "label": "Privacy Policy URL" }
+  ],
+  "presets": [
+    { "name": "Signup Step 2" }
+  ]
+}
+{% endschema %}

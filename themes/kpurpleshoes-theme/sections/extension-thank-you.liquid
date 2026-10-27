@@ -1,0 +1,176 @@
+{% comment %}
+  Extension purchase thank-you page.
+  Shown after a customer extends their guide access.
+{% endcomment %}
+
+{%- assign referral_url = section.settings.referral_link -%}
+{%- if referral_url == blank -%}
+  {%- assign referral_url = request.origin | append: '/pages/freeguideoptin' -%}
+{%- endif -%}
+
+<section
+  class="exty"
+  data-section="extension-thank-you"
+  data-ty-offer
+  data-customer-id="{{ customer.id | default: '' }}"
+  data-entitlements-endpoint="/apps/bta-booking/guide-extension/entitlements"
+  data-summary-endpoint="/apps/bta-booking/coupons/summary"
+  data-share-activate-endpoint="/apps/bta-booking/coupons/extra10/activate-share"
+  data-referral-url="{{ referral_url | escape }}"
+  data-share-title="{{ section.settings.referral_title | default: 'Get an Extra $10 OFF Coupon' | escape }}"
+  data-share-text="{{ section.settings.referral_desc | default: 'Share this link with a friend. Your coupon unlocks when they click it.' | escape }}"
+>
+  <div class="exty__container">
+
+    {% comment %} ========== 1. HEADER ========== {% endcomment %}
+    <header class="exty__header">
+      <p class="exty__logo">{{ section.settings.logo_text | default: shop.name }}</p>
+      <h1 class="exty__headline">{{ section.settings.headline | default: "Your Korea Guide Kit Access Has Been Extended!" | escape | newline_to_br }}</h1>
+      <p class="exty__subheadline">{{ section.settings.subheadline | default: "Your extended access is now active.\nKeep exploring Korea with your Guide Kit." | escape | newline_to_br }}</p>
+    </header>
+
+    <div class="exty__access-card" data-extension-access aria-live="polite">
+      <p class="exty__eyebrow">ACCESS DETAILS</p>
+      <p class="exty__extension-copy" data-extension-copy>Your guide access extension is now active.</p>
+      <dl class="exty__access-list">
+        <div><dt>Access Status</dt><dd data-extension-status>Active</dd></div>
+        <div><dt>Days Remaining</dt><dd data-extension-days>Loading…</dd></div>
+        <div><dt>Access Ends</dt><dd data-extension-ends>Loading…</dd></div>
+      </dl>
+      <p class="exty__instruction">Your updated access details are also available in<br><a href="/pages/mypage?tab=orders">My Page &gt; Orders &amp; Bookings</a>.</p>
+    </div>
+
+    <section class="exty__referral" data-referral-section aria-labelledby="exty-referral-title">
+      <h2 class="exty__referral-title" id="exty-referral-title">{{ section.settings.referral_title | default: 'Get an Extra $10 OFF Coupon' }}</h2>
+      <p class="exty__referral-description">
+        <strong>Share &amp; Save!</strong>
+        {{ section.settings.referral_desc | default: 'Share this link with a friend. Your coupon unlocks when they click it.' }}
+      </p>
+      <div class="exty__referral-actions">
+        <button type="button" class="exty__referral-button" data-referral-share-button>
+          Share &amp; Unlock $10 Coupon
+        </button>
+        <button type="button" class="exty__referral-button exty__referral-button--copy" data-referral-copy-button hidden>
+          Copy Link
+        </button>
+      </div>
+      <p class="exty__referral-status" data-referral-status aria-live="polite" hidden></p>
+      <ul class="exty__referral-benefits">
+        <li>No expiration date</li>
+        <li><strong>Stackable</strong> — combine it with other coupons for extra savings</li>
+        <li>You can find your coupon in <strong>My Page &gt; My Coupons.</strong></li>
+      </ul>
+      <p class="exty__referral-link" data-referral-link-preview>{{ referral_url }}</p>
+    </section>
+
+  </div>
+</section>
+
+<style>
+  .exty {
+    --exty-bg: #fafafa;
+    --exty-card: #ffffff;
+    --exty-text: #1d1d1f;
+    --exty-muted: #6e6e73;
+    --exty-accent: #5b2bd8;
+    --exty-accent-dark: #3a156f;
+    --exty-accent-soft: #f1e7ff;
+    --exty-radius: 14px;
+    --exty-space: 24px;
+    --exty-space-lg: 40px;
+    background: var(--exty-bg);
+    padding: 32px 20px 56px;
+    min-height: 100vh;
+    font-family: 'Poppins', sans-serif;
+  }
+  .exty__container { max-width: 680px; margin: 0 auto; }
+
+  /* 1. Header */
+  .exty__header { text-align: center; margin-bottom: var(--exty-space-lg); }
+  .exty__logo {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--exty-muted); margin: 0 0 20px; text-transform: uppercase;
+  }
+  .exty__headline {
+    font-size: clamp(28px, 5vw, 36px); font-weight: 700; color: var(--exty-text);
+    margin: 0 0 12px; line-height: 1.2; letter-spacing: -0.02em;
+  }
+  .exty__subheadline {
+    font-size: 18px; color: var(--exty-muted); margin: 0 0 var(--exty-space); line-height: 1.45;
+  }
+  .exty__notice {
+    background: var(--exty-card); border-radius: var(--exty-radius);
+    padding: 20px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .exty__notice-text { font-size: 15px; font-weight: 600; color: var(--exty-text); margin: 0 0 8px; line-height: 1.4; }
+  .exty__instruction { font-size: 14px; color: var(--exty-muted); margin: 0; line-height: 1.5; }
+
+  .exty__access-card {
+    background: var(--exty-card); border-radius: var(--exty-radius);
+    padding: clamp(24px, 5vw, 36px); margin-bottom: var(--exty-space-lg);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .exty__eyebrow { margin: 0 0 10px; color: var(--exty-accent); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .exty__extension-copy { margin: 0 0 24px; color: var(--exty-text); font-size: 18px; font-weight: 700; line-height: 1.45; }
+  .exty__access-list { margin: 0; border-top: 1px solid #eceaf0; }
+  .exty__access-list > div { display: flex; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid #eceaf0; }
+  .exty__access-list dt { color: var(--exty-muted); font-size: 15px; }
+  .exty__access-list dd { margin: 0; color: var(--exty-text); font-size: 15px; font-weight: 800; text-align: right; }
+  .exty__access-list dd[data-extension-status] { color: #178246; }
+  .exty__instruction { margin: 20px 0 0; font-size: 14px; color: var(--exty-muted); line-height: 1.55; }
+  .exty__instruction a { color: var(--exty-accent); font-weight: 700; }
+
+  .exty__referral {
+    background: var(--exty-card); border: 1px solid rgba(91,43,216,.16); border-radius: var(--exty-radius);
+    box-shadow: 0 2px 12px rgba(53,16,127,.08); margin-bottom: var(--exty-space-lg); padding: clamp(24px, 5vw, 36px);
+    text-align: center;
+  }
+  .exty__referral-title { color: var(--exty-text); font-size: clamp(22px, 4vw, 28px); font-weight: 800; letter-spacing: -.02em; margin: 0 0 10px; }
+  .exty__referral-description { color: var(--exty-muted); font-size: 15px; line-height: 1.55; margin: 0 auto 18px; max-width: 490px; }
+  .exty__referral-description strong { color: var(--exty-text); }
+  .exty__referral-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .exty__referral-button {
+    appearance: none; background: var(--exty-accent); border: 0; border-radius: 10px; color: #fff; cursor: pointer;
+    font: inherit; font-size: 14px; font-weight: 800; padding: 12px 18px; transition: opacity .15s, transform .12s;
+  }
+  .exty__referral-button:hover { opacity: .9; transform: translateY(-1px); }
+  .exty__referral-button[disabled] { cursor: wait; opacity: .55; }
+  .exty__referral-button--copy { background: var(--exty-accent-soft); color: var(--exty-accent-dark); }
+  .exty__referral-button[hidden], .exty__referral-status[hidden] { display: none !important; }
+  .exty__referral-status { color: #178246; font-size: 14px; font-weight: 700; line-height: 1.5; margin: 14px 0 0; }
+  .exty__referral-status.ty-offer__referral-status--error { color: #b42318; }
+  .exty__referral-benefits { color: var(--exty-text); font-size: 14px; line-height: 1.65; list-style: none; margin: 20px 0 0; padding: 0; text-align: left; }
+  .exty__referral-benefits li { margin: 6px 0; padding-left: 26px; position: relative; }
+  .exty__referral-benefits li::before { color: #178246; content: '✓'; font-weight: 900; left: 4px; position: absolute; }
+  .exty__referral-link { color: var(--exty-muted); font-size: 12px; line-height: 1.5; margin: 18px 0 0; overflow-wrap: anywhere; }
+
+  @media (max-width: 600px) {
+    .exty { padding: 24px 16px 48px; }
+    .exty__access-list > div { align-items: flex-start; flex-direction: column; gap: 6px; }
+    .exty__access-list dd { text-align: left; }
+  }
+</style>
+
+<script src="{{ 'extension-thank-you.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'thank-you-offer.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Extension Thank You",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "header", "content": "Header" },
+    { "type": "text", "id": "logo_text", "label": "Logo / brand name", "default": "Purple Shoes" },
+    { "type": "text", "id": "headline", "label": "Main headline", "default": "Your Korea Guide Kit Access Has Been Extended!" },
+    { "type": "textarea", "id": "subheadline", "label": "Sub headline", "default": "Your extended access is now active.\nKeep exploring Korea with your Guide Kit." },
+    { "type": "header", "content": "Referral coupon" },
+    { "type": "text", "id": "referral_title", "label": "Heading", "default": "Get an Extra $10 OFF Coupon" },
+    { "type": "textarea", "id": "referral_desc", "label": "Description", "default": "Share this link with a friend. Your coupon unlocks when they click it." },
+    { "type": "url", "id": "referral_link", "label": "Referral link override" }
+  ],
+  "presets": [
+    { "name": "Extension Thank You" }
+  ]
+}
+{% endschema %}

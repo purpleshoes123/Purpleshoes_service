@@ -1,0 +1,52 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "09b970d7689d84da5464db10fbd9e368"
+name = "bta-proxy"
+application_url = "https://bta-proxy.kpurpleshoes.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2026-04"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  # Phase 5-4: Booking confirmation webhooks (app-scoped)
+  [[webhooks.subscriptions]]
+  topics = [ "orders/paid" ]
+  uri = "/proxy/webhooks/orders-paid"
+
+  [[webhooks.subscriptions]]
+  topics = [ "orders/cancelled" ]
+  uri = "/proxy/webhooks/orders-cancelled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "orders/updated" ]
+  uri = "/proxy/webhooks/orders-updated"
+
+  [[webhooks.subscriptions]]
+  topics = [ "refunds/create" ]
+  uri = "/proxy/webhooks/refunds-create"
+
+  [[webhooks.subscriptions]]
+  topics = [ "customers/create" ]
+  uri = "/webhooks/customers/create"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_app_proxy,write_products,read_products,read_orders,write_orders,read_metaobjects,write_metaobjects,write_files,read_files,read_publications,write_publications,read_customers,write_customers,read_draft_orders,write_draft_orders,read_discounts,write_discounts,unauthenticated_write_checkouts,unauthenticated_read_checkouts,unauthenticated_read_product_listings,unauthenticated_read_selling_plans,unauthenticated_read_product_inventory"
+[auth]
+redirect_urls = [ "https://bta-proxy.kpurpleshoes.com/auth/callback" ]
+
+[app_proxy]
+url = "/proxy/bta"
+subpath = "bta-booking"
+prefix = "apps"

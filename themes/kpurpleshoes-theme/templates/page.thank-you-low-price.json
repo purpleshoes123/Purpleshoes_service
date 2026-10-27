@@ -1,0 +1,38 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "theme",
+  "sections": {
+    "thank_you_low_price": {
+      "type": "thank-you-low-price",
+      "settings": {
+        "show_when_no_order": true,
+        "headline": "Your Guide Is Ready",
+        "subheadline": "Everything you need for your Korea trip is now ready to explore.",
+        "notice_text": "Access your Guide anytime through the Purple Shoes App & Web.",
+        "instruction_text": "Open it on the web below or scan the QR code to access it in the app.",
+        "offline_note": "* Offline Viewing Supported",
+        "show_viewer_cta": false,
+        "viewer_title": "Open your purchased guide",
+        "viewer_text": "Your purchased PDF and video are available in your secure Guide Viewer.",
+        "viewer_label": "Open My Guide",
+        "viewer_url": "/pages/pdfviewer",
+        "show_kit_upsell": false,
+        "kit_title": "Unlock the full Korea Guide Kit",
+        "kit_text": "Get the complete guidebook, video guides and Purple Map for your Korea trip.",
+        "kit_label": "Explore Korea Guide Kit",
+        "kit_url": "/products/korea-guide-kit"
+      }
+    }
+  },
+  "order": [
+    "thank_you_low_price"
+  ]
+}

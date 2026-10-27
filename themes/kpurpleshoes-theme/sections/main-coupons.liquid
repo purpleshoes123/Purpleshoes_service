@@ -1,0 +1,840 @@
+{%- if customer or request.design_mode -%}
+{% comment %}
+  My Coupons — 3 fixed coupons + referral section
+{% endcomment %}
+
+{% render 'member-page-guard', gate_path: '/pages/members-only' %}
+
+{% assign coupons_return_path = request.path | default: '/pages/coupons' | url_encode %}
+{% assign coupons_login_url = '/account/login?return_url=' | append: coupons_return_path %}
+
+<section
+  class="mp-wrap"
+  data-mypage
+  data-coupons-root
+  data-coupon-endpoint="/apps/bta-booking/coupons/summary"
+  data-coupon-endpoint-fallback="/apps/bta-booking/bta/coupons/summary"
+  data-share-activate-endpoint="/apps/bta-booking/coupons/extra10/activate-share"
+  data-customer-id="{{ customer.id }}"
+  data-customer-name="{% assign coupon_name = customer.first_name | strip %}{% if coupon_name contains '@' %}{% assign coupon_name = '' %}{% endif %}{% if coupon_name == blank %}{% assign coupon_name = customer.last_name | strip %}{% endif %}{% if coupon_name contains '@' %}{% assign coupon_name = '' %}{% endif %}{{ coupon_name | default: 'Member' | escape }}"
+  data-login-url="{{ coupons_login_url }}"
+  data-guide-kit-url="{{ section.settings.guide_kit_url | default: '/products/korea-guide-kit' }}"
+  data-tour-url="{{ section.settings.tour_url | default: '/collections/experience-tour' }}"
+  data-referral-base="{{ section.settings.referral_base_url | default: '' }}"
+>
+  <div class="mp-grid">
+
+    {% render 'mypage-sidebar', active: 'coupons' %}
+
+    <main class="mp-main">
+      <section class="mp-panel is-active">
+
+        <div class="cp-page-header">
+          <h2 class="mp-h2">{{ section.settings.coupons_heading | default: 'My Coupons' }}</h2>
+          {% if section.settings.coupons_desc != blank %}
+            <p class="mp-coupons-desc">{{ section.settings.coupons_desc }}</p>
+          {% endif %}
+        </div>
+
+        <div class="mp-couponLoading" data-coupon-loading hidden>
+          <span class="mp-couponLoading__spinner" aria-hidden="true"></span>
+          <span>Loading your coupons...</span>
+        </div>
+        <p class="mp-couponState" data-coupon-state hidden></p>
+
+        <!-- Coupon cards (JS rendered) -->
+        <div class="mp-couponGrid" data-coupon-grid aria-live="polite"></div>
+
+        <!-- Referral section — shown by JS for share activation and link copy -->
+        <div class="cp-referral" data-referral-section hidden>
+          <div class="cp-referral__eyebrow">💜 Friend Bonus</div>
+          <h3 class="cp-referral__title">Get an Extra $10 OFF Coupon</h3>
+          <p class="cp-referral__desc">
+            <strong>Share &amp; Save!</strong> Tap once to activate your coupon, then share this link with a friend.
+          </p>
+          <div class="cp-referral__actions">
+            <button type="button" class="cp-referral__btn" data-referral-share>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              Share &amp; Unlock $10 Coupon
+            </button>
+            <button type="button" class="cp-referral__btn cp-referral__btn--copy" data-referral-copy hidden>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Copy free guide link
+            </button>
+          </div>
+          <p class="cp-referral__status" data-referral-status aria-live="polite" hidden></p>
+          <p class="cp-referral__link-preview" data-referral-link-preview></p>
+        </div>
+
+      </section>
+    </main>
+  </div>
+</section>
+
+<style>
+.mp-wrap {
+  --primary: #6366f1;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --radius: 16px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.mp-main { min-width: 0; }
+.mp-panel.is-active { display: block; }
+
+/* ── Page header ── */
+.cp-page-header { margin-bottom: 24px; }
+.mp-h2 { margin: 0 0 6px; font-size: 24px; font-weight: 900; }
+.mp-coupons-desc { margin: 0 0 4px; font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ── Loading / State ── */
+.mp-couponLoading {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; color: var(--muted); font-size: 13px; font-weight: 700;
+}
+.mp-couponLoading[hidden] { display: none !important; }
+.mp-couponLoading__spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border); border-top-color: var(--primary);
+  border-radius: 50%; animation: cp-spin 0.8s linear infinite;
+}
+@keyframes cp-spin { to { transform: rotate(360deg); } }
+.mp-couponState {
+  margin: 0 0 20px; padding: 12px 14px; border-radius: 10px;
+  background: #f1f5f9; color: var(--muted); font-size: 13px; font-weight: 600;
+}
+.mp-couponState[hidden] { display: none !important; }
+
+/* ── Coupon grid ── */
+.mp-couponGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* ── Coupon card ── */
+.cp-card {
+  border-radius: 20px; overflow: hidden;
+  display: flex; flex-direction: column;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.cp-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,0.14); }
+.cp-card--pink   { background: linear-gradient(135deg, #f43f5e, #be123c); }
+.cp-card--purple { background: linear-gradient(135deg, #8b5cf6, #5b21b6); }
+.cp-card--teal   { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+
+/* card top */
+.cp-top {
+  padding: 18px 22px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cp-type-badge {
+  font-size: 10px; font-weight: 900; letter-spacing: 1.5px;
+  text-transform: uppercase; opacity: 0.85;
+  background: rgba(255,255,255,0.18); border-radius: 999px; padding: 3px 10px;
+}
+.cp-icon { font-size: 22px; }
+
+/* card body */
+.cp-content { padding: 2px 22px 18px; flex: 1; }
+.cp-discount {
+  font-size: 42px; font-weight: 900;
+  letter-spacing: -0.03em; margin: 0 0 4px; line-height: 1;
+}
+.cp-valid-for {
+  font-size: 12px; font-weight: 700;
+  opacity: 0.85; margin: 0 0 10px; line-height: 1.4;
+}
+.cp-expiry-row {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.18); border-radius: 8px;
+  padding: 5px 10px; font-size: 12px; font-weight: 700;
+}
+.cp-expiry-icon { font-size: 13px; }
+.cp-countdown {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px; font-weight: 900; letter-spacing: 0.04em;
+}
+.cp-expiry-none { font-size: 12px; font-weight: 700; opacity: 0.85; }
+
+/* card footer */
+.cp-footer {
+  background: #fff; padding: 14px 22px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.cp-footer-info { display: flex; flex-direction: column; }
+.cp-user { font-size: 13px; font-weight: 800; color: var(--text); }
+.cp-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.cp-cta {
+  flex-shrink: 0; padding: 10px 16px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; text-decoration: none; color: #fff;
+  border-radius: 999px; transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+}
+.cp-card--pink   .cp-cta { background: #be123c; }
+.cp-card--purple .cp-cta { background: #5b21b6; }
+.cp-card--teal   .cp-cta { background: #0f766e; }
+.cp-cta:hover { opacity: 0.85; transform: scale(1.03); }
+
+/* ── Referral section ── */
+.cp-referral {
+  margin-top: 28px;
+  background: #fff;
+  border-radius: 18px;
+  border: 1.5px solid #e0d0fa;
+  padding: 26px 24px 28px;
+  box-shadow: 0 4px 20px rgba(91,43,216,0.08);
+}
+.cp-referral[hidden] { display: none !important; }
+.cp-referral__eyebrow {
+  display: inline-block;
+  background: #f1e7ff;
+  color: #5b2bd8;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 12px; font-weight: 700;
+  margin-bottom: 12px;
+}
+.cp-referral__title {
+  margin: 0 0 8px;
+  font-size: 20px; font-weight: 800; color: #5b2bd8;
+}
+.cp-referral__desc {
+  margin: 0 0 16px; font-size: 14px; color: var(--muted); line-height: 1.65;
+}
+.cp-referral__desc strong { color: var(--text); }
+.cp-referral__actions {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+}
+.cp-referral__btn {
+  appearance: none; border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #5b2bd8, #7c3aed);
+  color: #fff;
+  font-size: 14px; font-weight: 700;
+  padding: 13px 20px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: inherit;
+  transition: opacity 0.15s, transform 0.12s;
+}
+.cp-referral__btn:hover    { opacity: 0.88; transform: translateY(-1px); }
+.cp-referral__btn[disabled]{ opacity: 0.5; cursor: wait; }
+.cp-referral__btn--copy {
+  background: #f1e7ff;
+  color: #5b2bd8;
+}
+.cp-referral__btn[hidden] { display: none !important; }
+.cp-referral__status[hidden] { display: none !important; }
+.cp-referral__status {
+  font-size: 14px; font-weight: 600;
+  margin: 0 0 10px; line-height: 1.5; color: #15803d;
+}
+.cp-referral__status.is-error { color: #b91c1c; }
+.cp-referral__link-preview {
+  font-size: 12px; color: var(--muted);
+  margin: 0; word-break: break-all; line-height: 1.5;
+}
+
+/* ── Login prompt ── */
+.cp-login-prompt {
+  padding: 60px 20px; text-align: center;
+  background: #fff; border-radius: 16px;
+  border: 1px dashed var(--border);
+}
+.cp-login-btn {
+  display: inline-block; margin-top: 14px;
+  padding: 12px 36px;
+  background: var(--primary); color: #fff;
+  border-radius: 999px; font-weight: 800; text-decoration: none;
+}
+
+/* ── Responsive ── */
+[data-coupons-root] .mp-couponGrid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+[data-coupons-root] .cp-card,
+[data-coupons-root] .cp-footer-info { min-width: 0; }
+[data-coupons-root] .cp-footer { flex-wrap: wrap; flex-direction: column; align-items: stretch; }
+[data-coupons-root] .cp-footer-info { flex: none; }
+[data-coupons-root] .cp-user,
+[data-coupons-root] .cp-sub { overflow-wrap: anywhere; }
+[data-coupons-root] .cp-cta {
+  box-sizing: border-box; width: 100%; max-width: 100%; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  white-space: normal; overflow-wrap: anywhere; text-align: center; line-height: 1.5;
+}
+[data-coupons-root] .cp-expiry-row { flex-wrap: wrap; max-width: 100%; box-sizing: border-box; }
+[data-coupons-root] .cp-referral__btn {
+  min-width: 0; max-width: 100%; min-height: 44px;
+  white-space: normal; overflow-wrap: anywhere; line-height: 1.5;
+}
+[data-coupons-root] .cp-referral__btn svg { flex-shrink: 0; }
+@media (max-width: 749px) {
+  .mp-wrap[data-mypage][data-coupons-root] .mp-main { padding: 20px 16px; }
+  .mp-wrap[data-mypage][data-coupons-root] .mp-mobile-nav { margin: 16px 16px 0; }
+  [data-coupons-root] .mp-couponGrid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  [data-coupons-root] .cp-discount { font-size: 34px; }
+  [data-coupons-root] .cp-top { padding: 16px 18px 10px; gap: 8px; }
+  [data-coupons-root] .cp-content { padding: 2px 18px 18px; }
+  [data-coupons-root] .cp-footer { padding: 16px 18px; flex-direction: column; align-items: stretch; }
+  [data-coupons-root] .cp-footer-info { flex: none; }
+  [data-coupons-root] .cp-cta { width: 100%; }
+  [data-coupons-root] .cp-referral { padding: 20px 18px; }
+  [data-coupons-root] .cp-referral__actions { flex-direction: column; }
+  [data-coupons-root] .cp-referral__btn { width: 100%; justify-content: center; }
+}
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  var root = document.querySelector('[data-coupons-root]');
+  if (!root) return;
+
+  var grid          = root.querySelector('[data-coupon-grid]');
+  var loadingEl     = root.querySelector('[data-coupon-loading]');
+  var stateEl       = root.querySelector('[data-coupon-state]');
+  var referralSec      = root.querySelector('[data-referral-section]');
+  var referralShareBtn = root.querySelector('[data-referral-share]');
+  var referralCopyBtn  = root.querySelector('[data-referral-copy]');
+  var referralStatus   = root.querySelector('[data-referral-status]');
+  var referralPreview  = root.querySelector('[data-referral-link-preview]');
+  var referralHref     = '';
+  var referralActivationInFlight = false;
+
+  var endpoint         = root.getAttribute('data-coupon-endpoint') || '/apps/bta-booking/coupons/summary';
+  var fallbackEndpoint = root.getAttribute('data-coupon-endpoint-fallback') || '';
+  var shareActivateEndpoint = root.getAttribute('data-share-activate-endpoint') || '/apps/bta-booking/coupons/extra10/activate-share';
+  var customerId       = (root.getAttribute('data-customer-id') || '').trim();
+  var customerName     = (root.getAttribute('data-customer-name') || 'Member').trim() || 'Member';
+  var loginUrl         = root.getAttribute('data-login-url') || '/account/login';
+  var guideKitUrl      = root.getAttribute('data-guide-kit-url') || '/products/korea-guide-kit';
+  var tourUrl          = root.getAttribute('data-tour-url') || '/pages/experience-tours';
+  var referralBase     = root.getAttribute('data-referral-base') || '';
+
+  /* ── Countdown state ── */
+  var countdownInterval = null;
+  var countdownExpiry   = null; // Date object
+  var alreadyActiveCodes = {
+    EXTRA10_ALREADY_ACTIVE: true,
+    EXTRA10_ALREADY_GRANTED: true,
+    EXTRA10_ALREADY_ISSUED: true,
+    EXTRA10_ALREADY_REDEEMED: true
+  };
+
+  function escapeHtml(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function setLoading(on) { loadingEl.hidden = !on; }
+
+  function setMsg(msg) {
+    if (!msg) { stateEl.hidden = true; stateEl.textContent = ''; return; }
+    stateEl.hidden = false; stateEl.textContent = msg;
+  }
+
+  function createClientRequestId(prefix) {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return (prefix || 'coupons') + '-' + window.crypto.randomUUID();
+    }
+    return (prefix || 'coupons') + '-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  function padTwo(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function formatCountdown(ms) {
+    if (ms <= 0) return '00:00:00';
+    var totalSec = Math.floor(ms / 1000);
+    var h = Math.floor(totalSec / 3600);
+    var m = Math.floor((totalSec % 3600) / 60);
+    var s = totalSec % 60;
+    return padTwo(h) + ':' + padTwo(m) + ':' + padTwo(s);
+  }
+
+  function startCountdown(expiryDate) {
+    countdownExpiry = expiryDate;
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    function tick() {
+      var remaining = countdownExpiry - Date.now();
+      var el = grid.querySelector('[data-countdown]');
+      if (!el) { clearInterval(countdownInterval); return; }
+
+      if (remaining <= 0) {
+        clearInterval(countdownInterval);
+        /* Coupon expired: remove the guide50 card */
+        var card = grid.querySelector('[data-coupon-key="guide50"]');
+        if (card) card.remove();
+        checkEmpty();
+        return;
+      }
+      el.textContent = formatCountdown(remaining);
+    }
+
+    tick();
+    countdownInterval = setInterval(tick, 1000);
+  }
+
+  function checkEmpty() {
+    if (!grid.children.length) {
+      setMsg('No currently available coupons for your account.');
+    }
+  }
+
+  /* ── Card HTML builders ── */
+
+  function buildExpiryHtml(expiresAt) {
+    if (!expiresAt) {
+      return '<span class="cp-expiry-none">⏰ No Expiration</span>';
+    }
+    var ms = expiresAt - Date.now();
+    return (
+      '<span class="cp-expiry-row">' +
+        '<span class="cp-expiry-icon">⏳</span>' +
+        '<span>Time Remaining:</span>' +
+        '<span class="cp-countdown" data-countdown>' + formatCountdown(ms) + '</span>' +
+      '</span>'
+    );
+  }
+
+  function renderCard(opts) {
+    /* opts: { key, style, typeBadge, icon, discount, validFor, expiresAt, ctaLabel, ctaLink } */
+    return (
+      '<article class="cp-card cp-card--' + escapeHtml(opts.style) + '" data-coupon-key="' + escapeHtml(opts.key) + '">' +
+        '<div class="cp-top">' +
+          '<span class="cp-type-badge">' + escapeHtml(opts.typeBadge) + '</span>' +
+          '<span class="cp-icon">' + escapeHtml(opts.icon) + '</span>' +
+        '</div>' +
+        '<div class="cp-content">' +
+          '<p class="cp-discount">' + escapeHtml(opts.discount) + '</p>' +
+          '<p class="cp-valid-for">' + escapeHtml(opts.validFor) + '</p>' +
+          buildExpiryHtml(opts.expiresAt) +
+        '</div>' +
+        '<div class="cp-footer">' +
+          '<div class="cp-footer-info">' +
+            '<span class="cp-user">' + escapeHtml(customerName) + '</span>' +
+            '<span class="cp-sub">Purple Shoes Member</span>' +
+          '</div>' +
+          '<a class="cp-cta" href="' + escapeHtml(opts.ctaLink) + '">' + escapeHtml(opts.ctaLabel) + '</a>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
+  /* ── Summary → cards ── */
+
+  function buildCards(summary) {
+    var coupons = (summary && summary.coupons) || {};
+    var tour    = (summary && summary.tour)    || {};
+    var cards   = [];
+    var showReferral = true;
+
+    /* ── Coupon 1: 50% OFF guide50 ── */
+    var g50 = coupons.guide50 || {};
+    if (g50.available === true) {
+      var expiresAt = g50.expiresAt ? new Date(g50.expiresAt) : null;
+      if (!expiresAt || expiresAt > new Date()) {
+        cards.push({
+          key:       'guide50',
+          style:     'pink',
+          typeBadge: 'GUIDE COUPON',
+          icon:      '🎁',
+          discount:  '50% OFF',
+          validFor:  'Valid for Korea Guide Kit Only',
+          expiresAt: expiresAt,
+          ctaLabel:  'Start Your Smart Korea Trip',
+          ctaLink:   guideKitUrl
+        });
+      }
+    }
+
+    /* ── Coupon 2: 15% OFF tour ── */
+    var tourRate = Number(tour.maxPercentRate);
+    var hasTour  = (Number.isFinite(tourRate) && tourRate >= 0.15) ||
+                   (Number(tour.tour15CreditBalance) > 0);
+    if (hasTour) {
+      cards.push({
+        key:       'tour15',
+        style:     'purple',
+        typeBadge: 'TOUR COUPON',
+        icon:      '🧭',
+        discount:  '15% OFF',
+        validFor:  'Valid for Experience Tours Only',
+        expiresAt: null,
+        ctaLabel:  'Book an Experience Tour',
+        ctaLink:   tourUrl
+      });
+    }
+
+    /* ── Coupon 3: $10 OFF extra10 ── */
+    var e10 = coupons.extra10 || {};
+    if (e10.available === true) {
+      cards.push({
+        key:       'extra10',
+        style:     'teal',
+        typeBadge: 'STACKABLE',
+        icon:      '🎟️',
+        discount:  '$10 OFF',
+        validFor:  'Valid for all guides, videos & tours\n(Excludes extensions)',
+        expiresAt: null,
+        ctaLabel:  'Start Your Smart Korea Trip',
+        ctaLink:   guideKitUrl
+      });
+    }
+
+    return { cards: cards, showReferral: showReferral };
+  }
+
+  function renderAll(summary) {
+    var result      = buildCards(summary);
+    var cards       = result.cards;
+    var showReferal = result.showReferral;
+
+    if (!cards.length) {
+      grid.innerHTML = '';
+      setMsg('No currently available coupons for your account.');
+    } else {
+      grid.innerHTML = cards.map(renderCard).join('');
+      setMsg('');
+    }
+
+    /* Start countdown if guide50 card is present */
+    var g50card = grid.querySelector('[data-coupon-key="guide50"]');
+    if (g50card) {
+      var coupons = (summary && summary.coupons) || {};
+      var g50     = coupons.guide50 || {};
+      if (g50.expiresAt) {
+        startCountdown(new Date(g50.expiresAt));
+      } else if (typeof g50.ttlSeconds === 'number' && g50.ttlSeconds > 0) {
+        startCountdown(new Date(Date.now() + g50.ttlSeconds * 1000));
+      }
+    }
+
+    /* Referral section */
+    if (referralSec) {
+      var summaryCoupons = (summary && summary.coupons) || {};
+      var summaryExtra10 = summaryCoupons.extra10 || {};
+      var extra10Available = summaryExtra10.available === true;
+      referralSec.hidden = !showReferal;
+      if (showReferal) {
+        var base = referralBase || (window.location.origin + '/pages/freeguideoptin');
+        referralHref = base + (base.indexOf('?') !== -1 ? '&' : '?') + 'ref=' + encodeURIComponent(customerId);
+        if (referralPreview) referralPreview.textContent = referralHref;
+        if (referralCopyBtn && extra10Available && referralHref) {
+          referralCopyBtn.hidden = false;
+        }
+      }
+    }
+  }
+
+  /* ── Referral share / copy ── */
+  function setReferralStatus(msg, isError) {
+    if (!referralStatus) return;
+    referralStatus.textContent = msg;
+    referralStatus.hidden = !msg;
+    referralStatus.className = 'cp-referral__status' + (isError ? ' is-error' : '');
+  }
+
+  function setReferralBusy(isBusy) {
+    referralActivationInFlight = isBusy;
+    if (referralShareBtn) {
+      referralShareBtn.disabled = isBusy;
+      referralShareBtn.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+    }
+    if (referralCopyBtn) {
+      referralCopyBtn.disabled = isBusy;
+      referralCopyBtn.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+    }
+  }
+
+  function getReferralErrorMessage(error) {
+    if (error && error.code === 'AUTH_LOGIN_REQUIRED') {
+      return 'Please sign in again to activate your Extra $10 coupon.';
+    }
+    if (error && alreadyActiveCodes[error.code]) {
+      return 'Your Extra $10 coupon is already active in My Coupons.';
+    }
+    if (error && error.code === 'VALIDATION_ERROR') {
+      return 'We could not prepare your share link. Please refresh and try again.';
+    }
+    if (error && (error.code === 'RATE_LIMITED' || error.code === 'NETWORK_ERROR')) {
+      return 'The share service is busy right now. Please try again in a moment.';
+    }
+    return 'We could not activate your coupon right now. Please try again.';
+  }
+
+  function requestEnvelope(url, options) {
+    var fetchOptions = {
+      method: options && options.method ? options.method : 'GET',
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    };
+
+    if (options && options.body) {
+      fetchOptions.headers['Content-Type'] = 'application/json';
+      fetchOptions.body = JSON.stringify(options.body);
+    }
+
+    return fetch(url, fetchOptions).catch(function(error) {
+      error.code = error.code || 'NETWORK_ERROR';
+      throw error;
+    }).then(function(res) {
+      var isJson = (res.headers.get('content-type') || '').indexOf('application/json') !== -1;
+      var p = isJson ? res.json().catch(function() { return null; }) : Promise.resolve(null);
+      return p.then(function(payload) {
+        var errorData = payload && payload.error ? payload.error : null;
+        if (!res.ok || !payload || payload.ok === false) {
+          var error = new Error((errorData && errorData.message) || 'Request failed');
+          error.code = (errorData && errorData.code) || '';
+          error.correlationId = (payload && payload.meta && payload.meta.correlationId) || res.headers.get('X-Correlation-Id') || '';
+          throw error;
+        }
+        return payload;
+      });
+    });
+  }
+
+  function loadCouponSummary() {
+    return fetchSummary(endpoint).catch(function() {
+      if (!fallbackEndpoint) throw new Error('failed');
+      return fetchSummary(fallbackEndpoint);
+    });
+  }
+
+  function activateShareCoupon() {
+    return requestEnvelope(shareActivateEndpoint, {
+      method: 'POST',
+      body: {
+        shareUrl: referralHref,
+        source: 'thank-you-offer',
+        clientRequestId: createClientRequestId('coupons-share')
+      }
+    });
+  }
+
+  function refreshAfterActivation() {
+    return loadCouponSummary().then(function(summary) {
+      renderAll(summary);
+      return summary;
+    });
+  }
+
+  function copyReferralLink() {
+    if (!referralHref) return;
+    var origText = referralCopyBtn ? referralCopyBtn.textContent.trim() : '';
+    try {
+      navigator.clipboard.writeText(referralHref).then(function() {
+        setReferralStatus('Link copied! Share it with a friend.', false);
+        if (referralCopyBtn) referralCopyBtn.textContent = 'Copied!';
+        setTimeout(function() {
+          setReferralStatus('', false);
+          if (referralCopyBtn) referralCopyBtn.textContent = origText;
+        }, 2500);
+      }).catch(fallbackCopy);
+    } catch(e) { fallbackCopy(); }
+
+    function fallbackCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = referralHref;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch(e2) {}
+      document.body.removeChild(ta);
+      setReferralStatus('Link copied! Share it with a friend.', false);
+      if (referralCopyBtn) referralCopyBtn.textContent = 'Copied!';
+      setTimeout(function() {
+        setReferralStatus('', false);
+        if (referralCopyBtn) referralCopyBtn.textContent = origText;
+      }, 2500);
+    }
+  }
+
+  if (referralShareBtn) {
+    referralShareBtn.addEventListener('click', function() {
+      if (!referralHref) return;
+      if (referralActivationInFlight) return;
+
+      setReferralBusy(true);
+      setReferralStatus('Activating your Extra $10 coupon...', false);
+
+      activateShareCoupon()
+        .catch(function(error) {
+          if (alreadyActiveCodes[error.code]) return null;
+          throw error;
+        })
+        .then(function() {
+          return refreshAfterActivation().catch(function() {
+            setReferralStatus('Your Extra $10 coupon was activated, but My Coupons could not refresh yet. Please reload this page in a moment.', false);
+            return null;
+          });
+        })
+        .then(function() {
+          if (navigator.share) {
+            return navigator.share({
+              title: 'Get an Extra $10 OFF Coupon',
+              text: 'Share the free Korea travel info page with a friend and unlock your extra $10 off coupon.',
+              url: referralHref
+            }).then(function() {
+              setReferralStatus('Your Extra $10 coupon is active. The link has been shared.', false);
+            }).catch(function() {
+              if (referralCopyBtn) referralCopyBtn.hidden = false;
+              setReferralStatus('Your Extra $10 coupon is active. You can share the link anytime.', false);
+            });
+          }
+
+          if (referralCopyBtn) referralCopyBtn.hidden = false;
+          referralShareBtn.hidden = true;
+          setReferralStatus('Your Extra $10 coupon is active. Copy the link to share it with a friend.', false);
+          return null;
+        })
+        .catch(function(error) {
+          setReferralStatus(getReferralErrorMessage(error), true);
+        })
+        .finally(function() {
+          setReferralBusy(false);
+        });
+    });
+  }
+
+  if (referralCopyBtn) {
+    referralCopyBtn.addEventListener('click', copyReferralLink);
+  }
+
+  /* ── Fetch ── */
+  function fetchSummary(url) {
+    return Promise.resolve(window.psWelcomeOfferReady).then(function () { return fetch(url, {
+      method: 'GET', credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    }); }).then(function(res) {
+      var isJson = (res.headers.get('content-type') || '').indexOf('application/json') !== -1;
+      var p = isJson ? res.json().catch(function() { return null; }) : Promise.resolve(null);
+      return p.then(function(payload) {
+        if (!res.ok) {
+          throw new Error((payload && payload.error && payload.error.message) || 'HTTP ' + res.status);
+        }
+        if (payload && typeof payload === 'object' && 'ok' in payload) {
+          if (!payload.ok) throw new Error((payload.error && payload.error.message) || 'Failed');
+          return payload.data || {};
+        }
+        return payload || {};
+      });
+    });
+  }
+
+  /* ── Not logged in ── */
+  if (!customerId) {
+    grid.innerHTML = (
+      '<div class="cp-login-prompt">' +
+        '<p>Log in to see your available coupons.</p>' +
+        '<a href="' + escapeHtml(loginUrl) + '" class="cp-login-btn">Login</a>' +
+      '</div>'
+    );
+    return;
+  }
+
+  setLoading(true);
+  setMsg('');
+
+  loadCouponSummary()
+    .then(function(summary) {
+      renderAll(summary);
+    })
+    .catch(function() {
+      grid.innerHTML = '';
+      setMsg('Unable to load coupons. Please try again later.');
+    })
+    .finally(function() {
+      setLoading(false);
+    });
+})();
+</script>
+
+
+{%- else -%}
+  {% render 'member-login-required' %}
+{%- endif -%}
+{% schema %}
+{
+  "name": "My Coupons",
+  "settings": [
+    {
+      "type": "text",
+      "id": "coupons_heading",
+      "label": "Section heading",
+      "default": "My Coupons"
+    },
+    {
+      "type": "textarea",
+      "id": "coupons_desc",
+      "label": "Description text",
+      "default": "Your exclusive discounts are waiting — apply them at checkout for instant savings."
+    },
+    {
+      "type": "header",
+      "content": "Links"
+    },
+    {
+      "type": "url",
+      "id": "guide_kit_url",
+      "label": "Korea Guide Kit page URL"
+    },
+    {
+      "type": "url",
+      "id": "tour_url",
+      "label": "Experience Tour page URL"
+    },
+    {
+      "type": "url",
+      "id": "referral_base_url",
+      "label": "Referral base URL (leave blank for auto)"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 40
+    }
+  ],
+  "presets": [{ "name": "My Coupons" }]
+}
+{% endschema %}

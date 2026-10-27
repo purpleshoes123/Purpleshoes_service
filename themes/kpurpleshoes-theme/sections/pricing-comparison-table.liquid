@@ -1,0 +1,162 @@
+<section class="pct-section" id="pct-{{ section.id }}" style="--pct-check-bg: {{ section.settings.check_color | default: '#5b2bd8' }};">
+  <div class="pct-inner">
+    {% if section.settings.table_title != blank %}
+      <h2 class="pct-title">{{ section.settings.table_title }}</h2>
+    {% endif %}
+
+    <div class="pct-wrap">
+      <table class="pct-table" role="table">
+        <thead>
+          <tr>
+            <th class="pct-cell pct-cell--feature" scope="col">{{ section.settings.col_feature | default: 'Feature' }}</th>
+            <th class="pct-cell pct-cell--plan" scope="col">{{ section.settings.col_start | default: 'Start' }}</th>
+            <th class="pct-cell pct-cell--plan" scope="col">{{ section.settings.col_scale | default: 'Scale' }}</th>
+            <th class="pct-cell pct-cell--plan" scope="col">{{ section.settings.col_transform | default: 'Transform' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for block in section.blocks %}
+            {% if block.type == 'feature_row' %}
+              <tr {{ block.shopify_attributes }}>
+                <td class="pct-cell pct-cell--feature">{{ block.settings.feature_name }}</td>
+                <td class="pct-cell pct-cell--plan">
+                  {% if block.settings.start_plan %}
+                    <span class="pct-check" aria-hidden="true">✓</span>
+                  {% else %}
+                    <span class="pct-empty" aria-hidden="true">—</span>
+                  {% endif %}
+                </td>
+                <td class="pct-cell pct-cell--plan">
+                  {% if block.settings.scale_plan %}
+                    <span class="pct-check" aria-hidden="true">✓</span>
+                  {% else %}
+                    <span class="pct-empty" aria-hidden="true">—</span>
+                  {% endif %}
+                </td>
+                <td class="pct-cell pct-cell--plan">
+                  {% if block.settings.transform_plan %}
+                    <span class="pct-check" aria-hidden="true">✓</span>
+                  {% else %}
+                    <span class="pct-empty" aria-hidden="true">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pct-section{
+    padding: clamp(124px, 5vw, 124px) 24px;
+    background: #f2f3f5;
+  }
+  .pct-inner{
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .pct-title{
+    margin: 0 0 24px;
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 700;
+    text-align: center;
+    color: #1a1a1a;
+  }
+  .pct-wrap{
+    overflow-x: auto;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .pct-table{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  .pct-cell{
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.4;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    text-align: left;
+    vertical-align: middle;
+  }
+  .pct-table thead .pct-cell{
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.8);
+    background: rgba(0,0,0,.02);
+  }
+  .pct-table thead .pct-cell--plan,
+  .pct-table tbody .pct-cell--plan{
+    text-align: center;
+    width: 18%;
+  }
+  .pct-cell--feature{ width: 46%; }
+  .pct-table tbody tr:last-child .pct-cell{ border-bottom: 0; }
+  .pct-table tbody .pct-cell--feature{ color: rgba(0,0,0,.85); }
+  .pct-check{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--pct-check-bg, #5b2bd8);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .pct-empty{
+    color: rgba(0,0,0,.25);
+    font-size: 14px;
+  }
+  @media (max-width: 600px){
+    .pct-cell{ padding: 12px 14px; font-size: 13px; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Pricing comparison table",
+  "settings": [
+    { "type": "text", "id": "table_title", "label": "Table title", "default": "Compare plans" },
+    { "type": "text", "id": "col_feature", "label": "Column 1 header (Feature)", "default": "Feature" },
+    { "type": "text", "id": "col_start", "label": "Column 2 header (Start)", "default": "Start" },
+    { "type": "text", "id": "col_scale", "label": "Column 3 header (Scale)", "default": "Scale" },
+    { "type": "text", "id": "col_transform", "label": "Column 4 header (Transform)", "default": "Transform" },
+    { "type": "color", "id": "check_color", "label": "Check icon color", "default": "#5b2bd8" }
+  ],
+  "blocks": [
+    {
+      "type": "feature_row",
+      "name": "Feature row",
+      "settings": [
+        { "type": "text", "id": "feature_name", "label": "Feature name", "default": "Feature" },
+        { "type": "checkbox", "id": "start_plan", "label": "Start plan", "default": true },
+        { "type": "checkbox", "id": "scale_plan", "label": "Scale plan", "default": true },
+        { "type": "checkbox", "id": "transform_plan", "label": "Transform plan", "default": false }
+      ]
+    }
+  ],
+  "max_blocks": 50,
+  "presets": [
+    {
+      "name": "Pricing comparison table",
+      "settings": { "table_title": "Compare plans" },
+      "blocks": [
+        { "type": "feature_row", "settings": { "feature_name": "Unlimited Users", "start_plan": true, "scale_plan": true, "transform_plan": true } },
+        { "type": "feature_row", "settings": { "feature_name": "Projects", "start_plan": true, "scale_plan": true, "transform_plan": true } },
+        { "type": "feature_row", "settings": { "feature_name": "Revision history", "start_plan": true, "scale_plan": true, "transform_plan": true } },
+        { "type": "feature_row", "settings": { "feature_name": "Shareable links", "start_plan": false, "scale_plan": true, "transform_plan": true } },
+        { "type": "feature_row", "settings": { "feature_name": "Single sign-on", "start_plan": false, "scale_plan": false, "transform_plan": true } }
+      ]
+    }
+  ]
+}
+{% endschema %}

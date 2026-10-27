@@ -1,0 +1,3 @@
+# Keep imported production bytes reproducible across Windows and Linux.
+# The deployment provenance records SHA-256 of the original files.
+* -text

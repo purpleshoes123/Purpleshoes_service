@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public reCAPTCHA site key rendered by the live storefront; never a server secret"
+condition = "AND"
+regexTarget = "line"
+paths = ['''themes[/\\]kpurpleshoes-theme[/\\]templates[/\\]page\.free-guide-optin\.json$''']
+regexes = ['''^\s*"mail_recaptcha_site_key"\s*:\s*"[A-Za-z0-9_-]+",?\s*$''']

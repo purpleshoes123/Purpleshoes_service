@@ -1,0 +1,24 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "theme",
+  "sections": {
+    "extension_thank_you": {
+      "type": "extension-thank-you",
+      "settings": {
+        "headline": "Your Korea Guide Kit Access Has Been Extended!",
+        "subheadline": "Your extended access is now active.\nKeep exploring Korea with your Guide Kit."
+      }
+    }
+  },
+  "order": [
+    "extension_thank_you"
+  ]
+}

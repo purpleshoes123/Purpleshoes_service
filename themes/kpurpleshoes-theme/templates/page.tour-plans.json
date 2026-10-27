@@ -1,0 +1,304 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "tour_hero": {
+      "type": "tour-plans-hero",
+      "settings": {
+        "use_page_title": true,
+        "heading": "Tour Plans"
+      }
+    },
+    "tour_plans_grid_AtPUJN": {
+      "type": "tour-plans-grid",
+      "blocks": {
+        "plan_XAEWec": {
+          "type": "plan",
+          "settings": {
+            "featured": false,
+            "badge_soft": "BASIC",
+            "badge_solid": "POPULAR",
+            "title": "Guidebook ONLY",
+            "desc": "A PDF guidebook covering key routes, restaurants, and photo spots.",
+            "price_amount": "₩19,000",
+            "price_unit": "/ 1 trip",
+            "f1": "1-2 recommended routes by area",
+            "f2": "Includes Purple Map places (Kakao Map)",
+            "f3": "Budget and travel time guidance",
+            "f4": "Simple trip prep checklist",
+            "button_label": "Select plan",
+            "button_link": "shopify://collections/all",
+            "small_note": "* Instant download after payment (sample)"
+          }
+        },
+        "plan_TBjEkR": {
+          "type": "plan",
+          "settings": {
+            "featured": true,
+            "badge_soft": "BASIC",
+            "badge_solid": "ALL-IN",
+            "title": "Korean Guide Kit",
+            "desc": "A PDF guidebook covering key routes, restaurants, and photo spots.",
+            "price_amount": "₩59,000",
+            "price_unit": "/ 1 trip",
+            "f1": "Video guide for key sections (for example, 20-40 minutes)",
+            "f2": "Captioned explanations by point (sample)",
+            "f3": "Route tips for common mistakes",
+            "f4": "Recommended shooting angles and times",
+            "button_label": "Select plan",
+            "button_link": "shopify://products/korea-guide-kit",
+            "small_note": "* Provided by link (sample)"
+          }
+        },
+        "plan_G4UYQw": {
+          "type": "plan",
+          "settings": {
+            "featured": false,
+            "badge_soft": "ALL-IN",
+            "badge_solid": "BASIC",
+            "title": "Video Guide Only",
+            "desc": "A PDF guidebook covering key routes, restaurants, and photo spots.",
+            "price_amount": "₩39,000",
+            "price_unit": "/ 1 trip",
+            "f1": "Guidebook + Video included",
+            "f2": "Korean phrases for restaurant and cafe reservations",
+            "f3": "30 essential phrases by situation (sample)",
+            "f4": "Tailored recommendations based on a short survey (sample)",
+            "button_label": "Select plan",
+            "button_link": "shopify://collections/all",
+            "small_note": "* Delivered as a kit (sample)"
+          }
+        }
+      },
+      "block_order": [
+        "plan_XAEWec",
+        "plan_TBjEkR",
+        "plan_G4UYQw"
+      ],
+      "name": "Tour Plans - Plans Grid",
+      "settings": {
+        "heading": "Get your guide plan",
+        "subheading": "The copy below is sample content. Update it to match your actual products, pricing, and benefits.",
+        "show_tip": true,
+        "tip_title": "Tip",
+        "tip_text": "<p>Update the button links (/collections/all) to your real sales page, collection, product, or external checkout link.</p>"
+      }
+    },
+    "toc_grid_47zYFm": {
+      "type": "toc-grid",
+      "blocks": {
+        "item_MqFt3T": {
+          "type": "item",
+          "settings": {
+            "number": "02",
+            "link": ""
+          }
+        },
+        "item_TnJpHH": {
+          "type": "item",
+          "settings": {
+            "number": "07",
+            "link": ""
+          }
+        },
+        "item_3HyKzc": {
+          "type": "item",
+          "settings": {
+            "number": "10",
+            "link": ""
+          }
+        },
+        "item_3XA4Ve": {
+          "type": "item",
+          "settings": {
+            "number": "13",
+            "link": ""
+          }
+        },
+        "item_UftcgJ": {
+          "type": "item",
+          "settings": {
+            "number": "16",
+            "link": ""
+          }
+        },
+        "item_cUibp3": {
+          "type": "item",
+          "settings": {
+            "number": "19",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "item_MqFt3T",
+        "item_TnJpHH",
+        "item_3HyKzc",
+        "item_3XA4Ve",
+        "item_UftcgJ",
+        "item_cUibp3"
+      ],
+      "name": "TOC Grid (Table of Contents)",
+      "settings": {
+        "eyebrow": "sm",
+        "heading": "TABLE OF CONTENTS",
+        "show_title_rule": true,
+        "max_width": 1100,
+        "gap_x": 56,
+        "gap_y": 36,
+        "bg_color": "#D7CCB7",
+        "text_color": "#1A1A1A",
+        "muted_color": "#5A564E",
+        "line_color": "#1A1A1A"
+      }
+    },
+    "tour_faq": {
+      "type": "tour-plans-faq",
+      "blocks": {
+        "qa_guide_1": {
+          "type": "qa",
+          "settings": {
+            "q": "Changed your mind?",
+            "a": "<p>No problem!<br>If you haven't opened or downloaded the content yet,<br>we are happy to offer a 100% refund within 48 hours of purchase.</p>"
+          }
+        },
+        "qa_guide_2": {
+          "type": "qa",
+          "settings": {
+            "q": "Once Accessed",
+            "a": "<p>Since these are digital products,<br>please understand that we cannot offer refunds<br>once you have started downloading or streaming the content.</p>"
+          }
+        },
+        "qa_guide_3": {
+          "type": "qa",
+          "settings": {
+            "q": "Package Note",
+            "a": "<p>The Korea Guide Kit is a special package deal,<br>so we are unable to refund individual items<br>(e.g., cancelling just the video) separately.</p>"
+          }
+        },
+        "qa_guide_4": {
+          "type": "qa",
+          "settings": {
+            "q": "Can I use it without an internet connection? (Offline Viewing)",
+            "a": "<p>Absolutely!<br>We know data roaming can be tricky.</p><p>Once you download the content in the Purpleshoes App,<br>you can enjoy the Guidebook and watch the Videos anytime, anywhere - even without Wi-Fi!</p>"
+          }
+        },
+        "qa_guide_5": {
+          "type": "qa",
+          "settings": {
+            "q": "Can I use it on multiple devices?",
+            "a": "<p>Yes, you can! Just keep in mind the device limits for your plan:</p><ul><li>Single Item (Guidebook or Video): Up to 2 devices</li><li>Korea Guide Kit: Up to 3 devices</li></ul>"
+          }
+        },
+        "qa_guide_6": {
+          "type": "qa",
+          "settings": {
+            "q": "Do I need to search for the addresses manually?",
+            "a": "<p>No. Once you purchase the Korea Guide Kit, you'll get access to our app with 1,500+ saved locations.</p><p>Just open the map, tap a spot, and go - no need to search or type any addresses.</p><p>For the best navigation experience, we recommend downloading Kakao Map in advance.</p>"
+          }
+        },
+        "qa_guide_7": {
+          "type": "qa",
+          "settings": {
+            "q": "I'm having trouble with the app. How can I get help?",
+            "a": "<p>We are here to help!<br>If you experience any technical issues or have questions, please contact our support team at support@kpurpleshoes.com.</p><p>We try to respond as quickly as possible to get you back on your trip!</p>"
+          }
+        },
+        "qa_guide_8": {
+          "type": "qa",
+          "settings": {
+            "q": "What currency will I be charged in?",
+            "a": "<p>All prices are listed and charged in USD.<br>Please check with your bank regarding exchange rates if you are using a non-USD card.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "qa_guide_1",
+        "qa_guide_2",
+        "qa_guide_3",
+        "qa_guide_4",
+        "qa_guide_5",
+        "qa_guide_6",
+        "qa_guide_7",
+        "qa_guide_8"
+      ],
+      "settings": {
+        "heading": "FAQ",
+        "subheading": "We want you to have the best experience with Purpleshoes.\n\nHowever, since we offer different types of services,\nthe policy varies slightly. Here is everything you need to know:"
+      }
+    },
+    "ready_cta_tour_plans": {
+      "type": "ps-big-cta",
+      "settings": {
+        "heading": "Ready to Travel Korea the Smart Way?",
+        "guest_button_label": "YES! I Need the Korea Guide Kit NOW!",
+        "guest_button_link": "/account/login",
+        "customer_button_label": "YES! I Need the Korea Guide Kit NOW!",
+        "customer_button_link": "/products/korea-guide-kit#choose-your-best-plan"
+      }
+    },
+    "image_banner_94jcAA": {
+      "type": "image-banner",
+      "blocks": {
+        "heading_EVbFnV": {
+          "type": "heading",
+          "settings": {
+            "heading": "Image banner",
+            "heading_size": "h1"
+          }
+        },
+        "text_qfQMzd": {
+          "type": "text",
+          "settings": {
+            "text": "Use this banner to highlight an image or key content details for customers.",
+            "text_style": "body"
+          }
+        },
+        "buttons_mnyxjq": {
+          "type": "buttons",
+          "settings": {
+            "button_label_1": "Button label",
+            "button_link_1": "",
+            "button_style_secondary_1": false,
+            "button_label_2": "Button label",
+            "button_link_2": "",
+            "button_style_secondary_2": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_EVbFnV",
+        "text_qfQMzd",
+        "buttons_mnyxjq"
+      ],
+      "name": "t:sections.image-banner.presets.name",
+      "settings": {
+        "image_overlay_opacity": 0,
+        "image_height": "medium",
+        "image_behavior": "none",
+        "desktop_content_position": "middle-center",
+        "desktop_content_alignment": "center",
+        "show_text_box": true,
+        "color_scheme": "",
+        "stack_images_on_mobile": true,
+        "mobile_content_alignment": "center",
+        "show_text_below": true
+      }
+    }
+  },
+  "order": [
+    "tour_hero",
+    "tour_plans_grid_AtPUJN",
+    "toc_grid_47zYFm",
+    "ready_cta_tour_plans",
+    "tour_faq",
+    "image_banner_94jcAA"
+  ]
+}

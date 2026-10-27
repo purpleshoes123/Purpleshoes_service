@@ -1,0 +1,62 @@
+{% comment %}
+  Tour page: Yellow section - What's Included, About Us | Our Guide, Contact. 2 columns, admin-editable.
+{% endcomment %}
+
+<section class="tour-info-yellow" style="--tour-yellow: {{ section.settings.bg_yellow | default: '#ffd400' }}; --tour-text: {{ section.settings.text_color | default: '#111' }};">
+  <div class="page-width tour-info-yellow__inner">
+    <div class="tour-info-yellow__grid">
+      <div class="tour-info-yellow__col">
+        {% if section.settings.heading_included != blank %}
+          <h3 class="tour-info-yellow__h">{{ section.settings.heading_included | escape }}</h3>
+          <div class="tour-info-yellow__body">{{ section.settings.body_included }}</div>
+        {% endif %}
+        {% if section.settings.heading_about != blank %}
+          <h3 class="tour-info-yellow__h">{{ section.settings.heading_about | escape }}</h3>
+          <div class="tour-info-yellow__body">{{ section.settings.body_about }}</div>
+        {% endif %}
+      </div>
+      <div class="tour-info-yellow__col">
+        {% if section.settings.heading_guide != blank %}
+          <h3 class="tour-info-yellow__h">{{ section.settings.heading_guide | escape }}</h3>
+          <div class="tour-info-yellow__body">{{ section.settings.body_guide }}</div>
+        {% endif %}
+        {% if section.settings.heading_contact != blank %}
+          <h3 class="tour-info-yellow__h">{{ section.settings.heading_contact | escape }}</h3>
+          <div class="tour-info-yellow__body">{{ section.settings.body_contact }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tour-info-yellow { background: var(--tour-yellow); padding: clamp(48px, 8vw, 124px) 0; }
+  .tour-info-yellow__inner { max-width: 1000px; margin: 0 auto; }
+  .tour-info-yellow__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px 32px; }
+  .tour-info-yellow__h { font-size: 16px; font-weight: 800; color: var(--tour-text); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tour-info-yellow__body { font-size: 14px; line-height: 1.6; color: var(--tour-text); margin-bottom: 24px; }
+  .tour-info-yellow__body:last-child { margin-bottom: 0; }
+  .tour-info-yellow__body ul { margin: 8px 0 0; padding-left: 20px; }
+  @media (max-width: 749px) { .tour-info-yellow__grid { grid-template-columns: 1fr; } }
+</style>
+
+{% schema %}
+{
+  "name": "Tour Info (Yellow)",
+  "settings": [
+    { "type": "color", "id": "bg_yellow", "label": "Background", "default": "#ffd400" },
+    { "type": "color", "id": "text_color", "label": "Text color", "default": "#111111" },
+    { "type": "header", "content": "Left column" },
+    { "type": "text", "id": "heading_included", "label": "Heading (What's Included)", "default": "What's Included" },
+    { "type": "richtext", "id": "body_included", "label": "Content" },
+    { "type": "text", "id": "heading_about", "label": "Heading (About Us)", "default": "About Us" },
+    { "type": "richtext", "id": "body_about", "label": "Content" },
+    { "type": "header", "content": "Right column" },
+    { "type": "text", "id": "heading_guide", "label": "Heading (Our Guide)", "default": "Our Guide" },
+    { "type": "richtext", "id": "body_guide", "label": "Content" },
+    { "type": "text", "id": "heading_contact", "label": "Heading (Contact Us)", "default": "Contact Us" },
+    { "type": "richtext", "id": "body_contact", "label": "Content" }
+  ],
+  "presets": [{ "name": "Tour Info (Yellow)" }]
+}
+{% endschema %}

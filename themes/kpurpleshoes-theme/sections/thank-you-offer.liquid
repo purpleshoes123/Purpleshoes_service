@@ -1,0 +1,716 @@
+{% comment %}
+  Thank You Offer — Upsell popup page shown after Guidebook-only or Video-only purchase.
+  All data-* attributes and JS hooks are preserved exactly. Design only is updated.
+{% endcomment %}
+
+{%- assign referral_url = section.settings.referral_link -%}
+{%- if referral_url == blank -%}
+  {%- assign referral_url = request.origin | append: '/pages/freeguideoptin' -%}
+{%- endif -%}
+
+<section
+  class="usp"
+  data-section="thank-you-offer"
+  data-ty-offer
+  data-section-id="{{ section.id }}"
+  data-customer-id="{{ customer.id | default: '' }}"
+  data-summary-endpoint="/apps/bta-booking/coupons/summary"
+  data-share-activate-endpoint="/apps/bta-booking/coupons/extra10/activate-share"
+  data-referral-url="{{ referral_url | escape }}"
+  data-share-title="{{ section.settings.referral_headline | default: 'Get an Extra $10 OFF Coupon' | escape }}"
+  data-share-text="{{ section.settings.referral_desc | default: 'Share the free Korea travel info page with a friend and unlock your extra $10 off coupon.' | escape }}"
+>
+  <div class="usp__backdrop">
+    <div class="usp__modal">
+
+      <!-- ── Flash Sale Banner ── -->
+      <div class="usp__flash-banner" aria-label="Limited time offer">
+        ⚡ {{ section.settings.flash_label | default: "24-HOUR FLASH SALE" }} ⚡
+      </div>
+
+      <!-- ── Header ── -->
+      <div class="usp__header">
+        <p class="usp__eyebrow">🚨 {{ section.settings.eyebrow | default: "Special One-Time Offer" }}</p>
+        <h1 class="usp__headline">{{ section.settings.headline | default: "Wait! Upgrade to the Full Kit & Save 50%" }}</h1>
+        <p class="usp__subtext">{{ section.settings.subtext | default: "This exclusive deal disappears when you leave this page." }}</p>
+      </div>
+
+      <!-- ── Offer Card: Price + Timer + CTA ── -->
+      <div class="usp__offer-card">
+
+        <!-- Price block -->
+        <div class="usp__price-block">
+          <div class="usp__offer-tag">{{ section.settings.offer_label | default: "Exclusive Offer:" }}</div>
+          <div class="usp__price-row">
+            <span class="usp__price-now">${{ section.settings.price_now | default: "75" }}</span>
+            <div class="usp__price-meta">
+              <span class="usp__price-was"><s>${{ section.settings.price_was | default: "150" }}</s></span>
+              <span class="usp__price-save">You Save ${{ section.settings.price_save | default: "75" }}!</span>
+            </div>
+          </div>
+          <p class="usp__price-desc">{{ section.settings.price_desc | default: "Get the Korea Guide Kit for just $75" }} <s>(Regular ${{ section.settings.price_was | default: "150" }})</s></p>
+        </div>
+
+        <!-- Timer — hidden until thank-you-offer.js activates it -->
+        <div
+          class="usp__timer-wrap"
+          data-guide50-timer
+          data-legacy-end-time="{{ section.settings.countdown_end_time | default: '' }}"
+          hidden
+        >
+          <p class="usp__timer-urgency" data-guide50-urgency>⏰ Offer expires in:</p>
+          <div class="usp__timer-simple">
+            <span class="usp__timer-simple-num" data-guide50-timer-display aria-live="polite">00:00:00</span>
+          </div>
+          <p class="usp__timer-expired" data-guide50-timer-expired hidden>This offer has expired.</p>
+          <p class="usp__timer-note" data-guide50-timer-note hidden></p>
+        </div>
+
+        <!-- Scissors divider -->
+        <div class="usp__scissors" aria-hidden="true">
+          <span class="usp__scissors-line"></span>
+          <svg class="usp__scissors-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+            <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+            <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+            <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+          </svg>
+          <span class="usp__scissors-line"></span>
+        </div>
+
+        <!-- CTA -->
+        <div class="usp__cta-wrap">
+          <a href="{{ section.settings.cta_link | default: '/products/korea-guide-kit' }}" class="usp__cta" id="ty-offer-cta">
+            {{ section.settings.cta_label | default: "YES! I Need the Korea Guide Kit NOW!" }}
+          </a>
+          <p class="usp__cta-note">{{ section.settings.cta_note | default: "Your 50% discount is already applied at checkout." }}</p>
+        </div>
+
+      </div><!-- /usp__offer-card -->
+
+      <!-- ── Checklist Card ── -->
+      <div class="usp__checklist-card">
+        <h2 class="usp__checklist-title">{{ section.settings.checklist_title | default: "Everything You Get:" }}</h2>
+        <ul class="usp__checklist">
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item1 | default: "Guidebook" }}</li>
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item2 | default: "Video Guide" }}</li>
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item3 | default: "1000+ Local Foodie Hidden Gems List" }}</li>
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item4 | default: "Offline Viewing" }}</li>
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item5 | default: "Up to 3 devices" }}</li>
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item6 | default: "6 months of access" }}</li>
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item7 | default: "15% Off Experience Tour Coupon" }}</li>
+          <li class="usp__checklist-item"><span class="usp__check" aria-hidden="true">✅</span> {{ section.settings.item8 | default: "1000+ handpicked spots — all in one map" }}</li>
+        </ul>
+        <p class="usp__tagline">{{ section.settings.tagline | default: "Don't travel blindly. Get the full stress-free package." }}</p>
+      </div>
+
+      <!-- ── App Download ── -->
+      {%- if section.settings.show_app_download -%}
+      <div class="usp__app-download">
+        <h2 class="usp__app-title">{{ section.settings.app_title | default: "Available on the Purple Shoes App" }}</h2>
+        <p class="usp__app-desc">{{ section.settings.app_desc | default: "Download the app to access your content offline." }}</p>
+        <div class="usp__app-row">
+          <div class="usp__app-icon-wrap">
+            {%- if section.settings.app_icon != blank -%}
+              <a href="{{ section.settings.app_download_url | default: '#' }}" class="usp__app-icon-link" aria-label="Download Purple Shoes app">
+                <img src="{{ section.settings.app_icon | image_url: width: 160 }}" alt="" width="80" height="80" class="usp__app-icon">
+              </a>
+            {%- else -%}
+              <a href="{{ section.settings.app_download_url | default: '#' }}" class="usp__app-icon-placeholder">App</a>
+            {%- endif -%}
+          </div>
+          <div class="usp__qr-wrap">
+            {%- if section.settings.qr_image != blank -%}
+              <img src="{{ section.settings.qr_image | image_url: width: 200 }}" alt="QR code for app download" width="140" height="140" class="usp__qr">
+            {%- elsif section.settings.app_download_url != blank -%}
+              {%- assign qr_url = section.settings.app_download_url | url_encode -%}
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ qr_url }}" alt="QR code for app download" width="140" height="140" class="usp__qr" loading="lazy">
+            {%- else -%}
+              <div class="usp__qr-placeholder">QR</div>
+            {%- endif -%}
+          </div>
+        </div>
+        <p class="usp__offline-note">{{ section.settings.offline_note | default: "Offline Viewing Supported" }}</p>
+      </div>
+      {%- endif -%}
+
+      <!-- ── Referral Card — all data-* attributes preserved exactly ── -->
+      <div class="usp__referral-card" data-referral-section>
+        <div class="usp__referral-badge">💜 Friend Bonus</div>
+        <h2 class="usp__referral-headline">{{ section.settings.referral_headline | default: "Get an Extra $10 OFF Coupon" }}</h2>
+        <p class="usp__referral-tagline">{{ section.settings.referral_tagline | default: "Share & Save." }}</p>
+        <p class="usp__referral-desc">{{ section.settings.referral_desc | default: "Share the free Korea travel info page with a friend. Tap the button once to activate your extra $10 coupon." }}</p>
+        <div class="usp__referral-actions">
+          <button type="button" class="usp__referral-btn" data-referral-share-button>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            {{ section.settings.referral_link_label | default: "Share & Unlock $10 Coupon" }}
+          </button>
+          <button type="button" class="usp__referral-btn usp__referral-btn--copy" data-referral-copy-button hidden>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            {{ section.settings.referral_copy_label | default: "Copy free guide link" }}
+          </button>
+        </div>
+        <p class="usp__referral-status ty-offer__referral-status--success" data-referral-status aria-live="polite" hidden></p>
+        <p class="usp__referral-link-preview" data-referral-link-preview>{{ referral_url }}</p>
+      </div>
+
+    </div><!-- /usp__modal -->
+  </div><!-- /usp__backdrop -->
+</section>
+
+<style>
+  /* ── Page backdrop: full-screen dark popup feel ── */
+  .usp {
+    --usp-purple:      #6d28d9;
+    --usp-purple-mid:  #9333ea;
+    --usp-purple-dark: #3d1b9e;
+    --usp-purple-deep: #1a0060;
+    --usp-purple-bg:   #f5f3ff;
+    --usp-purple-border: #e9d5ff;
+    --usp-red:         #dc2626;
+    --usp-orange:      #ea580c;
+    --usp-text:        #1e1b4b;
+    --usp-muted:       #6b7280;
+    --usp-radius:      20px;
+    --usp-shadow:      0 20px 60px rgba(109,40,217,.25);
+
+    background: radial-gradient(ellipse at top, #2a0a6e 0%, #0f0030 60%, #000 100%);
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+    font-family: 'Poppins', inherit;
+  }
+
+  .usp__backdrop {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  /* ── Modal card ── */
+  .usp__modal {
+    width: 100%;
+    max-width: 580px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Flash Sale Banner ── */
+  .usp__flash-banner {
+    background: linear-gradient(90deg, #b91c1c 0%, #dc2626 50%, #b91c1c 100%);
+    color: #fff;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    border-radius: 14px 14px 0 0;
+    animation: usp-pulse 2s ease-in-out infinite;
+  }
+  @keyframes usp-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .85; }
+  }
+
+  /* ── Header ── */
+  .usp__header {
+    background: #fff;
+    padding: 28px 28px 24px;
+    text-align: center;
+    border-radius: 0 0 0 0;
+    margin-top: -4px;
+  }
+  .usp__eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--usp-red);
+    margin: 0 0 10px;
+  }
+  .usp__headline {
+    font-size: clamp(22px, 4.5vw, 30px);
+    font-weight: 800;
+    color: var(--usp-text);
+    margin: 0 0 10px;
+    line-height: 1.2;
+    letter-spacing: -.02em;
+  }
+  .usp__subtext {
+    font-size: 14px;
+    color: var(--usp-muted);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── Offer Card ── */
+  .usp__offer-card {
+    background: linear-gradient(140deg, #3d1b9e 0%, #6d28d9 55%, #9333ea 100%);
+    border-radius: var(--usp-radius);
+    padding: 28px 24px;
+    box-shadow: var(--usp-shadow);
+    color: #fff;
+  }
+
+  /* Price block */
+  .usp__price-block {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid rgba(255,255,255,.15);
+  }
+  .usp__offer-tag {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 999px;
+    padding: 5px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .usp__price-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  /* Big gold price number with glow */
+  .usp__price-now {
+    font-size: clamp(72px, 16vw, 104px);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -.04em;
+    color: #fde047;
+    text-shadow:
+      0 0 24px rgba(253,224,71,.6),
+      0 0 48px rgba(253,224,71,.3),
+      0 4px 16px rgba(0,0,0,.4);
+    filter: drop-shadow(0 0 12px rgba(253,224,71,.45));
+  }
+  .usp__price-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .usp__price-was {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255,255,255,.55);
+  }
+  .usp__price-was s { text-decoration: line-through; }
+  /* Bright "You Save" badge */
+  .usp__price-save {
+    font-size: 13px;
+    font-weight: 800;
+    background: #fde047;
+    color: #1a0060;
+    padding: 5px 14px;
+    border-radius: 999px;
+    white-space: nowrap;
+    letter-spacing: .02em;
+    box-shadow: 0 2px 12px rgba(253,224,71,.45);
+  }
+  .usp__price-desc {
+    font-size: 14px;
+    opacity: .75;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Timer — hidden by default, shown by JS */
+  .usp__timer-wrap {
+    background: rgba(0,0,0,.35);
+    border-radius: 12px;
+    padding: 14px 12px 12px;
+    margin-bottom: 28px;
+    text-align: center;
+    border: 1.5px solid rgba(239,68,68,.5);
+    box-shadow:
+      0 0 0 1px rgba(239,68,68,.15),
+      0 0 16px rgba(239,68,68,.2);
+    position: relative;
+  }
+  .usp__timer-wrap[hidden] { display: none !important; }
+  /* Pulsing red "LIVE" dot before urgency text */
+  .usp__timer-urgency {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #f87171;
+    margin: 0 0 10px;
+  }
+  .usp__timer-urgency::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: #ef4444;
+    border-radius: 50%;
+    box-shadow: 0 0 5px #ef4444;
+    animation: usp-live 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes usp-live {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: .4; transform: scale(.7); }
+  }
+  .usp__timer-simple {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .usp__timer-simple-num {
+    font-size: 34px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .08em;
+    line-height: 1;
+    color: #f87171;
+    text-shadow: 0 0 10px rgba(239,68,68,.5);
+  }
+  .usp__timer-expired {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f87171;
+    margin: 12px 0 0;
+  }
+  .usp__timer-expired[hidden] { display: none !important; }
+  .usp__timer-note {
+    font-size: 12px;
+    opacity: .7;
+    margin: 8px 0 0;
+    line-height: 1.5;
+  }
+  .usp__timer-note[hidden] { display: none !important; }
+  /* Expired state */
+  .usp__timer-wrap.is-expired {
+    border-color: rgba(255,255,255,.15);
+    box-shadow: none;
+  }
+  .usp__timer-wrap.is-expired .usp__timer-box { opacity: .35; }
+  .usp__timer-wrap.is-expired .usp__timer-urgency { display: none; }
+
+  /* Scissors divider */
+  .usp__scissors {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 20px;
+    opacity: .4;
+  }
+  .usp__scissors-line {
+    flex: 1;
+    border-top: 2px dashed rgba(255,255,255,.7);
+  }
+  .usp__scissors-icon { flex-shrink: 0; }
+
+  /* CTA */
+  .usp__cta-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .usp__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: var(--usp-purple-dark);
+    font-size: clamp(14px, 2.5vw, 17px);
+    font-weight: 800;
+    padding: 18px 32px;
+    border-radius: 14px;
+    text-decoration: none;
+    width: 100%;
+    box-shadow: 0 6px 24px rgba(0,0,0,.2);
+    transition: transform .12s, box-shadow .12s;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .usp__cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 32px rgba(0,0,0,.28);
+  }
+  .usp__cta-note {
+    font-size: 12px;
+    opacity: .7;
+    margin: 0;
+    text-align: center;
+  }
+
+  /* ── Checklist Card ── */
+  .usp__checklist-card {
+    background: #fff;
+    border-radius: var(--usp-radius);
+    padding: 26px 24px 28px;
+    border: 1.5px solid var(--usp-purple-border);
+    box-shadow: 0 4px 24px rgba(109,40,217,.08);
+  }
+  .usp__checklist-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--usp-purple);
+    margin: 0 0 16px;
+  }
+  .usp__checklist {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .usp__checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--usp-text);
+    line-height: 1.45;
+    padding: 10px 14px;
+    background: var(--usp-purple-bg);
+    border-radius: 10px;
+  }
+  .usp__check { flex-shrink: 0; font-size: 16px; }
+  .usp__tagline {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--usp-purple-dark);
+    text-align: center;
+    margin: 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--usp-purple-border);
+    line-height: 1.5;
+  }
+
+  /* ── Referral Card ── */
+  .usp__referral-card {
+    background: #fff;
+    border-radius: var(--usp-radius);
+    padding: 26px 24px 28px;
+    border: 1.5px solid var(--usp-purple-border);
+    box-shadow: 0 4px 24px rgba(109,40,217,.08);
+  }
+  .usp__referral-badge {
+    display: inline-block;
+    background: var(--usp-purple-bg);
+    color: var(--usp-purple);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .usp__referral-headline {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--usp-purple);
+    margin: 0 0 6px;
+  }
+  .usp__referral-tagline {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--usp-text);
+    margin: 0 0 8px;
+  }
+  .usp__referral-desc {
+    font-size: 14px;
+    color: var(--usp-muted);
+    margin: 0 0 16px;
+    line-height: 1.6;
+  }
+  .usp__referral-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .usp__referral-btn {
+    appearance: none;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--usp-purple), var(--usp-purple-mid));
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 13px 20px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    transition: opacity .15s, transform .15s;
+  }
+  .usp__referral-btn:hover { transform: translateY(-1px); opacity: .92; }
+  .usp__referral-btn[disabled] { opacity: .5; cursor: wait; }
+  .usp__referral-btn--copy {
+    background: var(--usp-purple-bg);
+    color: var(--usp-purple);
+  }
+  .usp__referral-btn[hidden] { display: none !important; }
+  /* Status classes set by thank-you-offer.js */
+  .usp__referral-status[hidden] { display: none !important; }
+  .usp__referral-status {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 10px;
+    line-height: 1.5;
+  }
+  .ty-offer__referral-status--success { color: #15803d; }
+  .ty-offer__referral-status--error   { color: #b91c1c; }
+  .usp__referral-link-preview {
+    font-size: 12px;
+    color: var(--usp-muted);
+    margin: 0;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  /* ── App Download ── */
+  .usp__app-download {
+    background: #fff;
+    border-radius: var(--usp-radius);
+    padding: 26px 24px 28px;
+    border: 1.5px solid var(--usp-purple-border);
+    box-shadow: 0 4px 24px rgba(109,40,217,.08);
+    text-align: center;
+  }
+  .usp__app-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--usp-purple);
+    margin: 0 0 8px;
+  }
+  .usp__app-desc {
+    font-size: 14px;
+    color: var(--usp-muted);
+    margin: 0 0 20px;
+    line-height: 1.55;
+  }
+  .usp__app-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .usp__app-icon, .usp__app-icon-placeholder {
+    width: 80px; height: 80px;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .usp__app-icon { display: block; }
+  .usp__app-icon-placeholder {
+    background: var(--usp-purple);
+    color: #fff;
+    font-size: 14px; font-weight: 600;
+    text-decoration: none;
+  }
+  .usp__qr { width: 140px; height: 140px; display: block; border-radius: 8px; }
+  .usp__qr-placeholder {
+    width: 140px; height: 140px; background: #eee; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--usp-muted);
+  }
+  .usp__offline-note {
+    font-size: 13px;
+    color: var(--usp-muted);
+    margin: 16px 0 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .usp { padding: 20px 12px 48px; }
+    .usp__timer-box { width: 42px; height: 38px; }
+    .usp__timer-num { font-size: 18px; }
+    .usp__timer-colon { font-size: 16px; margin-bottom: 10px; }
+    .usp__cta { font-size: 14px; padding: 16px 20px; }
+    .usp__referral-actions { flex-direction: column; }
+    .usp__referral-btn { justify-content: center; }
+  }
+</style>
+
+<script src="{{ 'thank-you-offer.js' | asset_url }}" defer="defer"></script>
+
+
+{% schema %}
+{
+  "name": "Thank You Offer",
+  "settings": [
+    { "type": "header", "content": "Flash Banner" },
+    { "type": "text", "id": "flash_label",    "label": "Flash sale label",  "default": "24-HOUR FLASH SALE" },
+    { "type": "header", "content": "Header" },
+    { "type": "text",     "id": "eyebrow",  "label": "Eyebrow",    "default": "Special One-Time Offer" },
+    { "type": "text",     "id": "headline", "label": "Headline",   "default": "Wait! Upgrade to the Full Kit & Save 50%" },
+    { "type": "textarea", "id": "subtext",  "label": "Sub-text",   "default": "This exclusive deal disappears when you leave this page." },
+    { "type": "header", "content": "Offer / Price" },
+    { "type": "text", "id": "offer_label", "label": "Offer tag",    "default": "Exclusive Offer:" },
+    { "type": "text", "id": "price_now",   "label": "Price (now)",  "default": "75" },
+    { "type": "text", "id": "price_was",   "label": "Price (was)",  "default": "150" },
+    { "type": "text", "id": "price_save",  "label": "Amount saved", "default": "75" },
+    { "type": "text", "id": "price_desc",  "label": "Price description (Regular price added automatically)", "default": "Get the Korea Guide Kit for just $75" },
+    { "type": "header", "content": "Countdown Timer" },
+    { "type": "text", "id": "countdown_end_time", "label": "Legacy countdown end (Unix timestamp)", "info": "Optional fallback only. Live timer prefers the coupon summary API response." },
+    { "type": "header", "content": "CTA Button" },
+    { "type": "text", "id": "cta_label", "label": "Button text", "default": "YES! I Need the Korea Guide Kit NOW!" },
+    { "type": "url",  "id": "cta_link",  "label": "Button URL" },
+    { "type": "text", "id": "cta_note",  "label": "Note below button", "default": "Your 50% discount is already applied at checkout." },
+    { "type": "header", "content": "Checklist" },
+    { "type": "text", "id": "checklist_title", "label": "Section title", "default": "Everything You Get:" },
+    { "type": "text", "id": "item1", "label": "Item 1", "default": "Guidebook" },
+    { "type": "text", "id": "item2", "label": "Item 2", "default": "Video Guide" },
+    { "type": "text", "id": "item3", "label": "Item 3", "default": "1000+ Local Foodie Hidden Gems List" },
+    { "type": "text", "id": "item4", "label": "Item 4", "default": "Offline Viewing" },
+    { "type": "text", "id": "item5", "label": "Item 5", "default": "Up to 3 devices" },
+    { "type": "text", "id": "item6", "label": "Item 6", "default": "6 months of access" },
+    { "type": "text", "id": "item7", "label": "Item 7", "default": "15% Off Experience Tour Coupon" },
+    { "type": "text", "id": "item8", "label": "Item 8", "default": "1000+ handpicked spots — all in one map" },
+    { "type": "text", "id": "tagline", "label": "Bottom tagline", "default": "Don't travel blindly. Get the full stress-free package." },
+    { "type": "header", "content": "App Download" },
+    { "type": "checkbox", "id": "show_app_download", "label": "Show app download section", "default": true },
+    { "type": "text", "id": "app_title", "label": "Title", "default": "Available on the Purple Shoes App" },
+    { "type": "text", "id": "app_desc", "label": "Description", "default": "Download the app to access your content offline." },
+    { "type": "image_picker", "id": "app_icon", "label": "App icon" },
+    { "type": "url", "id": "app_download_url", "label": "App download URL", "info": "Used for icon link and auto-generated QR." },
+    { "type": "image_picker", "id": "qr_image", "label": "QR code image", "info": "Leave blank to auto-generate from App download URL." },
+    { "type": "text", "id": "offline_note", "label": "Offline note", "default": "Offline Viewing Supported" },
+    { "type": "header", "content": "Referral Section" },
+    { "type": "text",     "id": "referral_headline",  "label": "Referral headline",  "default": "Get an Extra $10 OFF Coupon" },
+    { "type": "text",     "id": "referral_tagline",   "label": "Referral tagline",   "default": "Share & Save." },
+    { "type": "textarea", "id": "referral_desc",      "label": "Referral description","default": "Share the free Korea travel info page with a friend. Tap the button once to activate your extra $10 coupon." },
+    { "type": "url",      "id": "referral_link",      "label": "Squeeze page link override" },
+    { "type": "text",     "id": "referral_link_label","label": "Share button label", "default": "Share & Unlock $10 Coupon" },
+    { "type": "text",     "id": "referral_copy_label","label": "Copy button label",  "default": "Copy free guide link" },
+    { "type": "header",   "content": "Legacy / unused (kept for compatibility)" },
+    { "type": "text",     "id": "logo_text",     "label": "Logo text" },
+    { "type": "text",     "id": "coupon_headline","label": "Coupon headline" },
+    { "type": "text",     "id": "coupon_title",   "label": "Coupon title" },
+    { "type": "text",     "id": "coupon_subtitle","label": "Coupon subtitle" },
+    { "type": "textarea", "id": "bonus_desc",     "label": "Bonus description" }
+  ],
+  "presets": [
+    { "name": "Thank You Offer" }
+  ]
+}
+{% endschema %}

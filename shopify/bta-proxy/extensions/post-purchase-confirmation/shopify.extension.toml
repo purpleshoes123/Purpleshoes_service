@@ -1,0 +1,14 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "Purple Shoes Purchase Confirmation"
+handle = "purple-shoes-purchase-confirmation"
+uid = "b1903082-557c-f6c6-92fc-3647287ec2571d5bca79"
+type = "ui_extension"
+
+[[extensions.targeting]]
+target = "purchase.thank-you.block.render"
+module = "./src/ThankYou.tsx"
+
+[extensions.capabilities]
+network_access = true

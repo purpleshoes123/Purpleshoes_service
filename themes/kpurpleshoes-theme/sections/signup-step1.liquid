@@ -1,0 +1,270 @@
+{% comment %}
+  Signup Step 1 of 2 — Name + Email, minimal friction.
+  Single column, max 560px. Saves to sessionStorage and redirects to Step 2.
+  Placeholder palette: primary blue, accent darker blue, background light gray.
+  Components: SignupHeader, ProgressBar, SignupFormStep1, PrimaryCTA, TermsNotice
+{% endcomment %}
+
+<section class="s1-wrap" data-signup-step1>
+  <div class="s1-container">
+
+    <header class="s1-header">
+      <p class="s1-logo">{{ section.settings.logo_text | default: 'Logo / Purple Shoes' }}</p>
+      <h1 class="s1-headline">{{ section.settings.headline | default: "Prepare for your Korea trip with instant, free information." }}</h1>
+      <div class="s1-progress-wrap">
+        <div class="s1-progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+          <span class="s1-progress-fill" style="width: 50%;"></span>
+        </div>
+        <p class="s1-progress-label">Sign Up: Step 1 of 2</p>
+      </div>
+    </header>
+
+    <form id="SignupStep1Form" class="s1-form" novalidate>
+      <div class="s1-field">
+        <label class="s1-label" for="s1-name">Name</label>
+        <input type="text" id="s1-name" name="name" class="s1-input" autocomplete="name" placeholder="Name" aria-required="true">
+        <span class="s1-error" data-error="name" role="alert"></span>
+      </div>
+      <div class="s1-field">
+        <label class="s1-label" for="s1-email">E-mail</label>
+        <input type="email" id="s1-email" name="email" class="s1-input" autocomplete="email" placeholder="E-mail" aria-required="true">
+        <span class="s1-error" data-error="email" role="alert"></span>
+      </div>
+
+      <div class="s1-cta-wrap">
+        <button type="submit" class="s1-cta" id="s1-continue">
+          {{ section.settings.cta_label | default: 'Continue' }}
+        </button>
+      </div>
+
+      <p class="s1-terms" id="s1-terms-text">
+        By providing your information, you agree to the collection and use of your data in accordance with our
+        <a href="{{ section.settings.terms_url | default: '/policies/terms-of-service' }}">Terms of Service</a>
+        and
+        <a href="{{ section.settings.privacy_url | default: '/policies/privacy-policy' }}">Privacy Policy</a>.
+      </p>
+    </form>
+
+  </div>
+</section>
+
+<style>
+  .s1-wrap {
+    --s1-primary: #2563eb;
+    --s1-accent: #1e40af;
+    --s1-bg: #f1f5f9;
+    --s1-card: #ffffff;
+    --s1-text: #1e293b;
+    --s1-muted: #64748b;
+    --s1-border: #e2e8f0;
+    --s1-radius: 12px;
+    --s1-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    background: var(--s1-bg);
+    padding: 48px 20px 64px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .s1-container {
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .s1-header { text-align: center; margin-bottom: 32px; }
+  .s1-logo {
+    font-size: 14px;
+    color: var(--s1-muted);
+    margin: 0 0 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .s1-headline {
+    font-size: clamp(22px, 3.2vw, 28px);
+    font-weight: 700;
+    color: var(--s1-text);
+    margin: 0 0 24px;
+    line-height: 1.35;
+  }
+
+  .s1-progress-wrap { margin-top: 20px; }
+  .s1-progress-bar {
+    height: 8px;
+    background: var(--s1-border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .s1-progress-fill {
+    display: block;
+    height: 100%;
+    background: var(--s1-primary);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  .s1-progress-label {
+    font-size: 14px;
+    color: var(--s1-muted);
+    margin: 8px 0 0;
+  }
+
+  .s1-form {
+    background: var(--s1-card);
+    border-radius: var(--s1-radius);
+    padding: 36px 32px;
+    box-shadow: var(--s1-shadow);
+  }
+  .s1-field { margin-bottom: 22px; }
+  .s1-field:last-of-type { margin-bottom: 28px; }
+
+  .s1-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--s1-text);
+    margin-bottom: 8px;
+  }
+  .s1-input {
+    width: 100%;
+    padding: 16px 18px;
+    font-size: 17px;
+    border: 1px solid var(--s1-border);
+    border-radius: 10px;
+    background: var(--s1-card);
+    color: var(--s1-text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .s1-input:focus {
+    outline: none;
+    border-color: var(--s1-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+  .s1-input::placeholder { color: var(--s1-muted); opacity: 0.8; }
+  .s1-input.is-error { border-color: #dc2626; }
+  .s1-error {
+    display: block;
+    font-size: 13px;
+    color: #dc2626;
+    margin-top: 6px;
+  }
+  .s1-error:empty { display: none; }
+
+  .s1-cta-wrap { margin-bottom: 24px; }
+  .s1-cta {
+    display: block;
+    width: 100%;
+    padding: 18px 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--s1-primary);
+    border: none;
+    border-radius: var(--s1-radius);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .s1-cta:hover { background: var(--s1-accent); transform: translateY(-1px); }
+  .s1-cta:focus { outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4); }
+  .s1-cta:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+  .s1-terms {
+    font-size: 13px;
+    color: var(--s1-muted);
+    line-height: 1.55;
+    margin: 0;
+  }
+  .s1-terms a { color: var(--s1-primary); text-decoration: underline; }
+  .s1-terms a:hover { opacity: 0.9; }
+</style>
+
+<script>
+(function() {
+  var SECTION_KEY = 'signup_step1_data';
+  var section = document.querySelector('[data-signup-step1]');
+  if (!section) return;
+
+  var form = document.getElementById('SignupStep1Form');
+  var nameInput = document.getElementById('s1-name');
+  var emailInput = document.getElementById('s1-email');
+  var continueBtn = document.getElementById('s1-continue');
+  var step2Url = '{{ section.settings.step2_url | default: "/pages/signup-step2" }}';
+
+  // Prefill email from URL (e.g. from ps-hero Sign in)
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var emailFromUrl = params.get('email');
+    if (emailFromUrl && emailInput) {
+      emailInput.value = emailFromUrl;
+    }
+  } catch (e) {}
+
+  function showError(field, message) {
+    var el = section.querySelector('[data-error="' + field + '"]');
+    if (el) el.textContent = message || '';
+    var input = field === 'name' ? nameInput : emailInput;
+    if (input) input.classList.toggle('is-error', !!message);
+  }
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || '').trim());
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    showError('name', '');
+    showError('email', '');
+
+    var name = (nameInput && nameInput.value) ? nameInput.value.trim() : '';
+    var email = (emailInput && emailInput.value) ? emailInput.value.trim() : '';
+
+    var valid = true;
+    if (!name) {
+      showError('name', 'Please enter your name.');
+      valid = false;
+    }
+    if (!email) {
+      showError('email', 'Please enter your email.');
+      valid = false;
+    } else if (!validateEmail(email)) {
+      showError('email', 'Please enter a valid email address.');
+      valid = false;
+    }
+
+    if (!valid) return;
+
+    if (continueBtn) {
+      continueBtn.disabled = true;
+      continueBtn.textContent = 'Continuing…';
+    }
+
+    try {
+      sessionStorage.setItem(SECTION_KEY, JSON.stringify({ name: name, email: email }));
+    } catch (err) {}
+
+    var sep = step2Url.indexOf('?') !== -1 ? '&' : '?';
+    var url = step2Url + sep + 'email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(name);
+    window.location.href = url;
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Signup Step 1",
+  "settings": [
+    { "type": "text", "id": "logo_text", "label": "Logo text", "default": "Logo / Purple Shoes" },
+    { "type": "text", "id": "headline", "label": "Headline", "default": "Prepare for your Korea trip with instant, free information." },
+    { "type": "text", "id": "cta_label", "label": "CTA button label", "default": "Continue" },
+    { "type": "url", "id": "step2_url", "label": "Step 2 page URL", "info": "Where to send the user after Continue (e.g. /pages/signup-step2)" },
+    { "type": "url", "id": "terms_url", "label": "Terms of Service URL" },
+    { "type": "url", "id": "privacy_url", "label": "Privacy Policy URL" }
+  ],
+  "presets": [
+    { "name": "Signup Step 1" }
+  ]
+}
+{% endschema %}

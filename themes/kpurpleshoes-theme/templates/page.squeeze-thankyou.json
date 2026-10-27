@@ -1,0 +1,31 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "no-header",
+  "sections": {
+    "squeeze_thankyou": {
+      "type": "ps-squeeze-thankyou",
+      "settings": {
+        "hero_title": "You're in.",
+        "hero_sub": "Your free Starter Kit is ready.",
+        "hero_note": "Start with the essentials for your first Korea trip,\nand explore at your own pace.",
+        "upsell_headline": "You've got the basics —\nnow let's do it right.",
+        "kit_label": "Inside the full Korea Guide Kit:",
+        "kit_items": "Full guidebook|Video guide|1,500+ handpicked spots on our map|Routes ready to use — no searching needed",
+        "cta_note": "Start planning your Korea trip with Purple Shoes.",
+        "cta_label": "Open My Free Starter Kit",
+        "cta_url": "https://kpurpleshoes.com/pages/starter-kit-viewer"
+      }
+    }
+  },
+  "order": [
+    "squeeze_thankyou"
+  ]
+}

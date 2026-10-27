@@ -1,0 +1,31 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "no-header",
+  "sections": {
+    "guide_viewer": {
+      "type": "pdf-viewer-page",
+      "settings": {
+        "logo_width": 160,
+        "back_url": "/pages/마이페이지",
+        "back_label": "Back to My Page",
+        "toggle_collapse_label": "Hide list",
+        "toggle_expand_label": "Show list",
+        "sidebar_aria_label": "Guide categories",
+        "empty_state_text": "Select a category from the left panel.",
+        "empty_guides_text": "You do not have an active guide yet. Purchase a guide to open the viewer.",
+        "loading_text": "Loading your guide...",
+        "padding_top": 24,
+        "padding_bottom": 40
+      }
+    }
+  },
+  "order": ["guide_viewer"]
+}

@@ -1,0 +1,171 @@
+<section class="tg-container tg-main tg-faq-wrap tg-faq-wrap--yellow" style="--tg-faq-bg: {{ section.settings.bg_color | default: '#ffd400' }};">
+  <section id="tg-faq" class="tg-section tg-faq-section" aria-label="FAQ">
+    <header class="tg-section__head">
+      <h2 class="tg-h2">{{ section.settings.heading }}</h2>
+      {% if section.settings.subheading != blank %}
+        <p class="tg-muted">{{ section.settings.subheading | newline_to_br }}</p>
+      {% endif %}
+    </header>
+
+    <div class="tg-faq" data-accordion>
+      {% for block in section.blocks %}
+        <details class="tg-faq__item" {{ block.shopify_attributes }}>
+          <summary class="tg-faq__q">
+            <span class="tg-faq__q-text">{{ block.settings.q }}</span>
+            <span class="tg-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="tg-faq__a">
+            {{ block.settings.a | newline_to_br }}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+
+<style>
+  .tg-faq-wrap.tg-container{
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  .tg-main{ padding: 0 0 84px; }
+
+  .tg-faq-wrap--yellow{
+    background: var(--tg-faq-bg, #ffd400);
+    padding: 124px 24px 124px;
+  }
+  @media (min-width: 750px){
+    .tg-faq-wrap--yellow{ padding-left: 40px; padding-right: 40px; }
+  }
+  @media (min-width: 990px){
+    .tg-faq-wrap--yellow{ padding-left: 48px; padding-right: 48px; }
+  }
+
+  .tg-faq-wrap--yellow .tg-faq-section{
+    width: min(1120px, calc(100% - 40px));
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (max-width: 560px){
+    .tg-faq-wrap--yellow .tg-faq-section{ width: min(1120px, calc(100% - 28px)); }
+  }
+
+  .tg-section{ margin-top: 0; }
+  .tg-faq-wrap--yellow .tg-section__head{ margin-bottom: 24px; }
+  .tg-faq-wrap--yellow .tg-h2{
+    margin: 0 0 8px;
+    font-size: clamp(22px, 2.2vw, 28px);
+    font-weight: 800;
+    color: #111;
+  }
+  .tg-faq-wrap--yellow .tg-muted{ margin: 0; color: rgba(0,0,0,.65); }
+
+  .tg-faq{
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,.06);
+  }
+  .tg-faq__item{ border-top: 1px solid rgba(0,0,0,.08); }
+  .tg-faq__item:first-child{ border-top: 0; }
+
+  .tg-faq__q{
+    list-style: none;
+    cursor: pointer;
+    padding: 20px 22px;
+    font-weight: bold;
+    font-size: clamp(18px, 2vw, 22px);
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    transition: background 0.2s;
+  }
+  .tg-faq__q:hover{ background: rgba(0,0,0,.02); }
+  .tg-faq__q-text{ flex: 1; }
+  .tg-faq__q::-webkit-details-marker{ display: none; }
+
+  .tg-faq__icon{
+    width: 10px; height: 10px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    color: #111;
+  }
+  details[open] .tg-faq__icon{ transform: rotate(-135deg); }
+
+  .tg-faq__a{
+    padding: 0 22px 20px;
+    color: #444;
+    line-height: 1.72;
+    font-size: clamp(16px, 1.6vw, 18px);
+  }
+  .tg-faq__a p,
+  .tg-faq__a ul{
+    margin: 0 0 12px;
+  }
+  .tg-faq__a p:last-child,
+  .tg-faq__a ul:last-child{
+    margin-bottom: 0;
+  }
+  .tg-faq__a ul{
+    padding-left: 1.2em;
+  }
+</style>
+
+<script>
+  (function(){
+    var root = document.currentScript && document.currentScript.parentElement;
+    var acc = document.querySelector('[data-accordion]');
+    if(!acc) return;
+
+    var items = Array.prototype.slice.call(acc.querySelectorAll('details'));
+    items.forEach(function(d){
+      d.addEventListener('toggle', function(){
+        if(!d.open) return;
+        items.forEach(function(other){
+          if(other !== d) other.removeAttribute('open');
+        });
+      });
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Tour Plans - FAQ",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "FAQ" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "Frequently asked questions. Click to expand each answer." },
+    { "type": "color", "id": "bg_color", "label": "Background color", "default": "#ffd400" }
+  ],
+  "blocks": [
+    {
+      "type": "qa",
+      "name": "Q&A",
+      "settings": [
+        { "type": "text", "id": "q", "label": "Question", "default": "When will I receive it after purchase?" },
+        { "type": "richtext", "id": "a", "label": "Answer", "default": "<p>Example: It can be delivered immediately after payment as a download or link. Update this to match your operating model.</p>" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Tour Plans - FAQ",
+      "blocks": [
+        { "type": "qa", "settings": { "q": "When will I receive it after purchase?" } },
+        { "type": "qa", "settings": { "q": "What is the refund policy?", "a": "<p>Example: Because this is digital content, refunds may be limited after download or access. Link this copy to your detailed refund policy page.</p>" } },
+        { "type": "qa", "settings": { "q": "What language is the guide provided in?", "a": "<p>Example: The Guidebook and Video are provided in English, and the Korean Guide Kit includes Korean phrases and sentence templates.</p>" } },
+        { "type": "qa", "settings": { "q": "If my schedule changes, can the route be updated too?", "a": "<p>Example: You can support one revision within a limited scope, or state that revisions are not available, depending on your policy.</p>" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

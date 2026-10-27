@@ -1,0 +1,923 @@
+{% comment %}
+  Travel Product Section
+{% endcomment %}
+
+{%- liquid
+  assign featured = product.featured_image
+  assign images = product.images
+  assign travel_gallery = product.metafields.custom.travel_gallery.value
+  assign travel_descript = product.metafields.custom.travel_descript
+  assign public_gallery = section.blocks | where: 'type', 'gallery_image'
+  assign perks = section.blocks | where: 'type', 'perk'
+  assign tour_title = product.title | default: page.title | default: section.settings.section_title
+  assign tour_description = product.description
+  if request.page_type == 'page'
+    assign first_gallery_item = public_gallery | first
+    assign featured = first_gallery_item.settings.image
+    assign tour_description = page.content
+  endif
+  assign description_sections = tour_description | split: '<section'
+  capture desc
+    for description_section in description_sections
+      if forloop.first
+        echo description_section
+      else
+        assign opening_tag = description_section | split: '>' | first
+        if opening_tag contains '__what_youll_do_WHp3tV' and description_section contains '</section>'
+          assign legacy_highlights = description_section | split: '</section>' | first | append: '</section>'
+          echo description_section | remove_first: legacy_highlights
+        else
+          echo '<section'
+          echo description_section
+        endif
+      endif
+    endfor
+  endcapture
+-%}
+
+<section
+  {% if request.page_type == 'page' %}id="member-purchase" tabindex="-1"{% endif %}
+  class="travel-product section-{{ section.id }}-padding"
+  data-travel-root
+  {% unless customer %}data-travel-public-only{% endunless %}
+  data-section="{{ section.id }}"
+  data-product-title="{{ product.title | default: page.title | escape }}"
+  {% if section.settings.inline_selector_mode %}
+    data-travel-inline-ui="true"
+  {% endif %}
+>
+  {{ 'travel-booking.css' | asset_url | stylesheet_tag }}
+  {{ 'flatpickr.min.css' | asset_url | stylesheet_tag }}
+
+  {%- style -%}
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+      padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+    }
+
+    @media screen and (min-width: 750px) {
+      .section-{{ section.id }}-padding {
+        padding-top: {{ section.settings.padding_top }}px;
+        padding-bottom: {{ section.settings.padding_bottom }}px;
+      }
+    }
+
+    .travel-product__booking-card {
+      background: {{ section.settings.card_bg | default: '#ffffff' }};
+      border-radius: {{ section.settings.radius | default: 16 }}px;
+    }
+
+    .travel-product__login-card { padding: 32px 24px; }
+    .travel-product__login-card p { margin: 0 0 20px; line-height: 1.6; }
+    .travel-product__login-card .travel-product__cta { display: flex; justify-content: center; text-align: center; text-decoration: none; }
+
+    .travel-product__booking-price-now,
+    .travel-product__field-value {
+      color: {{ section.settings.text_color | default: '#111111' }};
+    }
+
+    .travel-product__booking-price-suffix,
+    .travel-product__booking-compare,
+    .travel-product__booking-note,
+    .travel-product__field-label,
+    .travel-product__perk-desc {
+      color: {{ section.settings.muted_color | default: '#6b6b6b' }};
+    }
+
+    .travel-product__cta {
+      background: {{ section.settings.btn_bg | default: '#1677ff' }};
+      color: {{ section.settings.btn_text | default: '#ffffff' }};
+    }
+
+    .travel-product__gallery-main,
+    .travel-product__thumb {
+      border-radius: {{ section.settings.radius | default: 16 }}px;
+    }
+
+    .travel-product__section-title {
+      margin: 0 0 18px;
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 800;
+      line-height: 1.2;
+      color: {{ section.settings.text_color | default: '#111111' }};
+    }
+
+    @media screen and (max-width: 749px) {
+      .travel-product__section-title {
+        margin-bottom: 14px;
+      }
+    }
+  {%- endstyle -%}
+
+  {% if customer %}
+  {% render 'travel-booking-config', section: section %}
+
+  <script>
+    window.__customerId = {{ customer.id | json }};
+    window.__TRAVEL_CUSTOMER__ = {
+      isLoggedIn: {% if customer %}true{% else %}false{% endif %},
+      id: window.__customerId,
+      name: {% if customer %}{{ customer.name | json }}{% else %}null{% endif %},
+      email: {% if customer %}{{ customer.email | json }}{% else %}null{% endif %}
+    };
+  </script>
+  {% endif %}
+
+  <div class="page-width">
+    {% assign travel_section_title = tour_title %}
+    {% if travel_section_title != blank %}
+      <h1 class="travel-product__section-title">{{ travel_section_title | escape }}</h1>
+    {% endif %}
+    <div class="travel-product__layout">
+      <div class="travel-product__media" aria-label="Product gallery">
+        <div class="travel-product__gallery-main">
+          {% if featured %}
+            {{ featured | image_url: width: 1600 | image_tag: loading: 'eager', class: 'travel-product__gallery-main-img', alt: tour_title }}
+            <button class="travel-product__gallery-nav travel-product__gallery-nav--prev" type="button" data-gallery-prev aria-label="Previous image">‹</button>
+            <button class="travel-product__gallery-nav travel-product__gallery-nav--next" type="button" data-gallery-next aria-label="Next image">›</button>
+          {% else %}
+            <div class="travel-product__gallery-placeholder"></div>
+          {% endif %}
+        </div>
+
+        {% if images.size > 1 or travel_gallery != blank or public_gallery.size > 1 %}
+          <div class="travel-product__thumbs-slider" data-thumb-slider>
+            <button class="travel-product__thumbs-nav travel-product__thumbs-nav--prev" type="button" data-thumb-prev aria-label="Previous thumbnails" style="display:none">‹</button>
+            <div class="travel-product__gallery-thumbs">
+              <div class="travel-product__gallery-thumbs-track" role="list" aria-label="Gallery thumbnails">
+                {% for block in public_gallery %}
+                  {% if block.settings.image != blank %}
+                    <button class="travel-product__thumb {% if forloop.first %}is-active{% endif %}"
+                            type="button" data-src="{{ block.settings.image | image_url: width: 1600 }}"
+                            aria-label="{{ 'public_intro.view_image' | t: number: forloop.index }}" {{ block.shopify_attributes }}>
+                      {{ block.settings.image | image_url: width: 320 | image_tag: loading: 'lazy', class: 'travel-product__thumb-img', alt: tour_title }}
+                    </button>
+                  {% endif %}
+                {% endfor %}
+                {% for img in images %}
+                  <button class="travel-product__thumb {% if forloop.first %}is-active{% endif %}"
+                          type="button"
+                          data-src="{{ img | image_url: width: 1600 }}"
+                          aria-label="View image {{ forloop.index }}">
+                    {{ img | image_url: width: 320 | image_tag: loading: 'lazy', class: 'travel-product__thumb-img', alt: product.title }}
+                  </button>
+                {% endfor %}
+                {% if travel_gallery != blank %}
+                  {% assign thumb_start_index = images.size %}
+                  {% for gallery_image in travel_gallery %}
+                    <button class="travel-product__thumb"
+                            type="button"
+                            data-src="{{ gallery_image | image_url: width: 1600 }}"
+                            aria-label="View image {{ thumb_start_index | plus: forloop.index }}">
+                      {{ gallery_image | image_url: width: 320 | image_tag: loading: 'lazy', class: 'travel-product__thumb-img', alt: gallery_image.alt | default: product.title }}
+                    </button>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+            <button class="travel-product__thumbs-nav travel-product__thumbs-nav--next" type="button" data-thumb-next aria-label="Next thumbnails" style="display:none">›</button>
+          </div>
+        {% endif %}
+
+        {% if travel_descript != blank %}
+          <div class="travel-product__media-desc">
+            {% if travel_descript.type == 'rich_text_field' %}
+              {{ travel_descript | metafield_tag }}
+            {% else %}
+              {{ travel_descript.value | default: travel_descript | escape | newline_to_br }}
+            {% endif %}
+          </div>
+        {% elsif request.page_type == 'page' and section.settings.note != blank %}
+          <div class="travel-product__media-desc">{{ section.settings.note | escape | newline_to_br }}</div>
+        {% endif %}
+      </div>
+
+      <aside class="travel-product__booking" aria-label="Booking panel">
+        {% if customer %}
+        <div class="travel-product__booking-card">
+
+          <div class="travel-product__booking-fields">
+            <label class="travel-product__field">
+              <span class="travel-product__field-label">{{ section.settings.people_label | default: 'Travelers' }}</span>
+              <div class="travel-product__field-input" data-travel-input="people">
+                <span class="travel-product__field-value" data-travel-traveler-summary>Select travelers</span>
+              </div>
+              <div class="travel-product__inline-steppers" data-travel-inline-booking>
+                <div class="travel-product__inline-stepper-row">
+                  <div class="travel-product__inline-stepper-label">{{ section.settings.traveler_label_adult | default: 'Adult' }}</div>
+                  <div class="travel-product__stepper">
+                    <button class="travel-product__stepper-btn" data-travel-inline-stepper="adult-minus" type="button" aria-label="Decrease adult">
+                      <span aria-hidden="true">−</span>
+                    </button>
+                    <span class="travel-product__stepper-count" data-travel-inline-count="adult">0</span>
+                    <button class="travel-product__stepper-btn" data-travel-inline-stepper="adult-plus" type="button" aria-label="Increase adult">
+                      <span aria-hidden="true">+</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="travel-product__inline-stepper-row">
+                  <div class="travel-product__inline-stepper-label">{{ section.settings.traveler_label_teen | default: 'Teen' }}</div>
+                  <div class="travel-product__stepper">
+                    <button class="travel-product__stepper-btn" data-travel-inline-stepper="teenOrChild-minus" type="button" aria-label="Decrease teen">
+                      <span aria-hidden="true">−</span>
+                    </button>
+                    <span class="travel-product__stepper-count" data-travel-inline-count="teenOrChild">0</span>
+                    <button class="travel-product__stepper-btn" data-travel-inline-stepper="teenOrChild-plus" type="button" aria-label="Increase teen">
+                      <span aria-hidden="true">+</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="travel-product__inline-stepper-row">
+                  <div class="travel-product__inline-stepper-label">{{ section.settings.traveler_label_infant | default: 'Infant' }}</div>
+                  <div class="travel-product__stepper">
+                    <button class="travel-product__stepper-btn" data-travel-inline-stepper="infant-minus" type="button" aria-label="Decrease infant">
+                      <span aria-hidden="true">−</span>
+                    </button>
+                    <span class="travel-product__stepper-count" data-travel-inline-count="infant">0</span>
+                    <button class="travel-product__stepper-btn" data-travel-inline-stepper="infant-plus" type="button" aria-label="Increase infant">
+                      <span aria-hidden="true">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            <label class="travel-product__field">
+              <span class="travel-product__field-label">{{ section.settings.date_label | default: 'Select date' }}</span>
+              <div class="travel-product__field-input" data-travel-input="date">
+                <span class="travel-product__field-value" data-travel-date-summary>Select date</span>
+              </div>
+              <div class="travel-product__inline-calendar-wrap">
+                <div class="travel-product__inline-calendar" data-travel-inline-calendar></div>
+                <div data-calendar-empty hidden role="status" aria-live="polite">
+                  <p>{{ 'public_intro.calendar_empty' | t }}</p>
+                </div>
+              </div>
+            </label>
+
+            <div class="travel-product__status" data-travel-status role="status" aria-live="polite"></div>
+
+            <div class="travel-product__availability-message" data-travel-availability-message style="display: none;" aria-hidden="true" role="status" aria-live="polite">
+              <button class="travel-product__availability-retry" data-travel-availability-retry type="button" style="display: none;" aria-hidden="true">Retry</button>
+            </div>
+
+            <div class="travel-product__flow-status" data-travel-flow-status style="display: none;" aria-hidden="true" role="status" aria-live="polite">
+              <button class="travel-product__flow-retry" data-travel-flow-retry type="button" style="display: none;" aria-hidden="true">Retry</button>
+            </div>
+
+            <button class="travel-product__cta travel-product__cta--check" type="button" data-travel-check-availability disabled>
+              {{ section.settings.cta_check_label | default: 'Check availability' }}
+            </button>
+
+          </div>
+
+          {% if perks.size > 0 %}
+            <div class="travel-product__perks" aria-label="Perks">
+              {% for block in perks %}
+                <div class="travel-product__perk" {{ block.shopify_attributes }}>
+                  <span class="travel-product__perk-dot" aria-hidden="true"></span>
+                  <div class="travel-product__perk-text">
+                    <div class="travel-product__perk-title">{{ block.settings.title }}</div>
+                    {% if block.settings.desc != blank %}
+                      <div class="travel-product__perk-desc">{{ block.settings.desc }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        {% else %}
+          {% assign booking_return_path = request.path | append: '#member-purchase' | url_encode %}
+          <div class="travel-product__booking-card travel-product__login-card">
+            <p>{{ 'public_intro.signin_hint' | t }}</p>
+            <a class="travel-product__cta" href="/customer_authentication/login?return_to={{ booking_return_path }}">{{ 'public_intro.signin' | t }}</a>
+          </div>
+        {% endif %}
+      </aside>
+    </div>
+
+    {% if customer %}
+    <section class="travel-product__booking-summary" data-travel-booking-summary hidden aria-live="polite">
+      <div class="travel-product__booking-summary-heading">
+        <div>
+          <p class="travel-product__booking-summary-kicker">Booking summary</p>
+          <p class="travel-product__booking-summary-selection" data-travel-summary-selection></p>
+        </div>
+        <p class="travel-product__booking-summary-availability">Available <span aria-hidden="true">✓</span></p>
+      </div>
+      <div class="travel-product__booking-summary-grid">
+        <section class="travel-product__booking-summary-column">
+          <div class="travel-product__booking-summary-column-heading">
+            <h4>Price details</h4>
+            <span>per person</span>
+          </div>
+          <div class="travel-product__booking-summary-price-lines" data-travel-summary-price-lines></div>
+          <div class="travel-product__booking-summary-subtotal">
+            <span>Subtotal</span>
+            <strong data-travel-summary-subtotal>$0.00</strong>
+          </div>
+        </section>
+        <section class="travel-product__booking-summary-column">
+          <div class="travel-product__booking-summary-column-heading"><h4>Discounts &amp; credits</h4></div>
+          <div class="travel-product__booking-summary-discount" data-travel-summary-tour15-wrapper hidden>
+            <label class="travel-product__summary-checkbox" for="travel-summary-tour15-{{ section.id }}">
+              <input id="travel-summary-tour15-{{ section.id }}" type="checkbox" data-travel-summary-discount="tour15">
+              <span><strong>Korea Guide Kit customer discount</strong><small>Save 15% automatically</small></span>
+            </label>
+            <strong data-travel-summary-tour15-amount>-$0.00</strong>
+          </div>
+          <div class="travel-product__booking-summary-discount travel-product__booking-summary-discount--with-link">
+            <label class="travel-product__summary-checkbox" for="travel-summary-media-consent-{{ section.id }}">
+              <input id="travel-summary-media-consent-{{ section.id }}" type="checkbox" data-travel-summary-discount="media-consent">
+              <span><strong>I agree to photo and video participation</strong><small>Save 5% with media participation consent</small></span>
+            </label>
+            <strong data-travel-summary-media-amount>-$0.00</strong>
+            <button class="travel-product__summary-link" type="button" data-travel-media-consent-details>View media consent details</button>
+          </div>
+          <div class="travel-product__booking-summary-discount" data-travel-summary-extra10-wrapper hidden>
+            <label class="travel-product__summary-checkbox" for="travel-summary-extra10-{{ section.id }}">
+              <input id="travel-summary-extra10-{{ section.id }}" type="checkbox" data-travel-summary-discount="extra10">
+              <span><strong>Referral credit</strong><small>Use $10 credit</small></span>
+            </label>
+            <strong data-travel-summary-extra10-amount>-$0.00</strong>
+          </div>
+          <p class="travel-product__booking-summary-discount-note" data-travel-summary-discount-note></p>
+        </section>
+        <section class="travel-product__booking-summary-column travel-product__booking-summary-total">
+          <p>Total</p>
+          <strong data-travel-summary-total>$0.00 USD</strong>
+          <button class="travel-product__summary-cta" type="button" data-travel-summary-proceed>Continue to booking details</button>
+          <p data-travel-summary-refund></p>
+          <p>Secure checkout</p>
+        </section>
+      </div>
+    </section>
+    {% endif %}
+
+    <div data-travel-highlights-slot></div>
+
+    {% if desc != blank %}
+      <div class="travel-product__description">{{ desc }}</div>
+    {% endif %}
+
+    {% if customer %}
+    <div class="travel-product__debug" data-travel-debug style="display: none;" aria-hidden="true">
+      <div class="travel-product__debug-panel">
+        <h3>Debug Info</h3>
+        <div class="travel-product__debug-item">
+          <strong>Proxy Health:</strong> <span data-travel-debug-health>checking</span>
+        </div>
+        <div class="travel-product__debug-item">
+          <strong>Last API Call:</strong> <span data-travel-debug-last-call>-</span>
+        </div>
+        <div class="travel-product__debug-item">
+          <strong>Product ID:</strong> <span data-travel-debug-product-id>{{ product.id }}</span>
+        </div>
+        <div class="travel-product__debug-item">
+          <strong>Pool Key:</strong> <span data-travel-debug-pool-key>-</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if customer %}
+  <script src="{{ 'flatpickr.min.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'bta-theme-cart-checkout.js' | asset_url }}" defer="defer"></script>
+  {% endif %}
+  <script src="{{ 'travel-booking.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'travel-highlights-position.js' | asset_url }}" defer="defer"></script>
+
+  {% if customer %}
+  {% comment %} Traveler Modal (Phase 2) {% endcomment %}
+  <div class="travel-product__modal" data-travel-modal="travelers" role="dialog" aria-modal="true" aria-labelledby="travel-modal-title">
+    <div class="travel-product__modal-overlay"></div>
+    <div class="travel-product__modal-dialog">
+      <div class="travel-product__modal-header">
+        <h2 class="travel-product__modal-title" id="travel-modal-title">Select travelers</h2>
+        <button class="travel-product__modal-close" data-travel-modal-close type="button" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      
+      <div class="travel-product__modal-body">
+        {% comment %} Adult Row {% endcomment %}
+        <div class="travel-product__traveler-row">
+          <div class="travel-product__traveler-info">
+            <div class="travel-product__traveler-label">{{ section.settings.traveler_label_adult | default: 'Adult' }}</div>
+            <div class="travel-product__traveler-sublabel">Ages 12+</div>
+          </div>
+          <div class="travel-product__stepper">
+            <button class="travel-product__stepper-btn" data-travel-stepper="adult-minus" type="button" aria-label="Decrease">
+              <span aria-hidden="true">−</span>
+            </button>
+            <span class="travel-product__stepper-count" data-travel-stepper="adult-count">0</span>
+            <button class="travel-product__stepper-btn" data-travel-stepper="adult-plus" type="button" aria-label="Increase">
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
+        </div>
+
+        {% comment %} Teen/Child Row {% endcomment %}
+        <div class="travel-product__traveler-row">
+          <div class="travel-product__traveler-info">
+            <div class="travel-product__traveler-label">{{ section.settings.traveler_label_teen | default: 'Teen' }}</div>
+            <div class="travel-product__traveler-sublabel">Ages 3-11</div>
+          </div>
+          <div class="travel-product__stepper">
+            <button class="travel-product__stepper-btn" data-travel-stepper="teenOrChild-minus" type="button" aria-label="Decrease">
+              <span aria-hidden="true">−</span>
+            </button>
+            <span class="travel-product__stepper-count" data-travel-stepper="teenOrChild-count">0</span>
+            <button class="travel-product__stepper-btn" data-travel-stepper="teenOrChild-plus" type="button" aria-label="Increase">
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
+        </div>
+
+        {% comment %} Infant Row {% endcomment %}
+        <div class="travel-product__traveler-row">
+          <div class="travel-product__traveler-info">
+            <div class="travel-product__traveler-label">{{ section.settings.traveler_label_infant | default: 'Infant' }}</div>
+            <div class="travel-product__traveler-sublabel">Ages 0-2</div>
+          </div>
+          <div class="travel-product__stepper">
+            <button class="travel-product__stepper-btn" data-travel-stepper="infant-minus" type="button" aria-label="Decrease">
+              <span aria-hidden="true">−</span>
+            </button>
+            <span class="travel-product__stepper-count" data-travel-stepper="infant-count">0</span>
+            <button class="travel-product__stepper-btn" data-travel-stepper="infant-plus" type="button" aria-label="Increase">
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="travel-product__quote" data-travel-modal-quote></div>
+      </div>
+
+      <div class="travel-product__modal-footer">
+        <button class="travel-product__modal-apply" data-travel-modal-apply type="button" disabled>Apply</button>
+      </div>
+    </div>
+  </div>
+
+  {% comment %} Calendar Modal (Phase 3) {% endcomment %}
+  <div class="travel-product__modal" data-travel-modal="calendar" role="dialog" aria-modal="true" aria-labelledby="travel-calendar-modal-title">
+    <div class="travel-product__modal-overlay"></div>
+    <div class="travel-product__modal-dialog">
+      <div class="travel-product__modal-header">
+        <h2 class="travel-product__modal-title" id="travel-calendar-modal-title">Select date</h2>
+        <button class="travel-product__modal-close" data-travel-calendar-close type="button" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      
+      <div class="travel-product__modal-body">
+        <div class="travel-product__disabled-dates-status" data-disabled-dates-loading style="display: none;" aria-hidden="true">
+          <div class="travel-product__loading-spinner"></div>
+          <span class="travel-product__loading-text">Loading…</span>
+        </div>
+        <div class="travel-product__disabled-dates-status" data-disabled-dates-error style="display: none;" aria-hidden="true">
+          <div class="travel-product__error-message">Some dates could not be loaded.</div>
+          <button class="travel-product__retry-button" data-disabled-dates-retry type="button">Retry</button>
+        </div>
+        <div data-travel-calendar-container></div>
+      </div>
+    </div>
+  </div>
+
+  <dialog class="travel-product__consent-dialog" data-travel-media-consent-dialog aria-labelledby="travel-media-consent-title">
+    <div class="travel-product__consent-dialog-content">
+      <div class="travel-product__modal-header">
+        <h2 class="travel-product__modal-title" id="travel-media-consent-title">Media Participation Details</h2>
+        <button class="travel-product__modal-close" data-travel-media-consent-close type="button" aria-label="Close">×</button>
+      </div>
+      <p>Purple Shoes may take photos and videos during your tour. These photos and videos may be published on Purple Shoes channels, including YouTube, Instagram, and our website.<br><br>As a thank-you for participating, you’ll receive a 5% discount on your tour booking.<br><br>Participation is optional. You can still book and enjoy the tour without providing media consent; the 5% discount will simply not apply.</p>
+      <button class="travel-product__summary-cta" data-travel-media-consent-close type="button">Got it</button>
+    </div>
+  </dialog>
+
+  {% comment %} Checkout Extras Modal {% endcomment %}
+  <div class="travel-product__modal" data-travel-modal="checkout-extras" role="dialog" aria-modal="true" aria-labelledby="travel-checkout-extras-title">
+    <div class="travel-product__modal-overlay"></div>
+    <div class="travel-product__modal-dialog">
+      <div class="travel-product__modal-header travel-product__modal-header--checkout">
+        <div class="travel-product__checkout-modal-heading">
+          <h2 class="travel-product__modal-title" id="travel-checkout-extras-title">Complete your booking</h2>
+          <p class="travel-product__checkout-steps" data-travel-checkout-steps>
+            <span data-travel-checkout-step-indicator="details">1. Booking details</span>
+            <span aria-hidden="true">→</span>
+            <span data-travel-checkout-step-indicator="review">2. Review &amp; checkout</span>
+          </p>
+        </div>
+        <button class="travel-product__modal-close" data-travel-modal-close type="button" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <div class="travel-product__modal-body">
+        <section class="travel-product__checkout-review" data-travel-checkout-step="review" hidden aria-live="polite">
+          <h3>Review &amp; checkout</h3>
+          <dl class="travel-product__checkout-review-list">
+            <div><dt>Tour</dt><dd data-travel-review-tour></dd></div>
+            <div><dt>Date</dt><dd data-travel-review-date></dd></div>
+            <div><dt>Travelers</dt><dd data-travel-review-travelers></dd></div>
+            <div><dt>Pickup location</dt><dd data-travel-review-pickup></dd></div>
+            <div><dt>Contact</dt><dd data-travel-review-contact></dd></div>
+            <div><dt>Dietary requirements</dt><dd data-travel-review-dietary></dd></div>
+          </dl>
+          <div class="travel-product__checkout-review-pricing">
+            <h4>Price details</h4>
+            <div data-travel-review-price-lines></div>
+            <div data-travel-review-discount-lines></div>
+            <div class="travel-product__checkout-review-total"><span>Total due today</span><strong data-travel-review-total></strong></div>
+          </div>
+          <p class="travel-product__checkout-review-refund" data-travel-review-refund></p>
+        </section>
+        <div class="travel-product__field">
+          <label class="travel-product__field-label" for="travel-checkout-pickup-{{ section.id }}">Pickup location *</label>
+          <input
+            class="travel-product__text-input"
+            id="travel-checkout-pickup-{{ section.id }}"
+            data-travel-checkout-extra="pickup-location"
+            type="text"
+            placeholder="e.g. Hotel name and address"
+            autocomplete="off"
+          >
+          <div class="travel-product__field-error" data-travel-checkout-error="pickup-location" aria-live="polite"></div>
+        </div>
+
+        <div class="travel-product__field">
+          <label class="travel-product__field-label" for="travel-checkout-dietary-{{ section.id }}">Dietary restrictions</label>
+          <label class="travel-product__dietary-choice">
+            <input type="radio" name="travel-dietary-{{ section.id }}" value="none" data-travel-dietary-mode checked>
+            <span>No dietary restrictions</span>
+          </label>
+          <label class="travel-product__dietary-choice">
+            <input type="radio" name="travel-dietary-{{ section.id }}" value="details" data-travel-dietary-mode>
+            <span>I have dietary restrictions</span>
+          </label>
+          <div data-travel-dietary-details hidden>
+            <textarea
+              class="travel-product__textarea"
+              id="travel-checkout-dietary-{{ section.id }}"
+              data-travel-checkout-extra="dietary-restrictions"
+              rows="4"
+              placeholder="Please tell us about allergies, religious restrictions, or anything we should know."
+            ></textarea>
+          </div>
+          <div class="travel-product__field-error" data-travel-checkout-error="dietary-restrictions" aria-live="polite"></div>
+        </div>
+
+        <div class="travel-product__field">
+          <label class="travel-product__field-label" for="travel-checkout-reservation-name-{{ section.id }}">Reservation contact name *</label>
+          <input
+            class="travel-product__text-input"
+            id="travel-checkout-reservation-name-{{ section.id }}"
+            data-travel-checkout-extra="reservation-contact-name"
+            type="text"
+            placeholder="Full name"
+            autocomplete="name"
+          >
+          <div class="travel-product__field-error" data-travel-checkout-error="reservation-contact-name" aria-live="polite"></div>
+        </div>
+
+        <div class="travel-product__field">
+          <label class="travel-product__field-label" for="travel-checkout-reservation-phone-{{ section.id }}">Mobile phone number *</label>
+          <div class="travel-product__phone-wrap">
+            <select
+              class="travel-product__phone-dial"
+              data-travel-phone-dial-code
+              aria-label="Country dial code"
+            >
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+82">🇰🇷 +82</option>
+              <option value="+7">🇷🇺 +7</option>
+              <option value="+20">🇪🇬 +20</option>
+              <option value="+27">🇿🇦 +27</option>
+              <option value="+31">🇳🇱 +31</option>
+              <option value="+32">🇧🇪 +32</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+34">🇪🇸 +34</option>
+              <option value="+36">🇭🇺 +36</option>
+              <option value="+39">🇮🇹 +39</option>
+              <option value="+40">🇷🇴 +40</option>
+              <option value="+41">🇨🇭 +41</option>
+              <option value="+43">🇦🇹 +43</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+45">🇩🇰 +45</option>
+              <option value="+46">🇸🇪 +46</option>
+              <option value="+47">🇳🇴 +47</option>
+              <option value="+48">🇵🇱 +48</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+51">🇵🇪 +51</option>
+              <option value="+52">🇲🇽 +52</option>
+              <option value="+54">🇦🇷 +54</option>
+              <option value="+55">🇧🇷 +55</option>
+              <option value="+56">🇨🇱 +56</option>
+              <option value="+57">🇨🇴 +57</option>
+              <option value="+60">🇲🇾 +60</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="+62">🇮🇩 +62</option>
+              <option value="+63">🇵🇭 +63</option>
+              <option value="+64">🇳🇿 +64</option>
+              <option value="+65">🇸🇬 +65</option>
+              <option value="+66">🇹🇭 +66</option>
+              <option value="+81">🇯🇵 +81</option>
+              <option value="+84">🇻🇳 +84</option>
+              <option value="+86">🇨🇳 +86</option>
+              <option value="+90">🇹🇷 +90</option>
+              <option value="+91">🇮🇳 +91</option>
+              <option value="+92">🇵🇰 +92</option>
+              <option value="+94">🇱🇰 +94</option>
+              <option value="+95">🇲🇲 +95</option>
+              <option value="+351">🇵🇹 +351</option>
+              <option value="+352">🇱🇺 +352</option>
+              <option value="+358">🇫🇮 +358</option>
+              <option value="+380">🇺🇦 +380</option>
+              <option value="+420">🇨🇿 +420</option>
+              <option value="+852">🇭🇰 +852</option>
+              <option value="+853">🇲🇴 +853</option>
+              <option value="+855">🇰🇭 +855</option>
+              <option value="+856">🇱🇦 +856</option>
+              <option value="+886">🇹🇼 +886</option>
+              <option value="+966">🇸🇦 +966</option>
+              <option value="+971">🇦🇪 +971</option>
+              <option value="+972">🇮🇱 +972</option>
+              <option value="+977">🇳🇵 +977</option>
+            </select>
+            <input
+              class="travel-product__text-input travel-product__phone-number"
+              id="travel-checkout-reservation-phone-{{ section.id }}"
+              data-travel-checkout-extra="reservation-contact-phone"
+              type="text"
+              inputmode="numeric"
+              placeholder="Phone number"
+              autocomplete="tel-national"
+            >
+          </div>
+          <div class="travel-product__field-error" data-travel-checkout-error="reservation-contact-phone" aria-live="polite"></div>
+        </div>
+
+        <div class="travel-product__field travel-product__field--checkbox" data-travel-modal-discount data-travel-tour15-wrapper style="display: none;">
+          <label class="travel-product__checkbox" for="travel-checkout-tour15-{{ section.id }}">
+            <input
+              class="travel-product__checkbox-input"
+              id="travel-checkout-tour15-{{ section.id }}"
+              type="checkbox"
+              data-travel-checkout-extra="use-tour15"
+            >
+            <span class="travel-product__checkbox-label">Apply TOUR15 15% coupon</span>
+          </label>
+          <div class="travel-product__field-help" data-travel-tour15-note>Applied automatically when available.</div>
+        </div>
+
+        <div class="travel-product__field travel-product__field--checkbox" data-travel-modal-discount>
+          <label class="travel-product__checkbox" for="travel-checkout-media-consent-{{ section.id }}">
+            <input
+              class="travel-product__checkbox-input"
+              id="travel-checkout-media-consent-{{ section.id }}"
+              type="checkbox"
+              data-travel-checkout-extra="media-consent"
+            >
+            <span class="travel-product__checkbox-label">Consent to media recording/use (eligible for 5% discount)</span>
+          </label>
+        </div>
+
+        <div class="travel-product__field travel-product__field--checkbox" data-travel-modal-discount data-travel-extra10-wrapper>
+          <label class="travel-product__checkbox" for="travel-checkout-extra10-{{ section.id }}">
+            <input
+              class="travel-product__checkbox-input"
+              id="travel-checkout-extra10-{{ section.id }}"
+              type="checkbox"
+              data-travel-checkout-extra="use-extra10"
+            >
+            <span class="travel-product__checkbox-label">Apply EXTRA10 ($10) coupon</span>
+          </label>
+          <div class="travel-product__field-help" data-travel-extra10-note>Available only if you have the shared coupon.</div>
+        </div>
+
+        <div class="travel-product__modal-note">Pickup location, dietary restrictions, reservation contact name, and international phone number are required. You may enter “None” for dietary restrictions.</div>
+      </div>
+
+      <div class="travel-product__modal-footer">
+        <button class="travel-product__modal-back" data-travel-modal-back type="button" hidden>Back</button>
+        <button class="travel-product__modal-apply" data-travel-modal-apply type="button" disabled>Review booking</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% schema %}
+{
+  "name": "Travel Product",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Adapter Settings"
+    },
+    {
+      "type": "text",
+      "id": "adapter_base_url",
+      "label": "Adapter Base URL",
+      "info": "Booking adapter base URL (e.g., /apps/travel). Leave empty for stub adapter."
+    },
+    {
+      "type": "header",
+      "content": "Booking Card Settings"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section title",
+      "default": "Experience Tour"
+    },
+    {
+      "type": "color",
+      "id": "card_bg",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted color",
+      "default": "#6b6b6b"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_compare",
+      "label": "Show compare-at price",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "price_suffix",
+      "label": "Price suffix text",
+      "default": "(per person)"
+    },
+    {
+      "type": "text",
+      "id": "note",
+      "label": "Note under price",
+      "default": "This is example UI. Connect the real booking logic later."
+    },
+    {
+      "type": "text",
+      "id": "people_label",
+      "label": "People label",
+      "default": "Travelers"
+    },
+    {
+      "type": "text",
+      "id": "date_label",
+      "label": "Date label",
+      "default": "Select date"
+    },
+    {
+      "type": "text",
+      "id": "cta_check_label",
+      "label": "CTA check label",
+      "default": "Check availability"
+    },
+    {
+      "type": "text",
+      "id": "cta_checkout_label",
+      "label": "CTA checkout label",
+      "default": "Proceed to checkout"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg",
+      "label": "Button background",
+      "default": "#1677ff"
+    },
+    {
+      "type": "color",
+      "id": "btn_text",
+      "label": "Button text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 28,
+      "step": 1,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Traveler Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "adult_min_required",
+      "label": "Require minimum 1 adult",
+      "default": true,
+      "info": "Phase 2: Enforce at least 1 adult in party"
+    },
+    {
+      "type": "text",
+      "id": "traveler_label_adult",
+      "label": "Adult label",
+      "default": "Adult"
+    },
+    {
+      "type": "text",
+      "id": "traveler_label_teen",
+      "label": "Teen label",
+      "default": "Teen"
+    },
+    {
+      "type": "text",
+      "id": "traveler_label_infant",
+      "label": "Infant label",
+      "default": "Infant"
+    },
+    {
+      "type": "checkbox",
+      "id": "inline_selector_mode",
+      "label": "Use inline traveler/date selectors",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Section Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 36
+    }
+  ],
+  "blocks": [
+    {
+      "type": "gallery_image",
+      "name": "Public gallery image",
+      "settings": [{ "type": "image_picker", "id": "image", "label": "Image" }]
+    },
+    {
+      "type": "perk",
+      "name": "Perk item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Free cancellation"
+        },
+        {
+          "type": "textarea",
+          "id": "desc",
+          "label": "Description",
+          "default": "Cancel up to 24 hours in advance for a full refund."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Travel Product",
+      "blocks": [
+        {
+          "type": "perk"
+        },
+        {
+          "type": "perk",
+          "settings": {
+            "title": "Reserve first, pay later",
+            "desc": "Example copy for payment after reservation confirmation."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

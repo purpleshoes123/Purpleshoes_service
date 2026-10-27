@@ -1,0 +1,248 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "tour_product_hero_booking_mNdHyL": {
+      "type": "tour-product-hero-booking",
+      "blocks": {
+        "perk_y9nrbF": {
+          "type": "perk",
+          "settings": {
+            "title": "Free cancellation",
+            "desc": "Cancel up to 24 hours in advance for a full refund."
+          }
+        },
+        "perk_WQhDRy": {
+          "type": "perk",
+          "settings": {
+            "title": "Reserve first, pay later",
+            "desc": "Example copy for payment after reservation confirmation."
+          }
+        }
+      },
+      "block_order": [
+        "perk_y9nrbF",
+        "perk_WQhDRy"
+      ],
+      "disabled": true,
+      "name": "Tour product hero + booking (UI)",
+      "settings": {
+        "bg": "#ffffff",
+        "card_bg": "#ffffff",
+        "text": "#111111",
+        "muted": "#6b6b6b",
+        "show_compare": true,
+        "price_suffix": "(per person)",
+        "note": "This is example UI. Connect the real booking logic later.",
+        "people_label": "Travelers",
+        "people_options": "Adult x 1, Adult x 2, Adult x 3, Adult x 4",
+        "date_label": "Select date",
+        "date_options": "Select date, 2026-01-03, 2026-01-04, 2026-01-05",
+        "cta_label": "Check availability",
+        "cta_link": "",
+        "radius": 16,
+        "btn_bg": "#1677ff",
+        "btn_text": "#ffffff"
+      }
+    },
+    "tour_what_youll_do_dwBrg3": {
+      "type": "tour-what-youll-do",
+      "blocks": {
+        "item_NecWqL": {
+          "type": "item",
+          "settings": {
+            "title": "Explore night market",
+            "desc": "Wander through the vibrant energy of the night market."
+          }
+        },
+        "item_dTGQ6c": {
+          "type": "item",
+          "settings": {
+            "title": "Taste local dishes",
+            "desc": "Enjoy a diverse selection of cuisine and beverages."
+          }
+        },
+        "item_7YyYmB": {
+          "type": "item",
+          "settings": {
+            "title": "Learn local tips",
+            "desc": "Get practical tips for moving around and ordering food."
+          }
+        },
+        "item_34c39g": {
+          "type": "item",
+          "settings": {
+            "title": "Leave with memories",
+            "desc": "Capture moments and take home a story to tell."
+          }
+        }
+      },
+      "block_order": [
+        "item_NecWqL",
+        "item_dTGQ6c",
+        "item_7YyYmB",
+        "item_34c39g"
+      ],
+      "disabled": true,
+      "name": "What you'll do",
+      "settings": {
+        "heading": "What you’ll do",
+        "footer_note": "This experience is hosted in English. (Example copy)",
+        "aside_title": "Quick info",
+        "aside_desc": "You can place a summary of duration, language, difficulty, inclusions, and more here.",
+        "text": "#111111",
+        "muted": "#6b6b6b"
+      }
+    },
+    "tour_itinerary_map_z9LYjy": {
+      "type": "tour-itinerary-map",
+      "blocks": {
+        "step_M7BLyY": {
+          "type": "step",
+          "settings": {
+            "title": "Meet-up / Departure",
+            "duration": "15 min",
+            "desc": "Meet your guide at the meeting point.",
+            "note": "Additional note (optional)"
+          }
+        },
+        "step_AHRfPm": {
+          "type": "step",
+          "settings": {
+            "title": "Main highlights",
+            "duration": "75 min",
+            "desc": "Proceed through the main experience route.",
+            "note": "Additional note (optional)"
+          }
+        },
+        "step_WnCbCe": {
+          "type": "step",
+          "settings": {
+            "title": "Free time / Wrap-up",
+            "duration": "30 min",
+            "desc": "Free time after recommendations and wrap-up.",
+            "note": "Additional note (optional)"
+          }
+        }
+      },
+      "block_order": [
+        "step_M7BLyY",
+        "step_AHRfPm",
+        "step_WnCbCe"
+      ],
+      "disabled": true,
+      "name": "Itinerary + Map",
+      "settings": {
+        "heading": "Itinerary",
+        "map_embed": "",
+        "map_caption": "Reference map for the main route (example)",
+        "muted": "#6b6b6b"
+      }
+    },
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "vendor": {
+          "type": "text",
+          "settings": {
+            "text": "{{ product.vendor }}",
+            "text_style": "uppercase"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button",
+            "swatch_shape": "circle"
+          }
+        },
+        "quantity_selector": {
+          "type": "quantity_selector",
+          "settings": {}
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": true,
+            "show_gift_card_recipient": true
+          }
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "share": {
+          "type": "share",
+          "settings": {
+            "share_label": "Share"
+          }
+        }
+      },
+      "block_order": [
+        "vendor",
+        "title",
+        "price",
+        "variant_picker",
+        "quantity_selector",
+        "buy_buttons",
+        "description",
+        "share"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "color_scheme": "scheme-1",
+        "media_size": "large",
+        "constrain_to_viewport": true,
+        "media_fit": "contain",
+        "gallery_layout": "stacked",
+        "mobile_thumbnails": "hide",
+        "media_position": "left",
+        "image_zoom": "lightbox",
+        "hide_variants": true,
+        "enable_video_looping": false,
+        "padding_top": 36,
+        "padding_bottom": 12
+      }
+    },
+    "related-products": {
+      "type": "related-products",
+      "settings": {
+        "heading": "You may also like",
+        "heading_size": "h2",
+        "products_to_show": 4,
+        "columns_desktop": 4,
+        "columns_mobile": "2",
+        "color_scheme": "scheme-1",
+        "image_ratio": "square",
+        "image_shape": "default",
+        "show_secondary_image": true,
+        "show_vendor": false,
+        "show_rating": false,
+        "padding_top": 36,
+        "padding_bottom": 28
+      }
+    }
+  },
+  "order": [
+    "tour_product_hero_booking_mNdHyL",
+    "tour_what_youll_do_dwBrg3",
+    "tour_itinerary_map_z9LYjy",
+    "main",
+    "related-products"
+  ]
+}

@@ -1,0 +1,47 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "theme",
+  "sections": {
+    "korea_guide_thank_you": {
+      "type": "korea-guide-thank-you",
+      "settings": {
+        "logo_text": "Purple Shoes",
+        "headline": "Your Korea Guide Kit Is Ready",
+        "subheadline": "Everything you need for your Korea trip is now ready to explore.",
+        "notice_text": "Access your Korea Guide Kit anytime through the Purple Shoes App & Web.",
+        "instruction_text": "Open it on the web below\nor scan the QR code to access it in the app.",
+        "app_download_url": "https://kpurpleshoes.com/",
+        "offline_note": "* Offline Viewing Supported",
+        "show_guide_viewer_cta": true,
+        "guide_viewer_cta_label": "Open My Korea Guide Kit",
+        "guide_viewer_url": "/pages/pdfviewer",
+        "show_review_cta": false,
+        "review_cta_label": "Leave a Quick Review ➤",
+        "review_cta_url": "/account/orders",
+        "preview_label": "",
+        "tour_upsell_title": "Special Gift Unlocked!",
+        "tour_upsell_subtitle": "15% OFF Experience Tour Coupon",
+        "coupon_value": "15% OFF",
+        "coupon_valid_for": "Valid for Experience Tours",
+        "tour_cta_label": "Book a Tour & Save 15%",
+        "tour_cta_url": "https://kpurpleshoes.com/collections/experience-tour",
+        "show_referral_section": true,
+        "referral_title": "Get an Extra $10 OFF Coupon",
+        "referral_desc": "Share & Save! Share this link with a friend. Your coupon unlocks when they click it.",
+        "referral_link": "",
+        "copy_button_label": "Copy Link"
+      }
+    }
+  },
+  "order": [
+    "korea_guide_thank_you"
+  ]
+}

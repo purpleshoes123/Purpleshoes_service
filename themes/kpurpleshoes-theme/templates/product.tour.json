@@ -1,0 +1,300 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "hero": {
+      "type": "tour-product-hero-booking",
+      "blocks": {
+        "perk1": {
+          "type": "perk",
+          "settings": {
+            "title": "Free cancellation",
+            "desc": "Cancel up to 24 hours in advance for a full refund."
+          }
+        },
+        "perk2": {
+          "type": "perk",
+          "settings": {
+            "title": "Reserve first, pay later",
+            "desc": "Sample UI copy. Update this to match your policy."
+          }
+        }
+      },
+      "block_order": [
+        "perk1",
+        "perk2"
+      ],
+      "settings": {
+        "hero_style": "yellow_cream",
+        "hero_heading": "KOREA DISCOVERY TOUR",
+        "hero_sub": "Travel the local way.",
+        "hero_desc": "",
+        "bg": "#faf8f5",
+        "card_bg": "#ffffff",
+        "text": "#111111",
+        "muted": "#6b6b6b",
+        "show_compare": true,
+        "price_suffix": "(per person)",
+        "note": "",
+        "people_label": "Travelers",
+        "people_options": "Adult x 1, Adult x 2, Adult x 3, Adult x 4",
+        "date_label": "Select date",
+        "date_options": "Select date, 2026-01-03, 2026-01-04, 2026-01-05",
+        "cta_label": "BOOK NOW",
+        "cta_link": "",
+        "radius": 16,
+        "btn_bg": "#e85d3c",
+        "btn_text": "#ffffff"
+      }
+    },
+    "trip_summary": {
+      "type": "tour-trip-summary",
+      "blocks": {
+        "c1": { "type": "card", "settings": { "icon_text": "📅", "value": "8 Days", "label": "Duration" } },
+        "c2": { "type": "card", "settings": { "icon_text": "📍", "value": "3 Cities", "label": "Destinations" } },
+        "c3": { "type": "card", "settings": { "icon_text": "👤", "value": "1 Person", "label": "Min. group" } },
+        "c4": { "type": "card", "settings": { "icon_text": "🛏", "value": "1 Night", "label": "Accommodation" } },
+        "c5": { "type": "card", "settings": { "icon_text": "🍽", "value": "2 Meals", "label": "Included" } },
+        "c6": { "type": "card", "settings": { "icon_text": "📷", "value": "4 Sightseeing", "label": "Activities" } }
+      },
+      "block_order": ["c1", "c2", "c3", "c4", "c5", "c6"],
+      "settings": { "heading": "Trip Summary" }
+    },
+    "what": {
+      "type": "tour-what-youll-do",
+      "blocks": {
+        "i1": {
+          "type": "item",
+          "settings": {
+            "title": "Explore the market",
+            "desc": "Wander through the vibrant energy of the market."
+          }
+        },
+        "i2": {
+          "type": "item",
+          "settings": {
+            "title": "Taste signature bites",
+            "desc": "Try curated local foods and drinks."
+          }
+        },
+        "i3": {
+          "type": "item",
+          "settings": {
+            "title": "Learn local stories",
+            "desc": "Hear the stories behind each spot."
+          }
+        },
+        "i4": {
+          "type": "item",
+          "settings": {
+            "title": "Leave with memories",
+            "desc": "Capture photos and moments to remember."
+          }
+        }
+      },
+      "block_order": [
+        "i1",
+        "i2",
+        "i3",
+        "i4"
+      ],
+      "settings": {
+        "heading": "What you’ll do",
+        "footer_note": "This experience is hosted in English. (Sample copy)",
+        "aside_title": "Quick info",
+        "aside_desc": "Add a summary here for duration, language, difficulty, inclusions, and more.",
+        "text": "#111111",
+        "muted": "#6b6b6b"
+      }
+    },
+    "itinerary": {
+      "type": "tour-itinerary-map",
+      "settings": {
+        "heading": "Itinerary",
+        "map_embed": "",
+        "map_caption": "Reference map for the main route (sample)",
+        "bg_style": "cream",
+        "cta_label": "BOOK NOW",
+        "cta_link": "",
+        "muted": "#6b6b6b"
+      },
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "title": "Meet-up / Departure",
+            "duration": "15 min",
+            "desc": "Join the group at the meeting point.",
+            "note": ""
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "title": "Main experience",
+            "duration": "75 min",
+            "desc": "Follow the core route for the main experience.",
+            "note": ""
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "title": "Wrap-up",
+            "duration": "30 min",
+            "desc": "Finish after recommendations for nearby spots.",
+            "note": ""
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "tour_info_yellow": {
+      "type": "tour-info-yellow",
+      "settings": {
+        "heading_included": "What's Included",
+        "body_included": "",
+        "heading_about": "About Us",
+        "body_about": "",
+        "heading_guide": "Our Guide",
+        "body_guide": "",
+        "heading_contact": "Contact Us",
+        "body_contact": ""
+      }
+    },
+    "faq": {
+      "type": "tour-faq",
+      "blocks": {
+        "q1": {
+          "type": "qa",
+          "settings": {
+            "q": "What is the cancellation policy?",
+            "a": "Example: Free cancellation is available up to 24 hours before the experience starts."
+          }
+        },
+        "q2": {
+          "type": "qa",
+          "settings": {
+            "q": "What language is the tour offered in?",
+            "a": "Example: The experience is conducted in English. (Update to match your policy)"
+          }
+        }
+      },
+      "block_order": [
+        "q1",
+        "q2"
+      ],
+      "settings": {
+        "heading": "FAQ",
+        "bg_style": "orange",
+        "muted": "#6b6b6b"
+      }
+    },
+    "travel_reviews_list": {
+      "type": "travel-reviews",
+      "settings": {
+        "heading": "Reviews",
+        "review_limit": 10,
+        "proxy_prefix": "bta-booking",
+        "empty_text": "No reviews yet.",
+        "padding_top": 40,
+        "padding_bottom": 40
+      }
+    },
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "vendor": {
+          "type": "text",
+          "settings": {
+            "text": "{{ product.vendor }}",
+            "text_style": "uppercase"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button",
+            "swatch_shape": "circle"
+          }
+        },
+        "quantity_selector": {
+          "type": "quantity_selector",
+          "settings": {}
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": true,
+            "show_gift_card_recipient": true
+          }
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "share": {
+          "type": "share",
+          "settings": {
+            "share_label": "Share"
+          }
+        }
+      },
+      "block_order": [
+        "vendor",
+        "title",
+        "price",
+        "variant_picker",
+        "quantity_selector",
+        "buy_buttons",
+        "description",
+        "share"
+      ],
+      "settings": {
+        "hide_media": true,
+        "enable_sticky_info": true,
+        "color_scheme": "scheme-1",
+        "media_size": "large",
+        "constrain_to_viewport": true,
+        "media_fit": "contain",
+        "gallery_layout": "stacked",
+        "mobile_thumbnails": "hide",
+        "media_position": "left",
+        "image_zoom": "lightbox",
+        "hide_variants": true,
+        "enable_video_looping": false,
+        "padding_top": 80,
+        "padding_bottom": 100
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "trip_summary",
+    "what",
+    "itinerary",
+    "tour_info_yellow",
+    "faq",
+    "main",
+    "travel_reviews_list"
+  ]
+}

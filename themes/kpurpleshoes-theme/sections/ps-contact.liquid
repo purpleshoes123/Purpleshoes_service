@@ -1,0 +1,268 @@
+{{ 'section-contact-form.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div class="ps-contact color-{{ section.settings.color_scheme }} gradient" style="
+  --tg-hero-h: {{ section.settings.hero_height }}px;
+  --tg-overlay-top: {{ section.settings.overlay_top }};
+  --tg-overlay-mid: {{ section.settings.overlay_mid }};
+  --tg-overlay-bot: {{ section.settings.overlay_bottom }};
+  --tg-title-size: {{ section.settings.hero_title_size }}px;
+  --tg-title-weight: {{ section.settings.hero_title_weight }};
+  --tg-title-letter: {{ section.settings.hero_title_letter_spacing }}em;
+  --tg-title-transform: {{ section.settings.hero_title_transform }};
+  --tg-title-max: {{ section.settings.hero_title_max_width }}ch;
+  --tg-title-align: {{ section.settings.hero_title_align }};
+  --tg-title-pad-y: {{ section.settings.hero_title_pad_y }}px;
+  --tg-title-pad-x: {{ section.settings.hero_title_pad_x }}px;
+  --tg-title-bg-opacity: {{ section.settings.hero_title_bg_opacity }};
+  --tg-title-bg-radius: {{ section.settings.hero_title_bg_radius }}px;
+  --tg-title-font: {% if section.settings.hero_title_font == 'heading' %}var(--font-heading-family){% elsif section.settings.hero_title_font == 'body' %}var(--font-body-family){% else %}inherit{% endif %};
+">
+  {% if section.settings.show_hero %}
+    <section class="tg-hero" aria-label="Contact hero">
+      <div class="tg-hero__media{% if section.settings.hero_image == blank %} tg-hero__media--fallback{% endif %}">
+        {% if section.settings.hero_image != blank %}
+          <img
+            src="{{ section.settings.hero_image | image_url: width: 2400 }}"
+            alt="{{ section.settings.hero_image.alt | default: 'Contact hero image' | escape }}"
+            loading="lazy"
+          >
+        {% endif %}
+        <div class="tg-hero__overlay" aria-hidden="true"></div>
+        <div class="tg-hero__content page-width">
+          <h1 class="tg-title">
+            {% if section.settings.hero_title_bg_enable %}
+              <span class="tg-title__bg" aria-hidden="true"></span>
+            {% endif %}
+            <span class="tg-title__text">
+              {% if section.settings.hero_heading != blank %}
+                {{ section.settings.hero_heading | escape }}
+              {% elsif section.settings.hero_use_page_title %}
+                {{ page.title | escape }}
+              {% else %}
+                {{ section.settings.heading | default: 'Contact Us' | escape }}
+              {% endif %}
+            </span>
+          </h1>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="ps-contact__wrap section-{{ section.id }}-padding">
+    <div class="ps-contact__grid">
+      <div class="ps-contact__form">
+        {%- assign support_email = section.settings.email | default: 'support@kpurpleshoes.com' -%}
+        <p class="ps-contact-form__support">For help, email <a href="mailto:{{ support_email | escape }}">{{ support_email | escape }}</a>.</p>
+        {%- form 'contact', id: 'ContactForm', class: 'ps-contact-form' -%}
+          {%- if form.posted_successfully? -%}
+            <p class="ps-contact-form__success">{{ 'templates.contact.form.post_success' | t }}</p>
+          {%- elsif form.errors -%}
+            <p class="ps-contact-form__error">{{ 'templates.contact.form.error_heading' | t }}</p>
+          {%- endif -%}
+
+          <div class="ps-contact-form__row">
+            <div class="ps-contact-form__field">
+              <label for="ContactForm-first">{{ 'templates.contact.form.first_name' | t | default: 'First Name' }} <span>*</span></label>
+              <input type="text" id="ContactForm-first" name="contact[first_name]" class="ps-contact-form__input" required autocomplete="given-name">
+            </div>
+            <div class="ps-contact-form__field">
+              <label for="ContactForm-last">{{ 'templates.contact.form.last_name' | t | default: 'Last Name' }} <span>*</span></label>
+              <input type="text" id="ContactForm-last" name="contact[last_name]" class="ps-contact-form__input" required autocomplete="family-name">
+            </div>
+          </div>
+
+          <div class="ps-contact-form__field">
+            <label for="ContactForm-email">{{ 'templates.contact.form.email' | t }} <span>*</span></label>
+            <input type="email" id="ContactForm-email" name="contact[email]" class="ps-contact-form__input" required autocomplete="email" value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}">
+          </div>
+
+          <div class="ps-contact-form__field">
+            <label for="ContactForm-body">{{ 'templates.contact.form.comment' | t | default: 'Message' }} <span>*</span></label>
+            <textarea id="ContactForm-body" name="contact[body]" class="ps-contact-form__textarea" rows="6" required placeholder="{{ 'templates.contact.form.comment' | t }}">{{ form.body }}</textarea>
+          </div>
+
+          <button type="submit" class="ps-contact-form__btn">{{ 'templates.contact.form.send' | t | default: 'SEND' }}</button>
+        {%- endform -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.ps-contact { background: var(--ps-surface, #f5f6f8); padding: 0; }
+.ps-contact__wrap { max-width: 1120px; margin: 0 auto; padding: 72px 24px; }
+.ps-contact__grid { display: grid; gap: 40px; }
+.ps-contact__title { font-size: clamp(32px, 4vw, 48px); font-weight: 800; color: var(--ps-text, #111827); margin: 0 0 20px; letter-spacing: -0.02em; }
+.ps-contact__intro { font-size: 16px; color: var(--ps-muted, #6b7280); line-height: 1.6; margin: 0 0 28px; }
+.ps-contact__details { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+.ps-contact__link { color: var(--ps-purple, #5b2bd8); text-decoration: underline; font-weight: 600; font-size: 15px; }
+.ps-contact__link:hover { opacity: 0.85; }
+.ps-contact__address { font-size: 15px; color: var(--ps-text, #111827); line-height: 1.5; margin: 0; }
+.ps-contact__social { display: flex; gap: 16px; }
+.ps-contact__social a { color: var(--ps-text, #111827); opacity: 0.7; }
+.ps-contact__social a:hover { opacity: 1; color: var(--ps-purple, #5b2bd8); }
+.ps-contact__social .icon, .ps-contact__social svg { width: 24px; height: 24px; display: block; }
+.ps-contact-form__success { color: var(--ps-purple); margin-bottom: 16px; font-weight: 600; }
+.ps-contact-form__error { color: #dc2626; margin-bottom: 16px; }
+.ps-contact-form__support { margin: 0 0 18px; color: var(--ps-muted, #6b7280); font-size: 14px; }
+.ps-contact-form__support a { color: var(--ps-purple, #5b2bd8); font-weight: 700; }
+.ps-contact-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ps-contact-form__field { margin-bottom: 20px; }
+.ps-contact-form__field label { display: block; font-size: 13px; font-weight: 600; color: var(--ps-text, #111827); margin-bottom: 8px; }
+.ps-contact-form__field label span { color: var(--ps-purple); }
+.ps-contact-form__input, .ps-contact-form__textarea {
+  width: 100%; padding: 14px 16px; border: 1px solid rgba(17,24,39,0.2); border-radius: 12px;
+  font-size: 15px; background: #fff; font-family: inherit; transition: border-color 0.2s;
+}
+.ps-contact-form__input:focus, .ps-contact-form__textarea:focus {
+  outline: none; border-color: var(--ps-purple, #5b2bd8); box-shadow: 0 0 0 2px rgba(91,43,216,0.15);
+}
+.ps-contact-form__textarea { min-height: 140px; resize: vertical; }
+.ps-contact-form__btn {
+  margin-top: 24px; padding: 16px 40px; background: var(--ps-purple, #5b2bd8); color: #fff;
+  border: 0; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ps-contact-form__btn:hover { opacity: 0.92; }
+
+.ps-contact .tg-hero{ position: relative; }
+.ps-contact .tg-hero__media{
+  position: relative;
+  height: var(--tg-hero-h);
+  max-height: 399px;
+  overflow: hidden;
+  background: #0b0b0c;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.ps-contact .tg-hero__media img{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  opacity: .95;
+}
+.ps-contact .tg-hero__media--fallback{
+  background:
+    radial-gradient(900px 420px at 20% 30%, rgba(255,255,255,.10), transparent 60%),
+    radial-gradient(720px 380px at 70% 20%, rgba(255,255,255,.08), transparent 55%),
+    linear-gradient(135deg, #0b0b0c, #15121b);
+}
+.ps-contact .tg-hero__overlay{
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,var(--tg-overlay-top)) 0%,
+    rgba(0,0,0,var(--tg-overlay-mid)) 55%,
+    rgba(0,0,0,var(--tg-overlay-bot)) 100%
+  );
+}
+.ps-contact .tg-hero__content{
+  position: relative;
+  z-index: 3;
+  height: var(--tg-hero-h);
+  max-height: 399px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ps-contact .tg-title{
+  position: relative;
+  margin: 0;
+  max-width: var(--tg-title-max);
+  text-align: var(--tg-title-align);
+  font-family: var(--font-heading-family);
+  font-style: var(--font-heading-style);
+    font-size: clamp(38px, 4vw, 52px);
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.12;
+  color: #fff;
+}
+.ps-contact .tg-title__text{
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+}
+.ps-contact .tg-title__bg{
+  position: absolute;
+  z-index: 1;
+  left: calc(-1 * var(--tg-title-pad-x));
+  right: calc(-1 * var(--tg-title-pad-x));
+  top: calc(-1 * var(--tg-title-pad-y));
+  bottom: calc(-1 * var(--tg-title-pad-y));
+  border-radius: var(--tg-title-bg-radius);
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,var(--tg-title-bg-opacity)) 0%,
+    rgba(0,0,0,0) 92%
+  );
+}
+@media (max-width: 560px){
+  .ps-contact .tg-title{ max-width: 22ch; }
+}
+</style>
+
+{% schema %}
+{
+  "name": "PS Contact",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "header", "content": "Hero" },
+    { "type": "checkbox", "id": "show_hero", "label": "Show hero", "default": true },
+    { "type": "image_picker", "id": "hero_image", "label": "Hero image" },
+    { "type": "checkbox", "id": "hero_use_page_title", "label": "Use page title in hero", "default": true },
+    { "type": "text", "id": "hero_heading", "label": "Hero heading", "default": "Contact Us" },
+    { "type": "range", "id": "hero_height", "min": 260, "max": 400, "step": 2, "unit": "px", "label": "Hero height", "default": 360 },
+    { "type": "range", "id": "overlay_top", "label": "Hero overlay top darkness", "min": 0, "max": 1, "step": 0.1, "default": 0.8 },
+    { "type": "range", "id": "overlay_mid", "label": "Hero overlay mid darkness", "min": 0, "max": 1, "step": 0.1, "default": 0.6 },
+    { "type": "range", "id": "overlay_bottom", "label": "Hero overlay bottom darkness", "min": 0, "max": 1, "step": 0.1, "default": 0.3 },
+    { "type": "select", "id": "hero_title_font", "label": "Hero title font", "options": [{ "value": "inherit", "label": "Theme default" }, { "value": "heading", "label": "Theme heading font" }, { "value": "body", "label": "Theme body font" }], "default": "heading" },
+    { "type": "range", "id": "hero_title_size", "label": "Hero title max size", "min": 22, "max": 72, "step": 1, "default": 44 },
+    { "type": "range", "id": "hero_title_weight", "label": "Hero title weight", "min": 300, "max": 900, "step": 100, "default": 700 },
+    { "type": "range", "id": "hero_title_letter_spacing", "label": "Hero title letter spacing (em)", "min": 0, "max": 0.3, "step": 0.1, "default": 0 },
+    { "type": "select", "id": "hero_title_transform", "label": "Hero title transform", "options": [{ "value": "none", "label": "None" }, { "value": "uppercase", "label": "UPPERCASE" }, { "value": "capitalize", "label": "Capitalize" }], "default": "none" },
+    { "type": "select", "id": "hero_title_align", "label": "Hero title alignment", "options": [{ "value": "left", "label": "Left" }, { "value": "center", "label": "Center" }, { "value": "right", "label": "Right" }], "default": "center" },
+    { "type": "range", "id": "hero_title_max_width", "label": "Hero title max width (ch)", "min": 10, "max": 40, "step": 1, "default": 22 },
+    { "type": "checkbox", "id": "hero_title_bg_enable", "label": "Enable hero title background", "default": false },
+    { "type": "range", "id": "hero_title_bg_opacity", "label": "Hero title background opacity", "min": 0, "max": 1, "step": 0.2, "default": 0.6 },
+    { "type": "range", "id": "hero_title_bg_radius", "label": "Hero title background radius", "min": 0, "max": 40, "step": 1, "default": 12 },
+    { "type": "range", "id": "hero_title_pad_x", "label": "Hero title background horizontal padding", "min": 0, "max": 48, "step": 1, "default": 20 },
+    { "type": "range", "id": "hero_title_pad_y", "label": "Hero title background vertical padding", "min": 0, "max": 32, "step": 1, "default": 12 },
+
+    { "type": "header", "content": "Content" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Contact Us" },
+    { "type": "textarea", "id": "intro", "label": "Intro text", "default": "Do you have a question, need assistance or, you just want to say hello? You're in the right place :)" },
+    { "type": "text", "id": "email", "label": "Support email", "default": "support@kpurpleshoes.com" },
+    { "type": "text", "id": "phone", "label": "Phone" },
+    { "type": "textarea", "id": "address", "label": "Address" },
+    { "type": "url", "id": "instagram_link", "label": "Instagram URL" },
+    { "type": "url", "id": "youtube_link", "label": "YouTube URL" },
+    { "type": "url", "id": "facebook_link", "label": "Facebook URL" },
+    { "type": "color_scheme", "id": "color_scheme", "label": "Color scheme", "default": "scheme-1" },
+    { "type": "range", "id": "padding_top", "min": 32, "max": 120, "step": 4, "unit": "px", "label": "Padding top", "default": 72 },
+    { "type": "range", "id": "padding_bottom", "min": 32, "max": 120, "step": 4, "unit": "px", "label": "Padding bottom", "default": 80 }
+  ],
+  "presets": [{ "name": "PS Contact" }]
+}
+{% endschema %}

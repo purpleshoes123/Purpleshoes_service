@@ -1,0 +1,215 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-product-travel",
+      "settings": {
+        "adapter_base_url": "",
+        "section_title": "A Day Outside Seoul",
+        "card_bg": "#f1f2f9",
+        "text_color": "#111111",
+        "muted_color": "#6b6b6b",
+        "show_compare": true,
+        "price_suffix": "(per person)",
+        "note": "A relaxing spa in Icheon,\na royal-style Korean set lunch and BBQ dinner,\nand a smooth ride back through the Hangang River.",
+        "people_label": "Travelers",
+        "date_label": "Select date",
+        "cta_check_label": "Check availability",
+        "cta_checkout_label": "Proceed to checkout",
+        "btn_bg": "#1677ff",
+        "btn_text": "#ffffff",
+        "radius": 16,
+        "adult_min_required": true,
+        "traveler_label_adult": "Adult",
+        "traveler_label_teen": "Teen",
+        "traveler_label_infant": "Infant",
+        "inline_selector_mode": true,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "what_youll_do": {
+      "type": "what-youll-do",
+      "blocks": {
+        "private_service": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/1_6469ba6c-20a0-4084-948e-e773dba22d4c.png",
+            "title": "Private Door-to-Door Service",
+            "desc": "Travel in a private van with your own driver-guide,\nwith hotel pick-up and drop-off included.\n\nNo stress, no waiting —\njust a smooth, comfortable ride throughout the day."
+          }
+        },
+        "spa": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/20260616_170935_591a9f11-3220-48eb-92d7-90f19ea76d02.jpg",
+            "title": "Premium Korean Jjimjilbang & Spa",
+            "desc": "Experience an authentic Korean jjimjilbang with saunas, hot baths,\nindoor & outdoor pools, and traditional spa snacks.\n\nDeeply relaxing, uniquely Korean —\nsomething you'll remember long after the trip."
+          }
+        },
+        "hanjeongsik": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/b5fe092375c8f53ed1dcdab60a21f372.jpg",
+            "title": "Royal-Style Hanjeongsik",
+            "desc": "Enjoy a full-course traditional Korean meal\ninspired by royal court cuisine.\n\nBeautifully presented, rich in flavor —\noften a true highlight for first-time visitors."
+          }
+        },
+        "bbq": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/20260616_120659.jpg",
+            "title": "K-BBQ Dinner at a Local Favorite",
+            "desc": "End your day with real Korean BBQ\nat a spot loved by locals.\n\nA lively atmosphere, premium meats,\nand flavors you won't find in typical tourist restaurants."
+          }
+        },
+        "hangang": {
+          "type": "item",
+          "settings": {
+            "image": "shopify://shop_images/20260616_211133.jpg",
+            "title": "HanGang River Night Drive",
+            "desc": "A relaxed drive along the HanGang River\nas you return to the city.\n\nWatch Seoul's skyline and bridges light up —\na calm, perfect ending to your day."
+          }
+        }
+      },
+      "block_order": [
+        "private_service",
+        "spa",
+        "hanjeongsik",
+        "bbq",
+        "hangang"
+      ],
+      "settings": {
+        "heading": "Experience Highlights",
+        "note": "This experience is hosted in English.",
+        "heading_color": "#111111",
+        "title_color": "#1a1a1a",
+        "desc_color": "#6b7280",
+        "note_color": "#6b7280",
+        "thumb_bg": "#f3f4f6",
+        "padding_top": 28,
+        "padding_bottom": 28
+      }
+    },
+    "travel_reviews_list": {
+      "type": "travel-reviews",
+      "blocks": {
+        "review_K6MYxw": {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "name": "Mackenzie H.",
+            "country": "",
+            "date": "26.05.19.",
+            "variant": "-",
+            "quote": "Amazing experience! Highly recommend."
+          }
+        }
+      },
+      "block_order": [
+        "review_K6MYxw"
+      ],
+      "name": "Reviews",
+      "settings": {
+        "heading": "Reviews",
+        "review_limit": 10,
+        "proxy_prefix": "bta-booking",
+        "empty_text": "No reviews yet.",
+        "padding_top": 40,
+        "padding_bottom": 40
+      }
+    },
+    "tour_faq_m6UiNr": {
+      "type": "tour-faq",
+      "blocks": {
+        "qa_Lq4Ffg": {
+          "type": "qa",
+          "settings": {
+            "q": "How do I cancel or reschedule my tour?",
+            "a": "We understand that plans can change.\n\nCancellations and refunds follow the policy below:\n\n7 days before (by 9:00 AM KST): 100% refund\n6-3 days before (by 9:00 AM KST): 50% refund\n2 days before or later (after 9:00 AM KST): No refund\n\nRescheduling may be possible depending on availability and timing.\n\nIf rescheduling is not available, refund rules will apply."
+          }
+        },
+        "qa_8DijXr": {
+          "type": "qa",
+          "settings": {
+            "q": "What happens if I cancel late or don't show up?",
+            "a": "Cancellations made after 9:00 AM (KST), 2 days before the tour, or no-shows are non-refundable.\n\nThis includes:\n\nLate arrival\nNo contact with the guide\nIncorrect pickup information\nPersonal schedule changes (e.g., flight delays)"
+          }
+        },
+        "qa_ia7LGa": {
+          "type": "qa",
+          "settings": {
+            "q": "What if the tour is canceled by the company?",
+            "a": "Your safety always comes first.\n\nIf we must cancel due to weather, safety concerns, or other unavoidable situations,\nwe will provide a full refund or alternative arrangements, depending on the situation."
+          }
+        },
+        "qa_reschedule": {
+          "type": "qa",
+          "settings": {
+            "q": "Can I reschedule my tour?",
+            "a": "Rescheduling is possible in some cases, but it depends on:\n\nTime remaining before the tour\nAvailability\nLocal reservation conditions\n\nWe’ll do our best to help, but if rescheduling is not possible,\nstandard cancellation rules will apply."
+          }
+        },
+        "qa_pickup": {
+          "type": "qa",
+          "settings": {
+            "q": "I need to change my pickup location. What should I do?",
+            "a": "No problem! After your booking is confirmed,\nyour guide will contact you directly.\n\nYou can coordinate your pickup location with them.\n\nAlternatively, you can email us at support@kpurpleshoes.com."
+          }
+        },
+        "qa_PHTWQ6": {
+          "type": "qa",
+          "settings": {
+            "q": "What if I leave the tour early or skip part of it?",
+            "a": "No refunds are provided for:\n\nEarly departure\nSkipping parts of the itinerary.\n\nHowever, in some cases, the itinerary may be adjusted\ndue to weather, safety, or local conditions."
+          }
+        },
+        "qa_group_size": {
+          "type": "qa",
+          "settings": {
+            "q": "Can I change the number of people in my group?",
+            "a": "Yes, adjustments may be possible.\n\nDecreasing guests:\nPartial cancellation may apply based on our refund policy\n\nIncreasing guests:\nSubject to availability. Please contact us first\n\nContact: support@kpurpleshoes.com"
+          }
+        },
+        "qa_currency": {
+          "type": "qa",
+          "settings": {
+            "q": "What currency will I be charged in?",
+            "a": "All prices are listed and charged in USD.\n\nPlease check with your bank regarding exchange rates if you are using a non-USD card."
+          }
+        }
+      },
+      "block_order": [
+        "qa_Lq4Ffg",
+        "qa_8DijXr",
+        "qa_ia7LGa",
+        "qa_reschedule",
+        "qa_pickup",
+        "qa_PHTWQ6",
+        "qa_group_size",
+        "qa_currency"
+      ],
+      "name": "FAQ",
+      "settings": {
+        "heading": "FAQ",
+        "bg_style": "yellow",
+        "bg_color": "#f3f4f6",
+        "muted": "#6b6b6b"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "what_youll_do",
+    "travel_reviews_list",
+    "tour_faq_m6UiNr"
+  ]
+}

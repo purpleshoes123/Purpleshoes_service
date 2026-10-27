@@ -1,0 +1,192 @@
+{{ 'section-main-page.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .mp-wrap {
+    --primary: #6366f1;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #f1f5f9;
+    --radius: 16px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* mp-grid: purpleshoes-home.css */
+
+
+  .mp-main { padding: 24px; }
+  .ob-list { display: grid; gap: 20px; }
+  .ob-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px;
+  }
+  .ob-card__top { display: flex; justify-content: space-between; margin-bottom: 20px; }
+  .ob-orderNo a { font-weight: 800; text-decoration: none; color: var(--text); font-size: 18px; }
+  .ob-badge { background: #f0f1ff; color: var(--primary); padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+  .ob-price { font-weight: 800; font-size: 16px; }
+  
+  .ob-items { margin: 16px 0; border-top: 1px solid var(--border); padding-top: 16px; }
+  .ob-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; }
+  
+  .ob-card__footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .ob-detail-link {
+    text-decoration: none; color: var(--text); font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; gap: 4px; transition: color 0.2s;
+  }
+  .ob-detail-link:hover { color: var(--primary); }
+
+  .ob-review-box { margin-top: 20px; padding: 20px; background: #f8fafc; border-radius: 12px; }
+  .ob-textarea {
+    width: 100%; min-height: 80px; border-radius: 8px; border: 1px solid #e2e8f0;
+    padding: 12px; font-size: 14px; resize: none;
+  }
+  .ob-btn--primary {
+    background: var(--primary); color: #fff; border: none; padding: 12px 20px;
+    border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; width: 100%;
+  }
+
+  .mp-chipRow { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mp-chip {
+    appearance: none; border: 1px solid var(--border); background: #fff;
+    color: var(--muted); font-weight: 700; padding: 8px 16px; cursor: pointer;
+    font-size: 12px; border-radius: 999px; transition: all 0.2s;
+  }
+  .mp-chip.is-active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+{%- endstyle -%}
+
+<div class="mp-wrap section-{{ section.id }}-padding" data-mypage data-orders-bookings>
+  <div class="mp-grid">
+    
+    {% render 'mypage-sidebar', active: 'orders' %}
+
+    <main class="mp-main">
+      <header style="margin-bottom: 30px;">
+        <h2 class="mp-h2">Orders & Bookings</h2>
+        <p style="color: var(--muted); margin-top: 8px; font-size: 14px;">Manage your orders and share your experience.</p>
+        {% if customer and customer.orders_count > 0 %}
+          <div class="mp-chipRow" role="tablist" aria-label="Order filters" style="margin-top: 20px; display: flex; gap: 10px;">
+            <button class="mp-chip is-active" type="button" data-order-filter="all">All</button>
+            <button class="mp-chip" type="button" data-order-filter="unfulfilled">Preparing</button>
+            <button class="mp-chip" type="button" data-order-filter="fulfilled">Shipped</button>
+          </div>
+        {% endif %}
+      </header>
+
+      {% if customer %}
+        {% if customer.orders_count > 0 %}
+          {% paginate customer.orders by 12 %}
+            <div class="ob-list" data-orders-grid>
+              {% for order in customer.orders %}
+                {%- assign fin_raw = order.financial_status | downcase -%}
+                {%- assign ful_raw = order.fulfillment_status | default: '' | downcase -%}
+                {%- assign is_paid = false -%}{% if fin_raw == 'paid' %}{%- assign is_paid = true -%}{% endif %}
+                {%- assign first_product_id = order.line_items.first.product_id -%}
+                
+                <article class="ob-card" data-financial="{{ order.financial_status }}" data-fulfillment="{{ order.fulfillment_status | default: '' }}">
+                  <div class="ob-card__top">
+                    <div>
+                      <div class="ob-orderNo">
+                        <a href="{{ order.customer_url }}" style="text-decoration:none; color:inherit;">{{ order.name }}</a>
+                      </div>
+                      <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">{{ order.created_at | date: "%Y-%m-%d" }}</div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div class="ob-price">{{ order.total_price | money }}</div>
+                      <div style="margin-top: 8px;">
+                        <span class="ob-badge">{{ order.fulfillment_status_label }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="ob-items">
+                    {% for line_item in order.line_items limit: 3 %}
+                      <div class="ob-item">
+                        <span style="font-weight: 500; color: var(--text);">{{ line_item.title }}</span>
+                        <span style="font-weight: 700; color: var(--muted);">x{{ line_item.quantity }}</span>
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  <div class="ob-card__footer">
+                    <a href="{{ order.customer_url }}" class="ob-detail-link">
+                      View order details <span>→</span>
+                    </a>
+                    {% unless is_paid %}
+                      <span style="font-size: 12px; color: #ef4444; font-weight: 700;">Pending Payment</span>
+                    {% endunless %}
+                  </div>
+
+                  {% if is_paid %}
+                    <div class="ob-review-box">
+                      <form class="ob-review" data-review-form data-order-id="{{ order.id }}" data-product-id="{{ first_product_id }}">
+                        <label style="font-size: 13px; font-weight: 800; margin-bottom: 8px; display: block;">Review</label>
+                        <p class="ob-status" data-review-status aria-live="polite"></p>
+                        <textarea class="ob-textarea" data-review-body placeholder="How was your experience? (min 20 characters)" minlength="20" maxlength="2000"></textarea>
+                        <span class="ob-review-count" data-review-count style="font-size: 12px; color: var(--muted);">0 / 2000</span>
+                        <button class="ob-btn--primary" type="submit" data-review-submit>Submit Review</button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </article>
+              {% endfor %}
+            </div>
+
+            {% if paginate.pages > 1 %}
+              <nav class="ob-pagination" style="margin-top: 40px; text-align: center;">
+                {{ paginate | default_pagination }}
+              </nav>
+            {% endif %}
+          {% endpaginate %}
+        {% else %}
+          <div style="padding: 80px 20px; text-align: center; background: #fff; border-radius: 16px; border: 1px dashed #cbd5e1; color: var(--muted);">
+            No orders found.
+          </div>
+        {% endif %}
+      {% else %}
+        <div style="padding: 60px; text-align: center; background: #fff; border-radius: 16px;">
+          <p style="margin-bottom: 20px; font-weight: 700;">Please log in to see your orders.</p>
+          <a href="{{ routes.account_login_url }}" class="ob-btn--primary" style="text-decoration: none; display: inline-block; width: auto; padding: 12px 40px;">Login</a>
+        </div>
+      {% endif %}
+    </main>
+  </div>
+</div>
+
+<script src="{{ 'orders-bookings-reviews.js' | asset_url }}" defer="defer"></script>
+<script>
+(function(){
+  var root = document.querySelector('[data-orders-bookings]');
+  if(!root) return;
+  var chips = root.querySelectorAll('[data-order-filter]');
+  var grid = root.querySelector('[data-orders-grid]');
+  if(!grid || chips.length === 0) return;
+  function applyFilter(key){
+    chips.forEach(function(c){ c.classList.toggle('is-active', c.getAttribute('data-order-filter') === key); });
+    grid.querySelectorAll('.ob-card').forEach(function(card){
+      var ful = (card.getAttribute('data-fulfillment') || '').toLowerCase();
+      var show = key === 'all' || (key === 'unfulfilled' && (ful === 'unfulfilled' || ful === 'partial')) || (key === 'fulfilled' && ful === 'fulfilled');
+      card.style.display = show ? '' : 'none';
+    });
+  }
+  chips.forEach(function(chip){ chip.addEventListener('click', function(){ applyFilter(chip.getAttribute('data-order-filter')); }); });
+})();
+</script>

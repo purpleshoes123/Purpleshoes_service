@@ -1,0 +1,124 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "tour_experiences": {
+      "type": "tour-experiences",
+      "blocks": {
+        "exp1": {
+          "type": "experience",
+          "settings": {
+            "image": "shopify://shop_images/20260616_194959.jpg",
+            "tag": "1day",
+            "overlay_title": "A Day Outside Seoul",
+            "overlay_subtitle": "Full-day local experience",
+            "location": "OUTSIDE SEOUL",
+            "title": "A Day Outside Seoul",
+            "desc": "Relax, eat, and unwind — all in one day.",
+            "features": "Private Group\nDoor-to-Door\nAll-Inclusive\nThermal Spa\nUp to 6 Guests",
+            "btn_label": "Explore Journey",
+            "btn_link": "/pages/a-day-outside-seoul",
+            "coming_soon": false
+          }
+        },
+        "exp2": {
+          "type": "experience",
+          "settings": {
+            "tag": "Coming Soon",
+            "overlay_title": "Step Back into the Joseon Dynasty",
+            "overlay_subtitle": "40-person group experience",
+            "location": "KOREAN FOLK VILLAGE",
+            "title": "Step Back into the Joseon Dynasty",
+            "desc": "Experience traditional Korea at the Korean Folk Village.",
+            "features": "40-person Group\nLocal Guide\nPreparing",
+            "btn_label": "Coming Soon",
+            "btn_link": "",
+            "coming_soon": true
+          }
+        }
+      },
+      "block_order": [
+        "exp1",
+        "exp2"
+      ],
+      "settings": {
+        "show_hero": true,
+        "hero_image": "shopify://shop_images/4bda8907d9c7235be77c08639c36fbe5.png",
+        "hero_use_page_title": true,
+        "hero_heading": "Step Into the Real Korea.\nExplore with a Local Mate.",
+        "hero_height": 260,
+        "overlay_top": 1,
+        "overlay_mid": 1,
+        "overlay_bottom": 1,
+        "hero_title_font": "body",
+        "hero_title_size": 44,
+        "hero_title_weight": 700,
+        "hero_title_letter_spacing": 0.2,
+        "hero_title_transform": "uppercase",
+        "hero_title_align": "center",
+        "hero_title_max_width": 22,
+        "hero_title_bg_enable": false,
+        "hero_title_bg_opacity": 0.6,
+        "hero_title_bg_radius": 12,
+        "hero_title_pad_x": 20,
+        "hero_title_pad_y": 12,
+        "heading": "Curated Experiences",
+        "subheading": "A different way to experience Korea — like a local.",
+        "collection": "",
+        "products_to_show": 6,
+        "product_btn_label": "DISCOVER",
+        "bg": "#f8f9ff",
+        "title_color": "#1f1f1f",
+        "text_color": "#1f1f1f",
+        "muted_color": "#6b6b6b",
+        "btn_bg": "#9942d8",
+        "btn_text": "#ffffff",
+        "radius": 14,
+        "gap": 22
+      }
+    },
+    "image_with_text_wzGKpN": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading_KA8876": {
+          "type": "heading",
+          "settings": {
+            "heading": "Step Into the Real Korea： Start your journey with a Korean friend.",
+            "heading_size": "h1"
+          }
+        }
+      },
+      "block_order": [
+        "heading_KA8876"
+      ],
+      "disabled": true,
+      "name": "t:sections.image-with-text.presets.name",
+      "settings": {
+        "image": "shopify://shop_images/Gemini_Generated_Image_3jayok3jayok3jay.png",
+        "height": "adapt",
+        "desktop_image_width": "medium",
+        "layout": "image_first",
+        "image_behavior": "none",
+        "content_layout": "no-overlap",
+        "desktop_content_position": "top",
+        "desktop_content_alignment": "left",
+        "mobile_content_alignment": "left",
+        "section_color_scheme": "scheme-1",
+        "color_scheme": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "tour_experiences",
+    "image_with_text_wzGKpN"
+  ]
+}

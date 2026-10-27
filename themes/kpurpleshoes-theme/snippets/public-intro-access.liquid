@@ -1,0 +1,19 @@
+{% doc %}
+Returns allowed only for the reviewed price-free introduction templates and URLs.
+@example
+{% capture intro_access %}{% render 'public-intro-access' %}{% endcapture %}
+{% enddoc %}
+{%- liquid
+  assign access = 'blocked'
+  if request.page_type == 'page'
+    if page.handle == 'guide-plans' and template.suffix == 'member-guide'
+      assign access = 'allowed'
+    elsif page.handle == 'a-day-outside-seoul' and template.suffix == 'member-tour'
+      assign access = 'allowed'
+    endif
+  endif
+  if request.page_type == 'collection' and collection.handle == 'experience-tour' and template.suffix == 'tour-guide'
+    assign access = 'allowed'
+  endif
+  echo access
+-%}

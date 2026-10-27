@@ -1,0 +1,981 @@
+{%- liquid
+  assign review_limit = section.settings.review_limit | default: 10
+  if review_limit > 10
+    assign review_limit = 10
+  endif
+  assign proxy_prefix = section.settings.proxy_prefix | default: 'bta-booking'
+  assign reviews_endpoint = '/apps/' | append: proxy_prefix | append: '/reviews'
+  assign review_type = 'all'
+  assign section_heading = section.settings.heading | default: 'Reviews'
+  assign product_review_id = ''
+  assign product_review_gid = ''
+  if product != blank
+    assign product_review_id = product.id
+    assign product_review_gid = product.admin_graphql_api_id | default: ''
+  elsif section.settings.review_product_id != blank
+    assign product_review_id = section.settings.review_product_id | strip
+    assign product_review_gid = 'gid://shopify/Product/' | append: product_review_id
+  endif
+-%}
+
+<section
+  class="travel-reviews section-{{ section.id }}-padding"
+  data-travel-reviews
+  data-travel-reviews-id="{{ section.id }}"
+  data-reviews-endpoint="{{ reviews_endpoint }}"
+  data-product-id="{{ product_review_id }}"
+  data-product-gid="{{ product_review_gid }}"
+  data-review-limit="{{ review_limit }}"
+  data-review-type="{{ review_type }}"
+  data-review-empty-text="{{ section.settings.empty_text | escape }}"
+  aria-labelledby="travel-reviews-heading-{{ section.id }}"
+>
+  {%- style -%}
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+      padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+    }
+    @media screen and (min-width: 750px) {
+      .section-{{ section.id }}-padding {
+        padding-top: {{ section.settings.padding_top }}px;
+        padding-bottom: {{ section.settings.padding_bottom }}px;
+      }
+    }
+  {%- endstyle -%}
+
+  <div class="page-width">
+    {% if section_heading != blank %}
+      <h2 class="trv-heading" id="travel-reviews-heading-{{ section.id }}" tabindex="-1">{{ section_heading | escape }}</h2>
+    {% endif %}
+
+    <div class="trv-list" data-trv-list>
+      <div class="trv-loading" data-trv-loading>
+        <span class="trv-loading__dot"></span>
+        <span class="trv-loading__dot"></span>
+        <span class="trv-loading__dot"></span>
+      </div>
+    </div>
+    <div class="trv-pagination" data-trv-pagination hidden>
+      <button type="button" class="trv-pagination__button" data-trv-prev aria-label="Previous reviews page">Previous</button>
+      <span class="trv-pagination__status" data-trv-page-status aria-live="polite">
+        <span data-trv-page-label>Page 1</span>
+        <span class="trv-pagination__spinner" data-trv-spinner hidden aria-hidden="true"></span>
+        <span class="trv-pagination__sr" data-trv-loading-label hidden>Loading reviews</span>
+      </span>
+      <button type="button" class="trv-pagination__button" data-trv-next aria-label="Next reviews page">Next</button>
+    </div>
+  </div>
+</section>
+
+<style>
+.travel-reviews {
+  background: #fff;
+  scroll-margin-top: 104px;
+}
+
+/* Keep the footer from jumping into view on a short final reviews page. */
+.travel-reviews.has-review-pagination {
+  min-height: max(560px, 72vh);
+}
+
+.trv-heading {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 800;
+  color: #111827;
+  text-align: center;
+  margin: 0 0 24px;
+  letter-spacing: -0.02em;
+}
+
+.trv-list {
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.18s ease;
+}
+
+.trv-list.is-updating {
+  opacity: 0.58;
+}
+
+/* Loading dots */
+.trv-loading {
+  display: flex;
+  gap: 6px;
+  padding: 24px 0;
+  justify-content: center;
+}
+.trv-loading__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  animation: trvPulse 1.2s ease-in-out infinite;
+}
+.trv-loading__dot:nth-child(2) { animation-delay: 0.2s; }
+.trv-loading__dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes trvPulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes trvSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Review item */
+.trv-item {
+  display: flex;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: flex-start;
+}
+.trv-item:first-child { border-top: 1px solid #f0f0f0; }
+
+.trv-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Header row: avatar + meta */
+.trv-item__header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.trv-item__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8e8e8;
+  flex: 0 0 40px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #aaa;
+}
+
+.trv-item__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.trv-item__meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.trv-item__author-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.trv-item__author {
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
+}
+
+.trv-item__country {
+  font-size: 12px;
+  color: #777;
+}
+
+.trv-item__date {
+  font-size: 12px;
+  color: #999;
+}
+
+.trv-item__variant {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trv-item__text {
+  font-size: 14px;
+  color: #222;
+  line-height: 1.6;
+  margin: 0;
+  word-break: break-word;
+}
+
+/* Right-side photo */
+.trv-item__photo {
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.trv-item__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Empty / error state */
+.trv-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.trv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.trv-pagination[hidden] {
+  display: none;
+}
+
+.trv-pagination__button {
+  appearance: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  min-width: 88px;
+  padding: 9px 14px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.trv-pagination__button:hover:not(:disabled) {
+  background: #f8f5ff;
+  border-color: #d8cffc;
+  color: #4c1d95;
+}
+
+.trv-pagination__button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.trv-pagination__status {
+  align-items: center;
+  color: #6b7280;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 500;
+  justify-content: center;
+  min-width: 64px;
+  text-align: center;
+}
+
+.trv-pagination__spinner {
+  animation: trvSpin 0.75s linear infinite;
+  border: 2px solid #e5e7eb;
+  border-radius: 50%;
+  border-top-color: #6d28d9;
+  display: inline-block;
+  height: 16px;
+  width: 16px;
+}
+
+.trv-pagination__spinner[hidden] {
+  display: none;
+}
+
+.trv-pagination__sr {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@media screen and (max-width: 749px) {
+  .travel-reviews {
+    scroll-margin-top: 84px;
+  }
+
+  .travel-reviews.has-review-pagination {
+    min-height: max(500px, 68svh);
+  }
+
+  .trv-item__photo {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+  }
+}
+</style>
+
+<script>
+(function() {
+  var root = document.querySelector('[data-travel-reviews-id="{{ section.id }}"]');
+  if (!root) return;
+
+  var listEl = root.querySelector('[data-trv-list]');
+  var loadingEl = root.querySelector('[data-trv-loading]');
+  var paginationEl = root.querySelector('[data-trv-pagination]');
+  var prevButton = root.querySelector('[data-trv-prev]');
+  var nextButton = root.querySelector('[data-trv-next]');
+  var pageStatusEl = root.querySelector('[data-trv-page-status]');
+  var pageLabelEl = root.querySelector('[data-trv-page-label]');
+  var spinnerEl = root.querySelector('[data-trv-spinner]');
+  var loadingLabelEl = root.querySelector('[data-trv-loading-label]');
+  if (!listEl) return;
+
+  var endpoint = root.getAttribute('data-reviews-endpoint') || '';
+  var productId = root.getAttribute('data-product-id') || '';
+  var productGid = root.getAttribute('data-product-gid') || '';
+  var emptyText = root.getAttribute('data-review-empty-text') || 'No reviews yet.';
+  var reviewType = root.getAttribute('data-review-type') || 'all';
+  var limit = parseInt(root.getAttribute('data-review-limit') || '10', 10);
+  if (!Number.isFinite(limit) || limit < 1) limit = 10;
+  if (limit > 10) limit = 10;
+  var serverFetchLimit = 50;
+
+  var activeProductIdentifier = '';
+  var cursorByPage = [''];
+  var pageCache = {};
+  var prefetchPromises = {};
+  var currentPage = 1;
+  var currentPageInfo = { hasNextPage: false, endCursor: null };
+  var isPageLoading = false;
+  var bufferedReviews = [];
+  var bufferedProductIdentifier = '';
+  var bufferedServerPageInfo = { hasNextPage: false, endCursor: null };
+
+  var staticReviews = [
+    {% for block in section.blocks %}
+      {
+        rating: {{ block.settings.stars | default: 5 }},
+        body: {{ block.settings.quote | default: '' | strip | json }},
+        author: {{ block.settings.name | default: '' | strip | json }},
+        country: {{ block.settings.country | default: '' | strip | json }},
+        date: {{ block.settings.date | default: '' | strip | json }},
+        variant: {{ block.settings.variant | default: '' | strip | json }}
+      }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ].filter(function(item) {
+    return item && item.body && item.body.trim();
+  }).map(function(item) {
+    // API 리뷰와 동일한 표시 규칙 적용: 표시명 / 작성일
+    var rawDate = item.date;
+    item.author = formatDisplayName('', '', item.author) || 'Traveler';
+    item.date = formatStaticReviewDate(rawDate);
+    item.sortTimestamp = getReviewTimestamp(rawDate);
+    return item;
+  }).sort(compareReviewsNewestFirst);
+
+  /* 정적 블록 날짜 문자열("26.05.19." / "2026-05-19" 등) -> YYYY.MM */
+  function formatStaticReviewDate(raw) {
+    var v = (raw || '').toString().trim();
+    if (!v) return '';
+    return formatReviewDate(v) || v;
+  }
+
+  function avatarHtml(avatarUrl) {
+    if (avatarUrl) {
+      return '<img src="' + avatarUrl + '" alt="avatar" loading="lazy">';
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>';
+  }
+
+  function createItem(review) {
+    var item = document.createElement('div');
+    item.className = 'trv-item';
+
+    var photoHtml = '';
+    if (review.imageUrl) {
+      photoHtml = '<div class="trv-item__photo"><img src="' + review.imageUrl + '" alt="Review photo" loading="lazy"></div>';
+    }
+
+    var variantVal = (review.variant || '').trim();
+    var variantHtml = (variantVal && variantVal !== '-') ? '<div class="trv-item__variant">' + variantVal + '</div>' : '';
+
+    var dateHtml = review.date ? '<span class="trv-item__date">' + review.date + '</span>' : '';
+    var author = (review.author || 'Traveler').trim();
+    var country = (review.country || '').trim();
+    var countrySuffix = author.match(/\s+\(([^()]+)\)\s*$/);
+    if (countrySuffix && (!country || country.toLowerCase() === countrySuffix[1].trim().toLowerCase())) {
+      country = country || countrySuffix[1].trim();
+      author = author.slice(0, countrySuffix.index).trim();
+    }
+    var countryHtml = country ? '<span class="trv-item__country">(' + escapeReviewText(country) + ')</span>' : '';
+
+    item.innerHTML =
+      '<div class="trv-item__body">' +
+        '<div class="trv-item__header">' +
+          '<div class="trv-item__avatar">' + avatarHtml(review.avatarUrl) + '</div>' +
+          '<div class="trv-item__meta">' +
+            '<div class="trv-item__author-row">' +
+              '<span class="trv-item__author">' + escapeReviewText(author) + '</span>' +
+              countryHtml +
+              dateHtml +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        variantHtml +
+        '<p class="trv-item__text">' + (review.body || '') + '</p>' +
+      '</div>' +
+      photoHtml;
+
+    return item;
+  }
+
+  function escapeReviewText(value) {
+    return String(value).replace(/[&<>"']/g, function(character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
+  }
+
+  function renderList(reviews) {
+    if (loadingEl) loadingEl.remove();
+    listEl.innerHTML = '';
+    if (!reviews.length) {
+      var empty = document.createElement('div');
+      empty.className = 'trv-empty';
+      empty.textContent = emptyText;
+      listEl.appendChild(empty);
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    reviews.forEach(function(r) { frag.appendChild(createItem(r)); });
+    listEl.appendChild(frag);
+  }
+
+  function setPaginationLoading(isLoading) {
+    isPageLoading = isLoading;
+    root.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+    listEl.classList.toggle('is-updating', isLoading);
+    updatePagination();
+  }
+
+  function updatePagination() {
+    if (!paginationEl || !prevButton || !nextButton || !pageStatusEl) return;
+
+    var hasPrevious = currentPage > 1;
+    var hasNext = Boolean(currentPageInfo && currentPageInfo.hasNextPage && currentPageInfo.endCursor);
+    paginationEl.hidden = !hasPrevious && !hasNext;
+    root.classList.toggle('has-review-pagination', !paginationEl.hidden);
+    prevButton.disabled = isPageLoading || !hasPrevious;
+    nextButton.disabled = isPageLoading || !hasNext;
+    pageStatusEl.setAttribute('aria-busy', isPageLoading ? 'true' : 'false');
+    if (pageLabelEl) {
+      pageLabelEl.textContent = 'Page ' + currentPage;
+      pageLabelEl.hidden = isPageLoading;
+    } else {
+      pageStatusEl.textContent = isPageLoading ? '' : 'Page ' + currentPage;
+    }
+    if (spinnerEl) spinnerEl.hidden = !isPageLoading;
+    if (loadingLabelEl) loadingLabelEl.hidden = !isPageLoading;
+  }
+
+  /* 표시 규칙: 고객명 + Country + 작성일
+     고객 식별자(고객번호/GID/아이디)는 절대 노출하지 않는다. */
+  function looksLikeIdentifier(value) {
+    var v = (value || '').toString().trim();
+    if (!v) return true;
+    if (v.indexOf('gid://') !== -1) return true;      // Shopify GID
+    if (/^(customer|admin|order)[-_]/i.test(v)) return true; // customer-gid://... 등
+    if (/^\d+$/.test(v)) return true;                  // 숫자만 = 고객번호
+    if (/^[0-9a-f]{16,}$/i.test(v)) return true;       // 해시/토큰류
+    if (/^[0-9a-f-]{32,}$/i.test(v)) return true;      // UUID류
+    return false;
+  }
+
+  /* 고객명은 "Mackenzie H." 형태로 표시한다. 식별자(고객번호/GID)는 제외. */
+  function formatDisplayName(firstRaw, lastRaw, fallbackRaw) {
+    var first = (firstRaw || '').toString().trim();
+    var last = (lastRaw || '').toString().trim();
+
+    if (first || last) {
+      var lastInitial = last ? last.charAt(0).toUpperCase() + '.' : '';
+      return (first + ' ' + lastInitial).trim();
+    }
+
+    var fb = (fallbackRaw || '').toString().trim();
+    if (fb && !looksLikeIdentifier(fb)) return fb;
+
+    return '';
+  }
+
+  function getReviewTimestamp(rawDate) {
+    if (!rawDate) return 0;
+    try {
+      var raw = rawDate.toString().trim();
+      if (/^\d{4}-\d{1,2}-\d{1,2}T/.test(raw)) {
+        var isoDate = new Date(raw);
+        if (!isNaN(isoDate.getTime())) return isoDate.getTime();
+      }
+
+      var normalizedMatch = raw.match(/^(\d{2,4})\s*[.\-\/]\s*(\d{1,2})(?:\s*[.\-\/]\s*(\d{1,2}))?/);
+      if (normalizedMatch) {
+        var year = normalizedMatch[1].length === 2 ? 2000 + parseInt(normalizedMatch[1], 10) : parseInt(normalizedMatch[1], 10);
+        var month = parseInt(normalizedMatch[2], 10) - 1;
+        var day = normalizedMatch[3] ? parseInt(normalizedMatch[3], 10) : 1;
+        var normalizedDate = new Date(year, month, day);
+        if (!isNaN(normalizedDate.getTime())) return normalizedDate.getTime();
+      }
+
+      var parsedDate = new Date(raw);
+      return isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function compareReviewsNewestFirst(a, b) {
+    return (b && b.sortTimestamp ? b.sortTimestamp : 0) - (a && a.sortTimestamp ? a.sortTimestamp : 0);
+  }
+
+  function sortReviewsNewestFirst(reviews) {
+    return reviews.slice().sort(compareReviewsNewestFirst);
+  }
+
+  function resetReviewBuffer() {
+    bufferedReviews = [];
+    bufferedProductIdentifier = '';
+    bufferedServerPageInfo = { hasNextPage: false, endCursor: null };
+  }
+
+  function makeClientCursor(pageNumber) {
+    return 'client:' + pageNumber;
+  }
+
+  function parseClientCursor(cursor) {
+    var match = (cursor || '').toString().match(/^client:(\d+)$/);
+    if (!match) return null;
+    var pageNumber = parseInt(match[1], 10);
+    return Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : null;
+  }
+
+  function getBufferedPage(pageNumber) {
+    var start = (pageNumber - 1) * limit;
+    var end = start + limit;
+    var hasBufferedNext = bufferedReviews.length > end;
+    var pageInfo = hasBufferedNext
+      ? { hasNextPage: true, endCursor: makeClientCursor(pageNumber + 1) }
+      : {
+          hasNextPage: Boolean(bufferedServerPageInfo && bufferedServerPageInfo.hasNextPage && bufferedServerPageInfo.endCursor),
+          endCursor: bufferedServerPageInfo && bufferedServerPageInfo.hasNextPage ? bufferedServerPageInfo.endCursor || null : null
+        };
+
+    return {
+      reviews: bufferedReviews.slice(start, end),
+      pageInfo: pageInfo
+    };
+  }
+
+  /* 작성일: 2026.05 */
+  function formatReviewDate(rawDate) {
+    if (!rawDate) return '';
+    try {
+      var raw = rawDate.toString().trim();
+      var normalizedMatch = raw.match(/^(\d{2,4})\s*[.\-\/]\s*(\d{1,2})(?:\s*[.\-\/]\s*(\d{1,2}))?/);
+      if (normalizedMatch) {
+        var year = normalizedMatch[1].length === 2 ? '20' + normalizedMatch[1] : normalizedMatch[1];
+        var month = String(parseInt(normalizedMatch[2], 10)).padStart(2, '0');
+        return year + '.' + month;
+      }
+
+      var d = new Date(rawDate);
+      if (isNaN(d.getTime())) return '';
+      return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function normalizeReview(item) {
+    if (!item || typeof item !== 'object') return null;
+    var body = (item.body || '').toString().trim();
+    if (!body) return null;
+
+    var author = formatDisplayName(
+      item.firstName || item.first_name || item.customerFirstName,
+      item.lastName || item.last_name || item.customerLastName,
+      item.authorDisplayName || item.author || item.name
+    );
+    if (!author) author = 'Traveler';
+
+    var country = (item.country || item.countryName || item.countryCode || item.customerCountry || '').toString().trim();
+
+    var rawDate = item.submittedAt || item.createdAt || item.created_at || item.date || '';
+    var dateStr = formatReviewDate(rawDate);
+
+    var images = item.images || item.photos || item.reviewImages || [];
+    var imageUrl = '';
+    if (Array.isArray(images) && images.length) {
+      imageUrl = (typeof images[0] === 'string') ? images[0] : (images[0].url || images[0].src || '');
+    } else if (typeof item.imageUrl === 'string') {
+      imageUrl = item.imageUrl;
+    }
+
+    return {
+      rating: parseInt(item.rating || item.stars || 5, 10),
+      body: body,
+      author: author,
+      country: country,
+      date: dateStr,
+      sortTimestamp: getReviewTimestamp(rawDate),
+      variant: (item.productVariantTitle || item.variantTitle || item.variant || '').toString().trim(),
+      avatarUrl: item.reviewerAvatar || item.avatar || item.authorAvatar || '',
+      imageUrl: imageUrl
+    };
+  }
+
+  function renderFallback() {
+    if (!productId && staticReviews.length) {
+      renderList(staticReviews.slice(0, limit));
+      currentPage = 1;
+      currentPageInfo = { hasNextPage: false, endCursor: null };
+      pageCache = {};
+      prefetchPromises = {};
+      resetReviewBuffer();
+      updatePagination();
+      return;
+    }
+    renderList([]);
+    currentPage = 1;
+    currentPageInfo = { hasNextPage: false, endCursor: null };
+    pageCache = {};
+    prefetchPromises = {};
+    resetReviewBuffer();
+    updatePagination();
+  }
+
+  function buildReviewsUrl(productIdentifier, cursor) {
+    var params = new URLSearchParams({
+      limit: String(serverFetchLimit),
+      sort: 'newest',
+      reviewType: reviewType,
+      placement: 'product'
+    });
+    if (productIdentifier) {
+      params.set('productId', productIdentifier);
+    }
+    if (cursor) {
+      params.set('cursor', cursor);
+    }
+    return endpoint + (endpoint.indexOf('?') === -1 ? '?' : '&') + params.toString();
+  }
+
+  function fetchReviews(productIdentifier, cursor, pageNumber) {
+    var clientPageNumber = parseClientCursor(cursor);
+    if (clientPageNumber) {
+      return Promise.resolve(getBufferedPage(clientPageNumber));
+    }
+
+    return fetch(buildReviewsUrl(productIdentifier, cursor), {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(payload) {
+      var items = [];
+      var pageInfo = { hasNextPage: false, endCursor: null };
+      if (payload && payload.ok && payload.data) {
+        items = Array.isArray(payload.data.items) ? payload.data.items :
+                Array.isArray(payload.data) ? payload.data : [];
+        if (payload.data.pageInfo && typeof payload.data.pageInfo === 'object') {
+          pageInfo = {
+            hasNextPage: Boolean(payload.data.pageInfo.hasNextPage),
+            endCursor: payload.data.pageInfo.endCursor || null
+          };
+        }
+      }
+      var normalizedReviews = sortReviewsNewestFirst(items.map(normalizeReview).filter(Boolean));
+      if (!cursor || bufferedProductIdentifier !== productIdentifier) {
+        bufferedReviews = normalizedReviews;
+        bufferedProductIdentifier = productIdentifier;
+      } else {
+        bufferedReviews = bufferedReviews.concat(normalizedReviews);
+      }
+      bufferedServerPageInfo = pageInfo;
+      return {
+        reviews: getBufferedPage(pageNumber || 1).reviews,
+        pageInfo: getBufferedPage(pageNumber || 1).pageInfo
+      };
+    });
+  }
+
+  function normalizePageResult(result) {
+    return {
+      reviews: result && Array.isArray(result.reviews) ? result.reviews : [],
+      pageInfo: result && result.pageInfo ? result.pageInfo : { hasNextPage: false, endCursor: null }
+    };
+  }
+
+  function cachePage(pageNumber, result) {
+    pageCache[pageNumber] = normalizePageResult(result);
+    return pageCache[pageNumber];
+  }
+
+  function renderPageResult(pageNumber, result) {
+    var normalized = cachePage(pageNumber, result);
+    currentPage = pageNumber;
+    currentPageInfo = normalized.pageInfo;
+    renderList(normalized.reviews);
+    updatePagination();
+    prefetchNextPage();
+  }
+
+  function prefetchNextPage() {
+    if (!currentPageInfo || !currentPageInfo.hasNextPage || !currentPageInfo.endCursor) return;
+
+    var nextPage = currentPage + 1;
+    if (pageCache[nextPage] || prefetchPromises[nextPage]) return;
+
+    cursorByPage[currentPage] = currentPageInfo.endCursor;
+    var prefetchPromise = fetchReviews(activeProductIdentifier, currentPageInfo.endCursor, nextPage)
+      .then(function(result) {
+        return cachePage(nextPage, result);
+      })
+      .catch(function() {
+        return null;
+      });
+    prefetchPromises[nextPage] = prefetchPromise;
+    prefetchPromise.then(function() {
+      delete prefetchPromises[nextPage];
+    });
+  }
+
+  function scrollToReviews() {
+    if (!root || typeof root.scrollIntoView !== 'function') return;
+    var heading = root.querySelector('.trv-heading');
+    if (heading && typeof heading.focus === 'function') {
+      heading.focus({ preventScroll: true });
+    }
+
+    /*
+     * Wait for the shorter page to finish laying out. This preserves enough
+     * document height for the section heading to sit below the sticky header
+     * instead of leaving the visitor looking at the footer.
+     */
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  function fetchAndRenderPage(cursor, pageNumber, shouldScrollToReviews) {
+    if (isPageLoading) return;
+    if (pageCache[pageNumber]) {
+      renderPageResult(pageNumber, pageCache[pageNumber]);
+      if (shouldScrollToReviews) scrollToReviews();
+      return;
+    }
+
+    setPaginationLoading(true);
+
+    (prefetchPromises[pageNumber] || fetchReviews(activeProductIdentifier, cursor, pageNumber))
+      .then(function(result) {
+        if (result) renderPageResult(pageNumber, result);
+        setPaginationLoading(false);
+        if (result && shouldScrollToReviews) scrollToReviews();
+      })
+      .catch(function() {
+        setPaginationLoading(false);
+      });
+  }
+
+  function tryProductReviewFetch(index, productIdentifiers) {
+    if (index >= productIdentifiers.length) {
+      renderFallback();
+      return;
+    }
+
+    fetchReviews(productIdentifiers[index], '', 1)
+      .then(function(result) {
+        if (result.reviews.length || index >= productIdentifiers.length - 1) {
+          activeProductIdentifier = productIdentifiers[index];
+          cursorByPage = [''];
+          pageCache = {};
+          prefetchPromises = {};
+          currentPage = 1;
+          renderPageResult(1, result);
+          return;
+        }
+        tryProductReviewFetch(index + 1, productIdentifiers);
+      })
+      .catch(function() {
+        tryProductReviewFetch(index + 1, productIdentifiers);
+      });
+  }
+
+  if (!endpoint) {
+    renderFallback();
+    return;
+  }
+
+  if (prevButton) {
+    prevButton.addEventListener('click', function() {
+      if (currentPage <= 1 || isPageLoading) return;
+      fetchAndRenderPage(cursorByPage[currentPage - 2] || '', currentPage - 1, true);
+    });
+  }
+
+  if (nextButton) {
+    nextButton.addEventListener('click', function() {
+      if (isPageLoading || !currentPageInfo || !currentPageInfo.hasNextPage || !currentPageInfo.endCursor) return;
+      cursorByPage[currentPage] = currentPageInfo.endCursor;
+      fetchAndRenderPage(currentPageInfo.endCursor, currentPage + 1, true);
+    });
+  }
+
+  var productIdentifiers = [];
+  if (productId) productIdentifiers.push(productId);
+  if (productGid && productGid !== productId) productIdentifiers.push(productGid);
+  if (!productIdentifiers.length) productIdentifiers.push('');
+
+  tryProductReviewFetch(0, productIdentifiers);
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Travel Reviews (List)",
+  "settings": [
+    {"type":"text","id":"review_product_id","label":"Product ID for page reviews","info":"Use the existing product ID when this section appears on an introduction page."},
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section heading",
+      "default": "Reviews"
+    },
+    {
+      "type": "range",
+      "id": "review_limit",
+      "label": "Reviews per page",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "type": "text",
+      "id": "proxy_prefix",
+      "label": "App proxy prefix",
+      "default": "bta-booking"
+    },
+    {
+      "type": "text",
+      "id": "empty_text",
+      "label": "Empty review text",
+      "default": "No reviews yet."
+    },
+    {
+      "type": "header",
+      "content": "Section Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 40
+    }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review item",
+      "settings": [
+        {
+          "type": "range",
+          "id": "stars",
+          "label": "Rating",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 5
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Reviewer name",
+          "default": "Customer"
+        },
+        {
+          "type": "text",
+          "id": "country",
+          "label": "Country (optional, e.g. United States)"
+        },
+        {
+          "type": "text",
+          "id": "date",
+          "label": "Date (shown as YYYY.MM, e.g. 26.05.19. -> 2026.05)",
+          "default": "26.01.01."
+        },
+        {
+          "type": "text",
+          "id": "variant",
+          "label": "Product / variant info",
+          "default": "-"
+        },
+        {
+          "type": "textarea",
+          "id": "quote",
+          "label": "Review text",
+          "default": "Great experience!"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 50,
+  "presets": [
+    {
+      "name": "Travel Reviews (List)",
+      "blocks": [
+        {
+          "type": "review",
+          "settings": {
+            "stars": 5,
+            "name": "Mackenzie H.",
+            "date": "26.05.19.",
+            "quote": "Amazing experience! Highly recommend."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

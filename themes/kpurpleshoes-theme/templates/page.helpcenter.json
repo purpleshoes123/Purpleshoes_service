@@ -1,0 +1,169 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "help_center": {
+      "type": "help-center",
+      "settings": {
+        "heading": "FAQ",
+        "intro": "Find answers about your Guide content, tour bookings, cancellations, and payments."
+      },
+      "blocks": {
+        "header_guide": {
+          "type": "section_header",
+          "settings": {
+            "title": "Guide Content"
+          }
+        },
+        "qa_1": {
+          "type": "qa",
+          "settings": {
+            "question": "Changed your mind?",
+            "answer": "<p>No problem!<br>If you haven’t opened or downloaded the content yet,<br>we are happy to offer a 100% refund within 48 hours of purchase.</p>"
+          }
+        },
+        "qa_2": {
+          "type": "qa",
+          "settings": {
+            "question": "Once Accessed",
+            "answer": "<p>Since these are digital products,<br>please understand that we cannot offer refunds<br>once you have started downloading or streaming the content.</p>"
+          }
+        },
+        "qa_3": {
+          "type": "qa",
+          "settings": {
+            "question": "Package Note",
+            "answer": "<p>The Korea Guide Kit is a special package deal,<br>so we are unable to refund individual items<br>(e.g., cancelling just the video) separately.</p>"
+          }
+        },
+        "qa_4": {
+          "type": "qa",
+          "settings": {
+            "question": "Can I use it without an internet connection? (Offline Viewing)",
+            "answer": "<p>Absolutely!<br>We know data roaming can be tricky.</p><p>Once you download the content in the Purpleshoes App,<br>you can enjoy the Guidebook and watch the Videos anytime, anywhere - even without Wi-Fi!</p>"
+          }
+        },
+        "qa_5": {
+          "type": "qa",
+          "settings": {
+            "question": "Can I use it on multiple devices?",
+            "answer": "<p>Yes, you can! Just keep in mind the device limits for your plan:</p><p>Single Item (Guidebook or Video): Up to 2 devices<br>Korea Guide Kit: Up to 3 devices</p>"
+          }
+        },
+        "qa_6": {
+          "type": "qa",
+          "settings": {
+            "question": "Do I need to search for the addresses manually?",
+            "answer": "<p>No. Once you purchase the Korea Guide Kit, you'll get access to our app with 1,500+ saved locations.</p><p>Just open the map, tap a spot, and go - no need to search or type any addresses.</p><p>For the best navigation experience, we recommend downloading Naver Map in advance.</p>"
+          }
+        },
+        "qa_7": {
+          "type": "qa",
+          "settings": {
+            "question": "I'm having trouble with the app. How can I get help?",
+            "answer": "<p>We are here to help!<br>If you experience any technical issues or have questions, please contact our support team at <a href=\"mailto:support@kpurpleshoes.com\">support@kpurpleshoes.com</a>.</p><p>We try to respond as quickly as possible to get you back on your trip!</p>"
+          }
+        },
+        "qa_8": {
+          "type": "qa",
+          "settings": {
+            "question": "What currency will I be charged in?",
+            "answer": "<p>All prices are listed and charged in USD.<br>Please check with your bank regarding exchange rates if you are using a non-USD card.</p>"
+          }
+        },
+        "header_tours": {
+          "type": "section_header",
+          "settings": {
+            "title": "Experience Tours"
+          }
+        },
+        "qa_9": {
+          "type": "qa",
+          "settings": {
+            "question": "How do I cancel or reschedule my tour?",
+            "answer": "<p>We understand that plans can change.</p><p>Cancellations and refunds follow the policy below:</p><p>7 days before (by 9:00 AM KST): 100% refund<br>6-3 days before (by 9:00 AM KST): 50% refund<br>2 days before or later (after 9:00 AM KST): No refund</p><p>Rescheduling may be possible depending on availability and timing.</p><p>If rescheduling is not available, refund rules will apply.</p>"
+          }
+        },
+        "qa_10": {
+          "type": "qa",
+          "settings": {
+            "question": "What happens if I cancel late or don't show up?",
+            "answer": "<p>Cancellations made after 9:00 AM (KST), 2 days before the tour, or no-shows are non-refundable.</p><p>This includes:</p><p>Late arrival<br>No contact with the guide<br>Incorrect pickup information<br>Personal schedule changes (e.g., flight delays)</p>"
+          }
+        },
+        "qa_11": {
+          "type": "qa",
+          "settings": {
+            "question": "What if the tour is canceled by the company?",
+            "answer": "<p>Your safety always comes first.</p><p>If we must cancel due to weather, safety concerns, or other unavoidable situations,<br>we will provide a full refund or alternative arrangements, depending on the situation.</p>"
+          }
+        },
+        "qa_reschedule": {
+          "type": "qa",
+          "settings": {
+            "question": "Can I reschedule my tour?",
+            "answer": "<p>Rescheduling is possible in some cases, but it depends on:</p><p>Time remaining before the tour<br>Availability<br>Local reservation conditions</p><p>We’ll do our best to help, but if rescheduling is not possible,<br>standard cancellation rules will apply.</p>"
+          }
+        },
+        "qa_12": {
+          "type": "qa",
+          "settings": {
+            "question": "I need to change my pickup location. What should I do?",
+            "answer": "<p>No problem! After your booking is confirmed,<br>your guide will contact you directly.</p><p>You can coordinate your pickup location with them.</p><p>Alternatively, you can email us at <a href=\"mailto:support@kpurpleshoes.com\">support@kpurpleshoes.com</a>.</p>"
+          }
+        },
+        "qa_early_departure": {
+          "type": "qa",
+          "settings": {
+            "question": "What if I leave the tour early or skip part of it?",
+            "answer": "<p>No refunds are provided for:</p><p>Early departure<br>Skipping parts of the itinerary.</p><p>However, in some cases, the itinerary may be adjusted<br>due to weather, safety, or local conditions.</p>"
+          }
+        },
+        "qa_13": {
+          "type": "qa",
+          "settings": {
+            "question": "Can I change the number of people in my group?",
+            "answer": "<p>Yes, adjustments may be possible.</p><p>Decreasing guests:<br>Partial cancellation may apply based on our refund policy</p><p>Increasing guests:<br>Subject to availability. Please contact us first</p><p>Contact: <a href=\"mailto:support@kpurpleshoes.com\">support@kpurpleshoes.com</a></p>"
+          }
+        },
+        "qa_15": {
+          "type": "qa",
+          "settings": {
+            "question": "What currency will I be charged in?",
+            "answer": "<p>All prices are listed and charged in USD.</p><p>Please check with your bank regarding exchange rates if you are using a non-USD card.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "header_guide",
+        "qa_1",
+        "qa_2",
+        "qa_3",
+        "qa_4",
+        "qa_5",
+        "qa_6",
+        "qa_7",
+        "qa_8",
+        "header_tours",
+        "qa_9",
+        "qa_10",
+        "qa_11",
+        "qa_reschedule",
+        "qa_12",
+        "qa_early_departure",
+        "qa_13",
+        "qa_15"
+      ]
+    }
+  },
+  "order": [
+    "help_center"
+  ]
+}

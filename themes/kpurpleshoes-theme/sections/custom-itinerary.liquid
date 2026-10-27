@@ -1,0 +1,435 @@
+{% schema %}
+{
+  "name": "Custom Itinerary",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Title",
+      "default": "Itinerary"
+    },
+    {
+      "type": "text",
+      "id": "note",
+      "label": "Bottom Notice Text",
+      "default": "For reference only. Itineraries are subject to change."
+    },
+    {
+      "type": "image_picker",
+      "id": "map_image",
+      "label": "Right-Side Map Image"
+    },
+    {
+      "type": "header",
+      "content": "Color Settings"
+    },
+    {
+      "type": "color",
+      "id": "line_color",
+      "label": "Timeline Vertical Line Color",
+      "default": "#5B2BD8"
+    },
+    {
+      "type": "color",
+      "id": "timeline_dot_color",
+      "label": "Timeline Pointer (Dot) Color",
+      "default": "#FFCC00"
+    },
+    {
+      "type": "color",
+      "id": "main_dot_color",
+      "label": "Accordion Title Dot (Primary)",
+      "default": "#E67E22"
+    },
+    {
+      "type": "color",
+      "id": "sub_dot_color",
+      "label": "Accordion Title Dot (Secondary)",
+      "default": "#666666"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Itinerary (Day)",
+      "settings": [
+        {
+          "type": "select",
+          "id": "dot_type",
+          "label": "Accordion Title Dot Style",
+          "options": [
+            { "value": "main", "label": "Primary (large dot)" },
+            { "value": "sub", "label": "Secondary (small dot)" }
+          ],
+          "default": "main"
+        },
+        {
+          "type": "text",
+          "id": "time_text",
+          "label": "Accordion Title (e.g., Day 1: Arrival & Welcome Korea)",
+          "default": "Day 1: Arrival & welcome Korea"
+        },
+        {
+          "type": "textarea",
+          "id": "timeline_entries",
+          "label": "Timeline (one item per line, e.g., 07:30 - Hotel Lobby Pick-up)",
+          "default": "07:30 - Hotel Lobby Pick-up\n08:00 - Departure to first spot\n12:00 - Lunch & free time",
+          "info": "Each line: time - description (separated by line break)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Itinerary",
+      "blocks": [
+        { "type": "step" },
+        { "type": "step" },
+        { "type": "step" }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .itinerary-section {
+    padding: 84px 24px 84px;
+  }
+
+  .itinerary-section__title {
+    margin: 0 0 32px;
+    font-size: clamp(26px, 2.8vw, 36px);
+    font-weight: 800;
+    color: #111;
+    text-align: center;
+  }
+
+  .itinerary-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .itinerary-list-wrapper {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .itinerary-note {
+    margin: 20px auto 0;
+    font-size: 12.5px;
+    color: #9ca3af;
+    font-style: italic;
+    text-align: center;
+    max-width: 640px;
+  }
+
+  .itinerary-list {
+    position: relative;
+    padding-left: 0;
+  }
+
+  .itinerary-item.itinerary-accordion {
+    margin-bottom: 4px;
+    border: none;
+    background: transparent;
+  }
+
+  .itinerary-item.itinerary-accordion:last-child {
+    margin-bottom: 0;
+  }
+
+  .itinerary-accordion__summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 18px 0;
+    font-weight: 700;
+    color: #111;
+    font-size: 1.12rem;
+    transition: opacity 0.2s;
+    text-align: center;
+    background: transparent;
+  }
+
+  .itinerary-item[open] .itinerary-accordion__summary {
+    padding-bottom: 0;
+  }
+
+  .itinerary-accordion__summary::-webkit-details-marker { display: none; }
+  .itinerary-accordion__summary:hover { opacity: 0.75; }
+
+  .itinerary-accordion__title {
+    font-size: 1.22rem;
+  }
+
+  .itinerary-accordion__icon {
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .itinerary-item[open] .itinerary-accordion__icon {
+    transform: rotate(-135deg);
+  }
+
+  .itinerary-dot {
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  }
+
+  .dot-main {
+    width: 22px;
+    height: 22px;
+    background-color: #6A0DAD;
+  }
+
+  .dot-sub {
+    width: 14px;
+    height: 14px;
+    background-color: {{ section.settings.sub_dot_color }};
+  }
+
+  .itinerary-accordion__content {
+    padding: 0 0 24px;
+  }
+
+  .itinerary-timeline {
+    position: relative;
+    --track: 26px;
+    padding-left: 0;
+  }
+
+  .itinerary-timeline::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--track) / 2);
+    transform: translateX(-50%);
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #6A0DAD;
+    border-radius: 2px;
+  }
+
+  .itinerary-timeline__row {
+    display: grid;
+    grid-template-columns: var(--track) minmax(76px, auto) 1fr;
+    column-gap: 16px;
+    align-items: start;
+    padding: 12px 0;
+    min-height: 0;
+  }
+
+  .itinerary-timeline__row:first-child { padding-top: 24px; }
+  .itinerary-timeline__row:last-child { padding-bottom: 0; }
+
+  .itinerary-timeline__dot {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    justify-self: center;
+    align-self: center;
+    border-radius: 50%;
+    background: var(--dot-color, #FFCC00);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--dot-color, #FFCC00);
+    flex-shrink: 0;
+    grid-column: 1;
+    grid-row: 1;
+    box-sizing: border-box;
+    z-index: 1;
+  }
+
+  .itinerary-timeline__time {
+    font-size: clamp(1.05rem, 2.6vw, 1.2rem);
+    font-weight: 700;
+    color: #1f2937;
+    white-space: nowrap;
+    grid-column: 2;
+    grid-row: 1;
+    text-align: center;
+    padding-top: 0.08em;
+    line-height: 1.45;
+  }
+
+  .itinerary-timeline__desc {
+    font-size: clamp(1.02rem, 2.5vw, 1.16rem);
+    color: #374151;
+    line-height: 1.58;
+    grid-column: 3;
+    grid-row: 1;
+    padding-top: 0.08em;
+    text-align: center;
+  }
+</style>
+
+<div class="itinerary-section">
+  {% assign itinerary_items = product.metafields.custom.itinerary_items.value | default: product.metafields.custom.itinerary_item.value | default: product.metafields.custom.itinerary_list.value %}
+  {% if section.settings.heading != blank %}
+    <h2 class="itinerary-section__title">{{ section.settings.heading }}</h2>
+  {% endif %}
+
+  <div class="itinerary-container">
+    <div class="itinerary-list-wrapper">
+      <div class="itinerary-list" data-accordion>
+        {% if itinerary_items != blank %}
+          {% assign rendered_days = '|' %}
+          {% for item in itinerary_items %}
+            {% assign accordion_title = item.day_label | default: item.day | default: 'Day' | strip %}
+            {% assign day_token = '|' | append: accordion_title | append: '|' %}
+            {% unless rendered_days contains day_token %}
+              {% assign day_map = item.map_img | default: item.map_image | default: item.image %}
+              <details class="itinerary-item itinerary-accordion" {% if rendered_days == '|' %}open{% endif %}{% if day_map != blank %} data-map-src="{{ day_map | image_url: width: 1200 }}"{% endif %}>
+                <summary class="itinerary-accordion__summary">
+                  <span class="itinerary-dot dot-main"></span>
+                  <span class="itinerary-accordion__title">{{ accordion_title }}</span>
+                  <span class="itinerary-accordion__icon" aria-hidden="true"></span>
+                </summary>
+                <div class="itinerary-content itinerary-accordion__content">
+                  <div class="itinerary-timeline" style="--line-color: {{ section.settings.line_color | default: '#5B2BD8' }}; --dot-color: {{ section.settings.timeline_dot_color | default: '#FFCC00' }};">
+                    {% for row in itinerary_items %}
+                      {% assign row_day = row.day_label | default: row.day | default: 'Day' | strip %}
+                      {% if row_day == accordion_title %}
+                        {% assign timeline_value = '' %}
+                        {% if row.timeline != blank %}
+                          {% if row.timeline.type == 'rich_text_field' %}
+                            {% assign timeline_value = row.timeline | metafield_tag | replace: '</p><p>', '__NL__' | replace: '<br />', '__NL__' | replace: '<br/>', '__NL__' | replace: '<br>', '__NL__' | strip_html | strip %}
+                          {% else %}
+                            {% assign timeline_value = row.timeline.value | default: row.timeline | strip %}
+                          {% endif %}
+                        {% endif %}
+
+                        {% assign time_desc_value = '' %}
+                        {% if row.time_desc != blank %}
+                          {% if row.time_desc.type == 'rich_text_field' %}
+                            {% assign time_desc_value = row.time_desc | metafield_tag | replace: '</p><p>', '__NL__' | replace: '<br />', '__NL__' | replace: '<br/>', '__NL__' | replace: '<br>', '__NL__' | strip_html | strip %}
+                          {% else %}
+                            {% assign time_desc_value = row.time_desc.value | default: row.time_desc | strip %}
+                          {% endif %}
+                        {% endif %}
+
+                        {% assign timeline_value_normalized = timeline_value | newline_to_br | replace: '<br />', '__NL__' | replace: '<br/>', '__NL__' | replace: '<br>', '__NL__' %}
+                        {% assign time_desc_value_normalized = time_desc_value | newline_to_br | replace: '<br />', '__NL__' | replace: '<br/>', '__NL__' | replace: '<br>', '__NL__' %}
+                        {% assign time_lines = timeline_value_normalized | split: '__NL__' %}
+                        {% assign desc_lines = time_desc_value_normalized | split: '__NL__' %}
+
+                        {% if timeline_value != blank or time_desc_value != blank %}
+                          {% for t_line in time_lines %}
+                            {% assign time_part = t_line | strip %}
+                            {% assign desc_part = desc_lines[forloop.index0] | strip %}
+                            {% if time_part != blank or desc_part != blank %}
+                              <div class="itinerary-timeline__row">
+                                <span class="itinerary-timeline__dot"></span>
+                                <div class="itinerary-timeline__cell itinerary-timeline__time">{{ time_part }}</div>
+                                <div class="itinerary-timeline__cell itinerary-timeline__desc">{{ desc_part }}</div>
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+                        {% else %}
+                          {% assign time_part = row.time | default: row.start_time | default: row.hour | strip %}
+                          {% assign desc_part = row.title | default: row.activity | default: row.name | strip %}
+                          {% if time_part != blank or desc_part != blank %}
+                            <div class="itinerary-timeline__row">
+                              <span class="itinerary-timeline__dot"></span>
+                              <div class="itinerary-timeline__cell itinerary-timeline__time">{{ time_part }}</div>
+                              <div class="itinerary-timeline__cell itinerary-timeline__desc">{{ desc_part }}</div>
+                            </div>
+                          {% endif %}
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </details>
+              {% assign rendered_days = rendered_days | append: accordion_title | append: '|' %}
+            {% endunless %}
+          {% endfor %}
+        {% else %}
+          {% for block in section.blocks %}
+            <details class="itinerary-item itinerary-accordion" {% if forloop.first %}open{% endif %} {{ block.shopify_attributes }}>
+              <summary class="itinerary-accordion__summary">
+                <span class="itinerary-dot {% if block.settings.dot_type == 'main' %}dot-main{% else %}dot-sub{% endif %}"></span>
+                <span class="itinerary-accordion__title">{{ block.settings.time_text | default: 'Day 1: Arrival & welcome Korea' }}</span>
+                <span class="itinerary-accordion__icon" aria-hidden="true"></span>
+              </summary>
+              <div class="itinerary-content itinerary-accordion__content">
+                {% if block.settings.timeline_entries != blank %}
+                  <div class="itinerary-timeline" style="--line-color: {{ section.settings.line_color | default: '#5B2BD8' }}; --dot-color: {{ section.settings.timeline_dot_color | default: '#FFCC00' }};">
+                    {% assign lines = block.settings.timeline_entries | newline_to_br | split: '<br />' %}
+                    {% for line in lines %}
+                      {% assign line_stripped = line | strip %}
+                      {% if line_stripped != '' %}
+                        {% assign parts = line_stripped | split: ' - ' %}
+                        {% if parts.size >= 2 %}
+                          {% assign time_part = parts[0] | strip %}
+                          {% assign desc_part = parts[1] | strip %}
+                          {% for p in parts offset: 2 %}
+                            {% assign desc_part = desc_part | append: ' - ' | append: p | strip %}
+                          {% endfor %}
+                        {% else %}
+                          {% assign time_part = '' %}
+                          {% assign desc_part = line_stripped %}
+                        {% endif %}
+                        <div class="itinerary-timeline__row">
+                          <span class="itinerary-timeline__dot"></span>
+                          <div class="itinerary-timeline__cell itinerary-timeline__time">{{ time_part }}</div>
+                          <div class="itinerary-timeline__cell itinerary-timeline__desc">{{ desc_part }}</div>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </details>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+
+    {% if section.settings.note != blank %}
+      <p class="itinerary-note">{{ section.settings.note | escape }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function() {
+  var root = document.querySelector('.itinerary-section');
+  if (!root) return;
+  var accordion = root.querySelector('[data-accordion]');
+  if (!accordion) return;
+  var details = accordion.querySelectorAll('details');
+
+  var hasOpen = false;
+  details.forEach(function(d) {
+    if (d.open) hasOpen = true;
+  });
+  if (!hasOpen && details.length) {
+    details[0].setAttribute('open', '');
+  }
+
+  details.forEach(function(d) {
+    d.addEventListener('toggle', function() {
+      if (!d.open) return;
+      details.forEach(function(other) {
+        if (other !== d) other.removeAttribute('open');
+      });
+    });
+  });
+})();
+</script>

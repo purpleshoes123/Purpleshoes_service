@@ -1,0 +1,54 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "layout": "no-header",
+  "sections": {
+    "purple_map": {
+      "type": "purple-map-page",
+      "settings": {
+        "logo_width": 160,
+        "back_url": "/pages/마이페이지",
+        "back_label": "Back to My Page",
+        "toggle_collapse_label": "Hide list",
+        "toggle_expand_label": "Show list",
+        "category_label": "Category",
+        "category_placeholder": "All categories",
+        "api_base_path": "/apps/bta-booking/mypage",
+        "restaurant_items_endpoint_template": "/restaurant-lists/{id}/items",
+        "restaurant_filters_endpoint_template": "/restaurant-lists/{id}/filters",
+        "default_restaurant_list_id": "gkv_virtual_restaurants",
+        "kakao_app_key": "48b4fb3ff4d5b7cd5b1987a43cff840c",
+        "naver_client_id": "gx6dbvqq34",
+        "empty_select_prompt": "Move the map or choose a category to refine the list.",
+        "empty_results_prompt": "No restaurants match your filters.",
+        "loading_text": "Loading restaurants...",
+        "error_text": "Couldn't load the restaurant list right now.",
+        "missing_list_id_text": "Restaurant list is not configured yet.",
+        "filters_label": "Meat type",
+        "sidebar_aria_label": "Restaurant list and filters",
+        "pagination_aria_label": "List pagination",
+        "map_region_label": "Map",
+        "map_placeholder_title": "Map area (Kakao)",
+        "map_placeholder_body": "Connect Kakao Maps JavaScript API here. This panel is reserved for the interactive map.",
+        "map_loading_text": "Loading Kakao Map...",
+        "map_key_missing_text": "Add a Kakao JavaScript key in this section to display the map.",
+        "map_error_text": "The map couldn't be loaded right now.",
+        "retry_label": "Retry",
+        "map_tab_fallback_all": "All",
+        "map_tab_fallback_open": "Halal",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    }
+  },
+  "order": [
+    "purple_map"
+  ]
+}

@@ -1,0 +1,1665 @@
+{%- if customer or request.design_mode -%}
+{{ 'guide-extension.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'bta-theme-cart-checkout.js' | asset_url }}" defer></script>
+<script src="{{ 'guide-extension.js' | asset_url }}" defer></script>
+
+{% render 'member-page-guard', gate_path: '/pages/members-only' %}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div class="mp-wrap section-{{ section.id }}-padding" data-mypage data-orders-bookings data-customer-id="{% if customer %}{{ customer.id }}{% endif %}">
+  <div class="mp-grid">
+
+    {% render 'mypage-sidebar', active: 'orders' %}
+
+    <main class="mp-main">
+      <header class="ob-header">
+        <h2 class="mp-h2">Orders &amp; Bookings</h2>
+        <div class="mp-chipRow" role="tablist" aria-label="Orders and booking tabs">
+          <button class="mp-chip is-active" type="button" data-ob-tab="orders">Orders</button>
+          <button class="mp-chip" type="button" data-ob-tab="booking">Bookings</button>
+        </div>
+      </header>
+
+      <!-- ═══════════════════════════════════════
+           TAB: ORDERS
+           ═══════════════════════════════════════ -->
+      <div class="ob-tab-panel is-active" data-ob-tab-panel="orders">
+        {% if customer %}
+          {% if customer.orders_count > 0 %}
+            {%- assign has_guide_orders = false -%}
+            {% for order in customer.orders %}
+              {% for line_item in order.line_items %}
+                {%- assign lt = line_item.title | downcase -%}
+                {%- assign lh = line_item.product.handle | default: '' | downcase -%}
+                {%- assign ltype = line_item.product.type | default: '' | downcase -%}
+                {%- assign tsuffix = line_item.product.template_suffix | default: '' | downcase -%}
+                {%- assign is_ext = false -%}
+                {%- assign is_tour = false -%}
+                {% if lt contains 'extension' or lt contains 'extend access' or lh contains 'extension' or lh contains 'extend' or ltype contains 'extension' %}
+                  {%- assign is_ext = true -%}
+                {% endif %}
+                {% if tsuffix contains 'travel' %}
+                  {%- assign is_tour = true -%}
+                {% endif %}
+                {% for prop in line_item.properties %}
+                  {%- assign pk = prop.first | downcase -%}
+                  {% if pk contains 'date' or pk contains 'traveler' or pk contains 'adult' or pk contains 'teen' or pk contains 'child' or pk contains 'infant' or pk contains 'booking' %}
+                    {%- assign is_tour = true -%}
+                  {% endif %}
+                {% endfor %}
+                {% unless is_tour or is_ext %}
+                  {%- assign has_guide_orders = true -%}
+                {% endunless %}
+              {% endfor %}
+            {% endfor %}
+
+            {% if has_guide_orders %}
+              <div class="ob-list" data-orders-grid>
+              {% for order in customer.orders %}
+                {%- assign order_has_guide = false -%}
+                {%- assign has_bundle = false -%}
+                {%- assign has_pdf = false -%}
+                {%- assign has_video = false -%}
+                {%- assign first_product_id = '' -%}
+                {%- assign first_guide_title = '' -%}
+                {%- assign fin_raw = order.financial_status | downcase -%}
+                {%- assign is_paid = false -%}
+                {% if fin_raw == 'paid' %}{%- assign is_paid = true -%}{% endif %}
+                {%- assign is_cancelled = false -%}
+                {% if order.cancelled or order.cancelled_at != blank or order.cancel_reason != blank %}
+                  {%- assign is_cancelled = true -%}
+                {% endif %}
+                {%- assign is_refunded = false -%}
+                {% if fin_raw == 'refunded' %}
+                  {%- assign is_refunded = true -%}
+                {% endif %}
+                {%- assign is_partially_refunded = false -%}
+                {% if fin_raw == 'partially_refunded' or order.total_refunded_amount > 0 %}
+                  {%- assign is_partially_refunded = true -%}
+                {% endif %}
+                {%- assign is_voided = false -%}
+                {% if fin_raw == 'voided' %}
+                  {%- assign is_voided = true -%}
+                {% endif %}
+                {%- assign is_active_order = is_paid -%}
+                {% if is_cancelled or is_refunded or is_partially_refunded or is_voided %}
+                  {%- assign is_active_order = false -%}
+                {% endif %}
+                {%- assign can_review = is_active_order -%}
+                {%- assign show_days_remaining = is_active_order -%}
+                {%- assign order_status_label = order.financial_status_label | default: 'Pending payment' -%}
+                {%- assign order_status_tone = 'neutral' -%}
+                {% if is_cancelled %}
+                  {%- assign order_status_label = 'Cancelled' -%}
+                  {%- assign order_status_tone = 'critical' -%}
+                {% elsif is_refunded %}
+                  {%- assign order_status_label = 'Refunded' -%}
+                  {%- assign order_status_tone = 'critical' -%}
+                {% elsif is_partially_refunded %}
+                  {%- assign order_status_label = 'Partially refunded' -%}
+                  {%- assign order_status_tone = 'attention' -%}
+                {% elsif is_voided %}
+                  {%- assign order_status_label = 'Voided' -%}
+                  {%- assign order_status_tone = 'critical' -%}
+                {% elsif is_paid %}
+                  {%- assign order_status_label = 'Paid' -%}
+                  {%- assign order_status_tone = 'success' -%}
+                {% else %}
+                  {%- assign order_status_label = 'Pending payment' -%}
+                  {%- assign order_status_tone = 'attention' -%}
+                {% endif %}
+                {%- assign show_refund_badge = false -%}
+                {%- assign refund_badge_label = '' -%}
+                {%- assign refund_badge_partial = false -%}
+                {% if is_refunded %}
+                  {%- assign show_refund_badge = true -%}
+                  {%- assign refund_badge_label = 'Refunded' -%}
+                {% elsif is_partially_refunded %}
+                  {%- assign show_refund_badge = true -%}
+                  {%- assign refund_badge_label = 'Partially Refunded' -%}
+                  {%- assign refund_badge_partial = true -%}
+                {% endif %}
+
+                {% for line_item in order.line_items %}
+                  {%- assign lt = line_item.title | downcase -%}
+                  {%- assign lv = line_item.variant.title | default: '' | downcase -%}
+                  {%- assign lh = line_item.product.handle | default: '' | downcase -%}
+                  {%- assign ltype = line_item.product.type | default: '' | downcase -%}
+                  {%- assign tsuffix = line_item.product.template_suffix | default: '' | downcase -%}
+                  {%- assign is_ext = false -%}
+                  {%- assign is_tour = false -%}
+                  {% if lt contains 'extension' or lt contains 'extend access' or lh contains 'extension' or lh contains 'extend' or ltype contains 'extension' %}
+                    {%- assign is_ext = true -%}
+                  {% endif %}
+                  {% if tsuffix contains 'travel' %}
+                    {%- assign is_tour = true -%}
+                  {% endif %}
+                  {% for prop in line_item.properties %}
+                    {%- assign pk = prop.first | downcase -%}
+                    {% if pk contains 'date' or pk contains 'traveler' or pk contains 'adult' or pk contains 'teen' or pk contains 'child' or pk contains 'infant' or pk contains 'booking' %}
+                      {%- assign is_tour = true -%}
+                    {% endif %}
+                  {% endfor %}
+                  {% unless is_tour or is_ext %}
+                    {%- assign order_has_guide = true -%}
+                    {% if first_product_id == blank %}{%- assign first_product_id = line_item.product_id -%}{% endif %}
+                    {% if first_guide_title == blank %}{%- assign first_guide_title = line_item.product.title | default: line_item.title -%}{% endif %}
+                    {% if lv contains 'video' or lt contains 'video only' or lt contains 'video guide only' %}
+                      {%- assign has_video = true -%}
+                    {% elsif lv contains 'pdf' or lv contains 'guidebook' or lt contains 'guidebook only' or lt contains 'guidebook' or lt contains 'pdf' %}
+                      {%- assign has_pdf = true -%}
+                    {% elsif lv contains 'bundle' or lv contains 'kit' or lt contains 'bundle' or lt contains 'korean guide kit' or lt contains 'korea guide kit' %}
+                      {%- assign has_bundle = true -%}
+                    {% endif %}
+                  {% endunless %}
+                {% endfor %}
+
+                {% unless order_has_guide %}{% continue %}{% endunless %}
+                {% if has_bundle == false and has_pdf == false and has_video == false %}
+                  {%- assign has_pdf = true -%}
+                {% endif %}
+
+                {%- assign product_label = 'Guidebook ONLY' -%}
+                {%- assign guide_type = 'PDF' -%}
+                {% if has_bundle %}
+                  {%- assign product_label = 'Korea Guide Kit' -%}
+                  {%- assign guide_type = 'BUNDLE' -%}
+                {% elsif has_video %}
+                  {%- assign product_label = 'Video Guide ONLY' -%}
+                  {%- assign guide_type = 'VIDEO' -%}
+                {% elsif has_pdf %}
+                  {%- assign product_label = 'Guidebook ONLY' -%}
+                  {%- assign guide_type = 'PDF' -%}
+                {% endif %}
+
+                <article class="ob-card{% unless is_active_order %} ob-card--inactive{% endunless %}" data-order-card data-my-order-card data-order-id="{{ order.id }}">
+                  <div class="ob-card__product">
+                    <span class="ob-card__product-badge">
+                      {% if has_bundle %}📦{% elsif has_video %}🎬{% else %}📖{% endif %}
+                    </span>
+                    <span class="ob-card__product-name">{{ product_label | default: first_guide_title }}</span>
+                    {% if show_refund_badge %}<span class="ob-card__refunded-badge{% if refund_badge_partial %} ob-card__refunded-badge--partial{% endif %}">{{ refund_badge_label }}</span>{% endif %}
+                  </div>
+
+                  <div class="ob-card__meta-row">
+                    <span class="ob-card__meta-label">Purchase date</span>
+                    <span class="ob-card__meta-value">{{ order.created_at | date: "%b %-d, %Y" }}</span>
+                  </div>
+                  <div class="ob-card__meta-row">
+                    <span class="ob-card__meta-label">Access status</span>
+                    <span class="ob-card__meta-value">
+                      <span class="ob-status-badge ob-status-badge--{% if is_active_order %}success{% else %}critical{% endif %}" data-order-access-status>{% if is_active_order %}Active{% else %}{{ order_status_label }}{% endif %}</span>
+                    </span>
+                  </div>
+
+                  {% if show_days_remaining %}
+                    <div class="ob-card__meta-row ob-card__days-row" data-order-days data-order-id="{{ order.id }}" data-guide-type="{{ guide_type }}" data-created="{{ order.created_at | date: '%s' }}">
+                      <span class="ob-card__meta-label">Days Remaining</span>
+                      <span class="ob-card__meta-value ob-card__days-value" data-days-value>— days</span>
+                    </div>
+                  {% endif %}
+
+                  {% if is_active_order %}
+                    <div class="ob-extend-row">
+                      {% if has_bundle %}
+                        <button class="ob-btn--extend" type="button" data-open-extension data-extension-type="BUNDLE" data-extension-label="Korea Guide Kit">
+                          Extend Access — $5 / 30 days
+                        </button>
+                      {% else %}
+                        {% if has_pdf %}
+                          <button class="ob-btn--extend" type="button" data-open-extension data-extension-type="PDF" data-extension-label="PDF Guidebook">
+                            Extend Access — $5 / 30 days
+                          </button>
+                        {% endif %}
+                        {% if has_video %}
+                          <button class="ob-btn--extend" type="button" data-open-extension data-extension-type="VIDEO" data-extension-label="Video Guide">
+                            Extend Access — $5 / 30 days
+                          </button>
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% unless is_active_order %}
+                    <button class="ob-btn--text ob-hide-order" type="button" data-hide-order data-order-id="{{ order.id }}">Remove from my list</button>
+                  {% endunless %}
+
+                  {% if can_review %}
+                    <div class="ob-review-box">
+                      <form class="ob-review" data-review-form data-order-id="{{ order.id }}" data-product-id="{{ first_product_id }}">
+                        <div class="ob-review__head">
+                          <span class="ob-review__icon">⭐</span>
+                          <span class="ob-review__title">Write a Review</span>
+                        </div>
+                        <p class="ob-status" data-review-status aria-live="polite"></p>
+                        <textarea class="ob-textarea" data-review-body placeholder="How was your experience? (min 20 characters)" minlength="20" maxlength="2000"></textarea>
+                        <span class="ob-review-count" data-review-count style="font-size:12px;color:var(--muted);">0 / 2000</span>
+                        <button class="ob-btn--primary" type="submit" data-review-submit>Submit Review</button>
+                      </form>
+                    </div>
+                  {% endif %}
+
+                  {%- assign ob_paid_tx = nil -%}
+                  {%- for ob_tx in order.transactions -%}
+                    {%- if ob_paid_tx == nil and ob_tx.status == 'success' and ob_tx.kind != 'refund' and ob_tx.kind != 'void' -%}
+                      {%- assign ob_paid_tx = ob_tx -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  <details class="ob-accordion">
+                    <summary class="ob-accordion__trigger">
+                      <span>Purchase Details</span>
+                      <span class="ob-accordion__chevron" aria-hidden="true"></span>
+                    </summary>
+                    <div class="ob-accordion__body">
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Purchase date</span>
+                        <span class="ob-info-value">{{ order.created_at | date: "%b %-d, %Y" }}</span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Subtotal</span>
+                        <span class="ob-info-value">{{ order.line_items | sum: 'original_line_price' | money }}</span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Discount</span>
+                        <span class="ob-info-value">
+                          {%- if order.total_discounts > 0 -%}-{{ order.total_discounts | money }}{%- else -%}—{%- endif -%}
+                        </span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Amount paid</span>
+                        <span class="ob-info-value ob-info-value--strong">{{ order.total_price | money }}</span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Payment method</span>
+                        <span class="ob-info-value">
+                          {%- if ob_paid_tx and ob_paid_tx.payment_details.credit_card_number != blank -%}
+                            {{ ob_paid_tx.payment_details.credit_card_company }} {{ ob_paid_tx.payment_details.credit_card_number }}
+                          {%- elsif ob_paid_tx and ob_paid_tx.gateway_display_name != blank -%}
+                            {{ ob_paid_tx.gateway_display_name }}
+                          {%- elsif ob_paid_tx and ob_paid_tx.gateway != blank -%}
+                            {{ ob_paid_tx.gateway | replace: '_', ' ' | capitalize }}
+                          {%- elsif order.payment_gateway -%}
+                            {{ order.payment_gateway | replace: '_', ' ' | capitalize }}
+                          {%- else -%}—{%- endif -%}
+                        </span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Payment status</span>
+                        <span class="ob-info-value"><span class="ob-status-badge ob-status-badge--{{ order_status_tone }}">{{ order_status_label }}</span></span>
+                      </div>
+                    </div>
+                  </details>
+
+                  <details class="ob-accordion">
+                    <summary class="ob-accordion__trigger">
+                      <span>Buyer Information</span>
+                      <span class="ob-accordion__chevron" aria-hidden="true"></span>
+                    </summary>
+                    <div class="ob-accordion__body">
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Name</span>
+                        <span class="ob-info-value">
+                          {{ order.billing_address.first_name | default: customer.first_name | default: '—' }}
+                          {{ order.billing_address.last_name | default: customer.last_name | default: '' }}
+                        </span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Email</span>
+                        <span class="ob-info-value">{{ order.email | default: customer.email | default: '—' }}</span>
+                      </div>
+                      {%- assign ob_phone = order.billing_address.phone | default: customer.phone -%}
+                      {%- if ob_phone != blank -%}
+                        <div class="ob-info-row">
+                          <span class="ob-info-label">Phone</span>
+                          <span class="ob-info-value">{{ ob_phone }}</span>
+                        </div>
+                      {%- endif -%}
+                      {%- if order.billing_address -%}
+                        {%- assign ob_addr = order.billing_address -%}
+                        {%- capture ob_full_addr -%}
+                          {%- if ob_addr.address1 != blank -%}{{ ob_addr.address1 }}{%- endif -%}
+                          {%- if ob_addr.address2 != blank -%}, {{ ob_addr.address2 }}{%- endif -%}
+                          {%- if ob_addr.city != blank -%}, {{ ob_addr.city }}{%- endif -%}
+                          {%- if ob_addr.province != blank -%}, {{ ob_addr.province }}{%- endif -%}
+                          {%- if ob_addr.zip != blank -%} {{ ob_addr.zip }}{%- endif -%}
+                          {%- if ob_addr.country != blank -%}, {{ ob_addr.country }}{%- endif -%}
+                        {%- endcapture -%}
+                        {%- assign ob_full_addr = ob_full_addr | strip -%}
+                        {%- if ob_full_addr != blank -%}
+                          <div class="ob-info-row">
+                            <span class="ob-info-label">Address</span>
+                            <span class="ob-info-value">{{ ob_full_addr }}</span>
+                          </div>
+                        {%- endif -%}
+                      {%- endif -%}
+                      {%- for attr in order.note_attributes -%}
+                        {%- if attr.name != blank and attr.value != blank -%}
+                          <div class="ob-info-row">
+                            <span class="ob-info-label">{{ attr.name }}</span>
+                            <span class="ob-info-value">{{ attr.value }}</span>
+                          </div>
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- if order.note != blank -%}
+                        <div class="ob-info-row">
+                          <span class="ob-info-label">Note</span>
+                          <span class="ob-info-value ob-info-value--note">{{ order.note }}</span>
+                        </div>
+                      {%- endif -%}
+                    </div>
+                  </details>
+
+                  <div class="ob-app-download">
+                    <div class="ob-app-download__inner">
+                      <div class="ob-app-download__icon" aria-hidden="true">📱</div>
+                      <div class="ob-app-download__text">
+                        <strong>Download the Purple Shoes App</strong>
+                        <span>Access your guide anytime, anywhere — offline ready.</span>
+                      </div>
+                      <div class="ob-app-download__links">
+                        <a href="{{ section.settings.app_store_url | default: 'https://apps.apple.com/app/id6759947452' | escape }}" class="ob-app-btn ob-app-btn--ios" target="_blank" rel="noopener">App Store</a>
+                        <a href="{{ section.settings.play_store_url | default: 'https://play.google.com/store/apps/details?id=com.kpurpleshoes.guidekitviewer' | escape }}" class="ob-app-btn ob-app-btn--android" target="_blank" rel="noopener">Google Play</a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 9. Cancellation & Refund Policy -->
+                  <div class="ob-policy-link">
+                    <a href="https://kpurpleshoes.com/pages/contact-1" target="_blank" rel="noopener">Contact us</a>
+                    <span class="ob-policy-link__divider" aria-hidden="true">|</span>
+                    <a href="{{ section.settings.refund_policy_url | default: '/policies/refund-policy' }}" target="_blank" rel="noopener">
+                      Cancellation &amp; Refund Policy ↗
+                    </a>
+                  </div>
+                </article>
+              {% endfor %}
+              </div>
+            {% else %}
+              <div class="ob-empty">No orders found</div>
+            {% endif %}
+          {% else %}
+            <div class="ob-empty">No orders found</div>
+          {% endif %}
+        {% else %}
+          <div class="ob-login-prompt">
+            <p>Please log in to see your orders.</p>
+            <a href="{{ routes.account_login_url }}" class="ob-btn--primary ob-btn--login">Login</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           TAB: BOOKINGS
+           ═══════════════════════════════════════ -->
+      <div class="ob-tab-panel" data-ob-tab-panel="booking" hidden>
+        {% if customer %}
+          {%- assign has_tour_orders = false -%}
+          {% for order in customer.orders %}
+            {% for line_item in order.line_items %}
+              {%- assign tsuffix = line_item.product.template_suffix | default: '' | downcase -%}
+              {%- assign is_tour = false -%}
+              {% if tsuffix contains 'travel' %}{%- assign is_tour = true -%}{% endif %}
+              {% for prop in line_item.properties %}
+                {%- assign pk = prop.first | downcase -%}
+                {% if pk contains 'date' or pk contains 'traveler' or pk contains 'adult' or pk contains 'teen' or pk contains 'child' or pk contains 'infant' or pk contains 'booking' %}
+                  {%- assign is_tour = true -%}
+                {% endif %}
+              {% endfor %}
+              {% if is_tour %}{%- assign has_tour_orders = true -%}{% endif %}
+            {% endfor %}
+          {% endfor %}
+
+          {% if has_tour_orders %}
+            <div class="ob-list" data-booking-orders-grid>
+              {% for order in customer.orders %}
+                {%- assign order_has_tour = false -%}
+                {%- assign tour_line = nil -%}
+                {%- assign fin_raw = order.financial_status | downcase -%}
+                {%- assign is_paid = false -%}
+                {% if fin_raw == 'paid' %}{%- assign is_paid = true -%}{% endif %}
+                {%- assign is_cancelled = false -%}
+                {% if order.cancelled or order.cancelled_at != blank or order.cancel_reason != blank %}
+                  {%- assign is_cancelled = true -%}
+                {% endif %}
+                {%- assign is_refunded = false -%}
+                {% if fin_raw == 'refunded' %}
+                  {%- assign is_refunded = true -%}
+                {% endif %}
+                {%- assign is_partially_refunded = false -%}
+                {% if fin_raw == 'partially_refunded' or order.total_refunded_amount > 0 %}
+                  {%- assign is_partially_refunded = true -%}
+                {% endif %}
+                {%- assign is_voided = false -%}
+                {% if fin_raw == 'voided' %}
+                  {%- assign is_voided = true -%}
+                {% endif %}
+                {%- assign is_active_order = is_paid -%}
+                {% if is_cancelled or is_refunded or is_partially_refunded or is_voided %}
+                  {%- assign is_active_order = false -%}
+                {% endif %}
+                {%- assign can_review = is_active_order -%}
+                {%- assign order_status_label = order.financial_status_label | default: 'Pending payment' -%}
+                {%- assign order_status_tone = 'neutral' -%}
+                {% if is_cancelled %}
+                  {%- assign order_status_label = 'Cancelled' -%}
+                  {%- assign order_status_tone = 'critical' -%}
+                {% elsif is_refunded %}
+                  {%- assign order_status_label = 'Refunded' -%}
+                  {%- assign order_status_tone = 'critical' -%}
+                {% elsif is_partially_refunded %}
+                  {%- assign order_status_label = 'Partially refunded' -%}
+                  {%- assign order_status_tone = 'attention' -%}
+                {% elsif is_voided %}
+                  {%- assign order_status_label = 'Voided' -%}
+                  {%- assign order_status_tone = 'critical' -%}
+                {% elsif is_paid %}
+                  {%- assign order_status_label = 'Paid' -%}
+                  {%- assign order_status_tone = 'success' -%}
+                {% else %}
+                  {%- assign order_status_label = 'Pending payment' -%}
+                  {%- assign order_status_tone = 'attention' -%}
+                {% endif %}
+                {%- assign show_refund_badge = false -%}
+                {%- assign refund_badge_label = '' -%}
+                {%- assign refund_badge_partial = false -%}
+                {% if is_refunded %}
+                  {%- assign show_refund_badge = true -%}
+                  {%- assign refund_badge_label = 'Refunded' -%}
+                {% elsif is_partially_refunded %}
+                  {%- assign show_refund_badge = true -%}
+                  {%- assign refund_badge_label = 'Partially Refunded' -%}
+                  {%- assign refund_badge_partial = true -%}
+                {% endif %}
+
+                {%- assign tour_inferred_adult_count = 0 -%}
+                {%- assign tour_inferred_child_count = 0 -%}
+                {%- assign tour_inferred_infant_count = 0 -%}
+                {%- assign tour_has_inferred_guest_breakdown = false -%}
+                {% for line_item in order.line_items %}
+                  {%- assign tsuffix = line_item.product.template_suffix | default: '' | downcase -%}
+                  {%- assign is_tour = false -%}
+                  {% if tsuffix contains 'travel' %}{%- assign is_tour = true -%}{% endif %}
+                  {% for prop in line_item.properties %}
+                    {%- assign pk = prop.first | downcase -%}
+                    {% if pk contains 'date' or pk contains 'traveler' or pk contains 'adult' or pk contains 'teen' or pk contains 'child' or pk contains 'infant' or pk contains 'booking' %}
+                      {%- assign is_tour = true -%}
+                    {% endif %}
+                  {% endfor %}
+                  {% if is_tour %}
+                    {%- assign order_has_tour = true -%}
+                    {%- assign tour_line = line_item -%}
+                    {%- assign tour_variant_text = line_item.variant.title | default: line_item.variant_title | default: '' | downcase -%}
+                    {%- if tour_variant_text == blank or tour_variant_text == 'default title' -%}
+                      {%- assign tour_guest_type_text = line_item.title | default: '' | downcase -%}
+                    {%- else -%}
+                      {%- assign tour_guest_type_text = tour_variant_text -%}
+                    {%- endif -%}
+                    {%- if tour_guest_type_text contains 'adult' or tour_guest_type_text contains '성인' -%}
+                      {%- assign tour_inferred_adult_count = tour_inferred_adult_count | plus: line_item.quantity -%}
+                      {%- assign tour_has_inferred_guest_breakdown = true -%}
+                    {%- elsif tour_guest_type_text contains 'infant' or tour_guest_type_text contains 'baby' or tour_guest_type_text contains 'toddler' or tour_guest_type_text contains '유아' or tour_guest_type_text contains '영아' -%}
+                      {%- assign tour_inferred_infant_count = tour_inferred_infant_count | plus: line_item.quantity -%}
+                      {%- assign tour_has_inferred_guest_breakdown = true -%}
+                    {%- elsif tour_guest_type_text contains 'child' or tour_guest_type_text contains 'children' or tour_guest_type_text contains 'teen' or tour_guest_type_text contains 'youth' or tour_guest_type_text contains '청소년' or tour_guest_type_text contains '어린이' -%}
+                      {%- assign tour_inferred_child_count = tour_inferred_child_count | plus: line_item.quantity -%}
+                      {%- assign tour_has_inferred_guest_breakdown = true -%}
+                    {%- endif -%}
+                  {% endif %}
+                {% endfor %}
+                {% unless order_has_tour %}{% continue %}{% endunless %}
+
+                {%- assign tour_adult_count = '' -%}
+                {%- assign tour_child_count = '' -%}
+                {%- assign tour_teen_count = '' -%}
+                {%- assign tour_infant_count = '' -%}
+                {%- assign tour_total_pax = '' -%}
+                {%- assign tour_party_size = '' -%}
+                {%- assign tour_travelers_adult = '' -%}
+                {%- assign tour_travelers_child = '' -%}
+                {%- assign tour_travelers_infant = '' -%}
+                {%- assign tour_pickup = '' -%}
+                {%- assign tour_travel_date = '' -%}
+                {%- assign tour_start_label = '' -%}
+                {%- assign tour_start_display = '' -%}
+                {%- assign tour_product_start_label = '' -%}
+                {%- assign tour_travelers_summary = '' -%}
+                {%- assign tour_travelers_json = '' -%}
+                {%- assign tour_contact_name = '' -%}
+                {%- assign tour_contact_phone = '' -%}
+                {%- assign tour_dietary = '' -%}
+                {% if tour_line %}
+                  {%- assign tour_product_start_label = tour_line.product.metafields.travel.start_time_label.value | default: '' -%}
+                  {% for prop in tour_line.properties %}
+                    {%- assign pk = prop.first | downcase | strip -%}
+                    {%- assign pv = prop.last | strip -%}
+                    {% if pv == blank %}{% continue %}{% endif %}
+                    {% if pk == 'pickup_location' %}{%- assign tour_pickup = pv -%}
+                    {% elsif pk == 'travel_date' %}{%- assign tour_travel_date = pv -%}
+                    {% elsif pk == 'booking_date' or pk == '_booking_date' or pk == 'booking[date]' or pk == 'booking date' or pk == 'date' %}
+                      {%- if tour_travel_date == blank -%}{%- assign tour_travel_date = pv -%}{%- endif -%}
+                    {% elsif pk == 'start_date' or pk == 'booking[start]' or pk == 'booking start' or pk == 'start date' or pk == 'start' %}
+                      {%- if tour_travel_date == blank -%}{%- assign tour_travel_date = pv | slice: 0, 10 -%}{%- endif -%}
+                    {% elsif pk == 'start_time_label' %}{%- assign tour_start_label = pv -%}
+                    {% elsif pk == 'adult' or pk == 'adults' or pk == 'adult_count' or pk == 'adult count' or pk == 'adultcount' %}{%- assign tour_adult_count = pv -%}
+                    {% elsif pk == 'child' or pk == 'children' or pk == 'child_count' or pk == 'child count' or pk == 'childcount' %}{%- assign tour_child_count = pv -%}
+                    {% elsif pk == 'teen' or pk == 'teens' or pk == 'youth' or pk == 'teen_count' or pk == 'teen count' or pk == 'teencount' %}{%- assign tour_teen_count = pv -%}
+                    {% elsif pk == 'infant' or pk == 'infants' or pk == 'infant_count' or pk == 'infant count' or pk == 'infantcount' %}{%- assign tour_infant_count = pv -%}
+                    {% elsif pk == 'total_pax' or pk == 'total pax' or pk == 'totalpax' %}{%- assign tour_total_pax = pv -%}
+                    {% elsif pk == 'party_size' or pk == 'party size' or pk == 'partysize' %}{%- assign tour_party_size = pv -%}
+                    {% elsif pk == 'travelers_adult' or pk == 'traveler_adult' or pk == 'travelers adult' or pk == 'traveler adult' or pk == 'travelersadult' or pk == 'traveleradult' %}{%- assign tour_travelers_adult = pv -%}
+                    {% elsif pk == 'travelers_child' or pk == 'traveler_child' or pk == 'travelers child' or pk == 'traveler child' or pk == 'travelerschild' or pk == 'travelerchild' %}{%- assign tour_travelers_child = pv -%}
+                    {% elsif pk == 'travelers_infant' or pk == 'traveler_infant' or pk == 'travelers infant' or pk == 'traveler infant' or pk == 'travelersinfant' or pk == 'travelerinfant' %}{%- assign tour_travelers_infant = pv -%}
+                    {% elsif pk == 'traveler_summary' or pk == 'travelers_summary' or pk == 'traveler summary' or pk == 'travelers summary' or pk == 'travelerssummary' %}{%- assign tour_travelers_summary = pv -%}
+                    {% elsif pk == 'travelers_json' or pk == 'travelers json' or pk == 'travelersjson' or pk == 'travelers' %}{%- assign tour_travelers_json = pv -%}
+                    {% elsif pk == 'reservation_contact_name' %}{%- assign tour_contact_name = pv -%}
+                    {% elsif pk == 'reservation_contact_phone_e164' %}{%- assign tour_contact_phone = pv -%}
+                    {% elsif pk == 'dietary_restrictions' %}{%- assign tour_dietary = pv -%}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+                {%- if tour_start_label == blank and tour_product_start_label != blank -%}
+                  {%- assign tour_start_label = tour_product_start_label -%}
+                {%- endif -%}
+                {%- assign tour_travel_date_display = '' -%}
+                {%- if tour_travel_date != blank -%}
+                  {%- assign tour_travel_date_display = tour_travel_date | date: "%b %-d, %Y" -%}
+                {%- endif -%}
+                {%- if tour_travel_date_display != blank and tour_start_label != blank -%}
+                  {%- assign tour_start_display = tour_travel_date_display | append: ' · ' | append: tour_start_label -%}
+                {%- elsif tour_travel_date_display != blank -%}
+                  {%- assign tour_start_display = tour_travel_date_display -%}
+                {%- elsif tour_start_label != blank -%}
+                  {%- assign tour_start_display = tour_start_label -%}
+                {%- endif -%}
+                {%- assign tour_booking_status_label = 'BOOKING CONFIRMED' -%}
+                {%- assign tour_booking_status_tone = 'success' -%}
+                {%- assign tour_is_completed = false -%}
+                {%- assign tour_completion_tag = 'bta-tour-completed-line-' | append: tour_line.id -%}
+                {%- if is_cancelled or is_refunded or is_partially_refunded or is_voided -%}
+                  {%- assign tour_booking_status_label = 'CANCELLED' -%}
+                  {%- assign tour_booking_status_tone = 'critical' -%}
+                {%- elsif is_active_order and order.tags contains tour_completion_tag -%}
+                  {%- assign tour_booking_status_label = 'TOUR COMPLETED' -%}
+                  {%- assign tour_booking_status_tone = 'success' -%}
+                  {%- assign tour_is_completed = true -%}
+                {%- endif -%}
+                {%- assign can_review = false -%}
+                {%- if is_active_order and tour_is_completed -%}{%- assign can_review = true -%}{%- endif -%}
+                {%- assign bk_travelers = '' -%}
+                {%- assign bk_guest_total = 0 -%}
+                {%- assign bk_has_guest_total = false -%}
+                {%- assign bk_has_guest_breakdown = false -%}
+                {%- assign bk_breakdown_adult = 0 -%}
+                {%- assign bk_breakdown_child = 0 -%}
+                {%- assign bk_breakdown_infant = 0 -%}
+                {%- assign tour_youth_count = tour_child_count -%}
+                {%- if tour_youth_count == blank -%}{%- assign tour_youth_count = tour_teen_count -%}{%- endif -%}
+                {%- if tour_adult_count != blank or tour_youth_count != blank or tour_infant_count != blank -%}
+                  {%- assign bk_breakdown_adult = tour_adult_count | plus: 0 -%}
+                  {%- assign bk_breakdown_child = tour_youth_count | plus: 0 -%}
+                  {%- assign bk_breakdown_infant = tour_infant_count | plus: 0 -%}
+                  {%- assign bk_guest_total = bk_breakdown_adult | plus: bk_breakdown_child | plus: bk_breakdown_infant -%}
+                  {%- if bk_guest_total > 0 -%}
+                    {%- assign bk_has_guest_breakdown = true -%}
+                    {%- assign bk_has_guest_total = true -%}
+                  {%- endif -%}
+                {%- endif -%}
+                {%- assign tour_has_traveler_count_properties = false -%}
+                {%- if tour_travelers_adult != blank or tour_travelers_child != blank or tour_travelers_infant != blank -%}
+                  {%- assign tour_has_traveler_count_properties = true -%}
+                {%- endif -%}
+                {%- if bk_has_guest_breakdown == false and tour_has_traveler_count_properties -%}
+                  {%- assign bk_breakdown_adult = tour_travelers_adult | plus: 0 -%}
+                  {%- assign bk_breakdown_child = tour_travelers_child | plus: 0 -%}
+                  {%- assign bk_breakdown_infant = tour_travelers_infant | plus: 0 -%}
+                  {%- assign bk_guest_total = bk_breakdown_adult | plus: bk_breakdown_child | plus: bk_breakdown_infant -%}
+                  {%- if bk_guest_total > 0 -%}
+                    {%- assign bk_has_guest_breakdown = true -%}
+                    {%- assign bk_has_guest_total = true -%}
+                  {%- endif -%}
+                {%- endif -%}
+                {%- if bk_has_guest_breakdown == false and tour_has_inferred_guest_breakdown -%}
+                  {%- assign bk_breakdown_adult = tour_inferred_adult_count | plus: 0 -%}
+                  {%- assign bk_breakdown_child = tour_inferred_child_count | plus: 0 -%}
+                  {%- assign bk_breakdown_infant = tour_inferred_infant_count | plus: 0 -%}
+                  {%- assign bk_guest_total = bk_breakdown_adult | plus: bk_breakdown_child | plus: bk_breakdown_infant -%}
+                  {%- if bk_guest_total > 0 -%}
+                    {%- assign bk_has_guest_breakdown = true -%}
+                    {%- assign bk_has_guest_total = true -%}
+                  {%- endif -%}
+                {%- endif -%}
+                {%- if bk_has_guest_breakdown -%}
+                  {%- assign bk_breakdown_label = '' -%}
+                  {%- if bk_breakdown_adult > 0 -%}
+                    {%- assign bk_breakdown_label = 'Adult ' | append: bk_breakdown_adult -%}
+                  {%- endif -%}
+                  {%- if bk_breakdown_child > 0 -%}
+                    {%- if bk_breakdown_label != blank -%}{%- assign bk_breakdown_label = bk_breakdown_label | append: ', ' -%}{%- endif -%}
+                    {%- assign bk_breakdown_label = bk_breakdown_label | append: 'Child ' | append: bk_breakdown_child -%}
+                  {%- endif -%}
+                  {%- if bk_breakdown_infant > 0 -%}
+                    {%- if bk_breakdown_label != blank -%}{%- assign bk_breakdown_label = bk_breakdown_label | append: ', ' -%}{%- endif -%}
+                    {%- assign bk_breakdown_label = bk_breakdown_label | append: 'Infant ' | append: bk_breakdown_infant -%}
+                  {%- endif -%}
+                  {%- assign bk_travelers = bk_breakdown_label -%}
+                {%- endif -%}
+                {%- if bk_has_guest_total == false and tour_total_pax != blank -%}
+                  {%- assign bk_guest_total = tour_total_pax | plus: 0 -%}
+                  {%- if bk_guest_total > 0 -%}{%- assign bk_has_guest_total = true -%}{%- endif -%}
+                {%- endif -%}
+                {%- if bk_has_guest_total == false and tour_party_size != blank -%}
+                  {%- assign bk_guest_total = tour_party_size | plus: 0 -%}
+                  {%- if bk_guest_total > 0 -%}{%- assign bk_has_guest_total = true -%}{%- endif -%}
+                {%- endif -%}
+                {%- if bk_has_guest_total == false -%}
+                  {%- assign bk_legacy_total = 0 -%}
+                  {%- if tour_adult_count != blank -%}{%- assign bk_legacy_total = bk_legacy_total | plus: tour_adult_count -%}{%- endif -%}
+                  {%- if tour_youth_count != blank -%}{%- assign bk_legacy_total = bk_legacy_total | plus: tour_youth_count -%}{%- endif -%}
+                  {%- if tour_infant_count != blank -%}{%- assign bk_legacy_total = bk_legacy_total | plus: tour_infant_count -%}{%- endif -%}
+                  {%- if bk_legacy_total > 0 -%}
+                    {%- assign bk_guest_total = bk_legacy_total -%}
+                    {%- assign bk_has_guest_total = true -%}
+                  {%- endif -%}
+                {%- endif -%}
+                {%- if bk_has_guest_total == false -%}
+                  {%- assign bk_travelers_total = 0 -%}
+                  {%- if tour_travelers_adult != blank -%}{%- assign bk_travelers_total = bk_travelers_total | plus: tour_travelers_adult -%}{%- endif -%}
+                  {%- if tour_travelers_child != blank -%}{%- assign bk_travelers_total = bk_travelers_total | plus: tour_travelers_child -%}{%- endif -%}
+                  {%- if tour_travelers_infant != blank -%}{%- assign bk_travelers_total = bk_travelers_total | plus: tour_travelers_infant -%}{%- endif -%}
+                  {%- if bk_travelers_total > 0 -%}
+                    {%- assign bk_guest_total = bk_travelers_total -%}
+                    {%- assign bk_has_guest_total = true -%}
+                  {%- endif -%}
+                {%- endif -%}
+                {%- if bk_has_guest_total and bk_travelers == blank -%}
+                  {%- assign bk_guest_label = 'guests' -%}
+                  {%- if bk_guest_total == 1 -%}{%- assign bk_guest_label = 'guest' -%}{%- endif -%}
+                  {%- assign bk_travelers = bk_guest_total | append: ' ' | append: bk_guest_label -%}
+                {%- endif -%}
+                {%- if bk_travelers == blank -%}
+                  {%- if tour_travelers_summary != blank -%}
+                    {%- assign bk_travelers = tour_travelers_summary -%}
+                  {%- elsif tour_line.variant_title != blank and tour_line.variant_title != 'Default Title' -%}
+                    {%- assign bk_travelers = tour_line.variant_title | append: ' x ' | append: tour_line.quantity -%}
+                  {%- elsif tour_line.quantity > 0 -%}
+                    {%- assign bk_travelers = tour_line.quantity | append: ' guest(s)' -%}
+                  {%- else -%}
+                    {%- assign bk_travelers = 'Confirmed by email' -%}
+                  {%- endif -%}
+                {%- endif -%}
+
+                <article class="ob-card ob-card--booking ob-card--tnty{% unless is_active_order %} ob-card--inactive{% endunless %}" data-booking-card data-my-order-card data-order-id="{{ order.id }}">
+
+                  <div class="ob-bk-head">
+                    <span class="ob-bk-eyebrow ob-status-badge--{{ tour_booking_status_tone }}">{{ tour_booking_status_label }}</span>
+                    {% if show_refund_badge %}<span class="ob-card__refunded-badge ob-card__refunded-badge--booking{% if refund_badge_partial %} ob-card__refunded-badge--partial{% endif %}">{{ refund_badge_label }}</span>{% endif %}
+                    <h3 class="ob-bk-title">{% if tour_line %}{{ tour_line.product.title | default: tour_line.title }}{% else %}{{ order.name }}{% endif %}</h3>
+                    <a class="ob-bk-pill" href="{{ order.customer_url }}">{{ order.name }}</a>
+                  </div>
+
+                  <div class="ob-bk-details">
+                    <div class="ob-bk-detail">
+                      <span class="ob-bk-detail-label">Guests</span>
+                      <span
+                        class="ob-bk-detail-value"
+                        data-booking-guests
+                        {% if bk_has_guest_breakdown %}data-guest-breakdown="true"{% endif %}
+                        {% if tour_travelers_json != blank and bk_has_guest_breakdown == false %}data-travelers-json="{{ tour_travelers_json | escape }}"{% endif %}
+                      >{{ bk_travelers }}</span>
+                    </div>
+                    <div class="ob-bk-detail">
+                      <span class="ob-bk-detail-label">Date &amp; time</span>
+                      <span class="ob-bk-detail-value"{% if is_active_order %} data-current-booking-date data-order-id="{{ order.id }}" data-line-item-id="{{ tour_line.id }}" data-start-label="{{ tour_start_label | escape }}" data-loading-label="{{ 'booking_date.loading' | t | escape }}" data-error-label="{{ 'booking_date.unavailable' | t | escape }}" aria-live="polite"{% endif %}>{% if is_active_order %}{{ 'booking_date.loading' | t }}{% elsif tour_start_display != blank %}{{ tour_start_display }}{% else %}Confirmed by email{% endif %}</span>
+                    </div>
+                    <div class="ob-bk-detail ob-bk-detail--wide">
+                      <span class="ob-bk-detail-label">Pickup point</span>
+                      <span class="ob-bk-detail-value">{% if tour_pickup != blank %}{{ tour_pickup }}{% else %}Confirmed by email{% endif %}</span>
+                    </div>
+                    <div class="ob-bk-detail">
+                      <span class="ob-bk-detail-label">Reservation contact name</span>
+                      <span class="ob-bk-detail-value">{% if tour_contact_name != blank %}{{ tour_contact_name }}{% else %}Confirmed by email{% endif %}</span>
+                    </div>
+                    <div class="ob-bk-detail">
+                      <span class="ob-bk-detail-label">Reservation contact phone</span>
+                      <span class="ob-bk-detail-value">{% if tour_contact_phone != blank %}{{ tour_contact_phone }}{% else %}Confirmed by email{% endif %}</span>
+                    </div>
+                    <div class="ob-bk-detail ob-bk-detail--wide">
+                      <span class="ob-bk-detail-label">Dietary restrictions</span>
+                      <span class="ob-bk-detail-value">{% if tour_dietary != blank %}{{ tour_dietary }}{% else %}None{% endif %}</span>
+                    </div>
+                  </div>
+
+                  {% unless is_active_order %}
+                    <button class="ob-btn--text ob-hide-order" type="button" data-hide-order data-order-id="{{ order.id }}">Remove from my list</button>
+                  {% endunless %}
+
+                  {% if can_review %}
+                    <div class="ob-review-box">
+                      <form class="ob-review" data-review-form data-order-id="{{ order.id }}" data-product-id="{% if tour_line %}{{ tour_line.product_id }}{% endif %}">
+                        <div class="ob-review__head">
+                          <span class="ob-review__icon">⭐</span>
+                          <span class="ob-review__title">Write a Review</span>
+                        </div>
+                        <p class="ob-status" data-review-status aria-live="polite"></p>
+                        <textarea class="ob-textarea" data-review-body placeholder="How was your tour experience? (min 20 characters)" minlength="20" maxlength="2000"></textarea>
+                        <span class="ob-review-count" data-review-count style="font-size:12px;color:var(--muted);">0 / 2000</span>
+                        <button class="ob-btn--primary" type="submit" data-review-submit>Submit Review</button>
+                      </form>
+                    </div>
+                  {% endif %}
+
+                  {%- assign ob_paid_tx = nil -%}
+                  {%- for ob_tx in order.transactions -%}
+                    {%- if ob_paid_tx == nil and ob_tx.status == 'success' and ob_tx.kind != 'refund' and ob_tx.kind != 'void' -%}
+                      {%- assign ob_paid_tx = ob_tx -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  <details class="ob-accordion">
+                    <summary class="ob-accordion__trigger">
+                      <span>Purchase Details</span>
+                      <span class="ob-accordion__chevron" aria-hidden="true"></span>
+                    </summary>
+                    <div class="ob-accordion__body">
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Purchase date</span>
+                        <span class="ob-info-value">{{ order.created_at | date: "%b %-d, %Y" }}</span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Subtotal</span>
+                        <span class="ob-info-value">{{ order.line_items | sum: 'original_line_price' | money }}</span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Discount</span>
+                        <span class="ob-info-value">
+                          {%- if order.total_discounts > 0 -%}-{{ order.total_discounts | money }}{%- else -%}—{%- endif -%}
+                        </span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Amount paid</span>
+                        <span class="ob-info-value ob-info-value--strong">{{ order.total_price | money }}</span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Payment method</span>
+                        <span class="ob-info-value">
+                          {%- if ob_paid_tx and ob_paid_tx.payment_details.credit_card_number != blank -%}
+                            {{ ob_paid_tx.payment_details.credit_card_company }} {{ ob_paid_tx.payment_details.credit_card_number }}
+                          {%- elsif ob_paid_tx and ob_paid_tx.gateway_display_name != blank -%}
+                            {{ ob_paid_tx.gateway_display_name }}
+                          {%- elsif ob_paid_tx and ob_paid_tx.gateway != blank -%}
+                            {{ ob_paid_tx.gateway | replace: '_', ' ' | capitalize }}
+                          {%- elsif order.payment_gateway -%}
+                            {{ order.payment_gateway | replace: '_', ' ' | capitalize }}
+                          {%- else -%}—{%- endif -%}
+                        </span>
+                      </div>
+                      <div class="ob-info-row">
+                        <span class="ob-info-label">Payment status</span>
+                        <span class="ob-info-value"><span class="ob-status-badge ob-status-badge--{{ order_status_tone }}">{{ order_status_label }}</span></span>
+                      </div>
+                    </div>
+                  </details>
+                  <div class="ob-policy-link">
+                    <a href="https://kpurpleshoes.com/pages/contact-1" target="_blank" rel="noopener">Contact us</a>
+                    <span class="ob-policy-link__divider" aria-hidden="true">|</span>
+                    <a href="{{ section.settings.refund_policy_url | default: '/policies/refund-policy' }}" target="_blank" rel="noopener">Refund policy ↗</a>
+                  </div>
+
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="ob-empty">No orders found</div>
+          {% endif %}
+        {% else %}
+          <div class="ob-login-prompt">
+            <p>Please sign in to see your bookings.</p>
+            <a href="{{ routes.account_login_url }}" class="ob-btn--primary ob-btn--login">Sign in</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Extension Modal -->
+      {% if customer %}
+        <div class="ob-extension-modal" data-extension-modal hidden>
+          <div class="ob-extension-modal__backdrop" data-extension-modal-close></div>
+          <div class="ob-extension-modal__card" role="dialog" aria-modal="true" aria-labelledby="ObExtensionModalTitle">
+            <div class="ob-extension-modal__header">
+              <div class="ob-extension-modal__header-content">
+                <h3 class="ob-extension-modal__heading" id="ObExtensionModalTitle" data-extension-modal-title>Extend Access Period</h3>
+                <p class="ob-extension-modal__desc" data-extension-modal-desc>Select how many 30-day units you want to add, then proceed to checkout.</p>
+              </div>
+              <button class="ob-extension-modal__close" type="button" aria-label="Close" data-extension-modal-close>&times;</button>
+            </div>
+            <div class="ob-extension-modal__body">
+              <div id="GuideExtensionRoot" data-customer-id="{{ customer.id }}"></div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </main>
+  </div>
+</div>
+
+<style>
+.mp-wrap {
+  --primary: #6366f1;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --radius: 16px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.mp-main { min-width: 0; }
+
+/* ── Header ── */
+.ob-header { margin-bottom: 28px; }
+.ob-header__sub { color: var(--muted); font-size: 14px; margin: 6px 0 16px; }
+
+/* ── Tabs ── */
+.mp-chipRow { display: flex; gap: 10px; flex-wrap: wrap; }
+.mp-chip {
+  appearance: none; border: 1px solid var(--border); background: #fff;
+  color: var(--muted); font-weight: 700; padding: 8px 20px; cursor: pointer;
+  font-size: 13px; border-radius: 999px; transition: all 0.2s;
+}
+.mp-chip.is-active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ob-tab-panel { margin-top: 16px; }
+.ob-tab-panel[hidden] { display: none; }
+
+/* ── List ── */
+.ob-list { display: grid; gap: 20px; }
+
+/* ── Card ── */
+.ob-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.ob-card--inactive {
+  filter: grayscale(1);
+  opacity: 0.72;
+}
+
+.ob-card__product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.ob-card__product-badge {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.ob-card__product-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  flex: 1;
+}
+.ob-card__refunded-badge {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fdecea;
+  color: #b71c1c;
+  border: 1px solid #f5c6cb;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ob-card__refunded-badge--booking {
+  margin-left: 0;
+  margin-bottom: 8px;
+}
+.ob-card__refunded-badge--partial {
+  background: #fff8e1;
+  color: #b45309;
+  border-color: #fcd34d;
+}
+
+/* 2~3. meta rows */
+.ob-card__meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ob-card__meta-label { color: var(--muted); font-weight: 500; }
+.ob-card__meta-value { font-weight: 700; color: var(--text); }
+.ob-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: #eef2ff;
+  color: #4338ca;
+}
+.ob-status-badge--success { background: #ecfdf5; color: #047857; }
+.ob-status-badge--critical { background: #fef2f2; color: #b42318; }
+.ob-status-badge--attention { background: #fffbeb; color: #b45309; }
+.ob-status-badge--neutral { background: #f1f5f9; color: #475569; }
+.ob-card__days-value {
+  color: var(--primary);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.ob-extend-row {
+  margin: 14px 0 0;
+}
+.ob-btn--extend {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.ob-btn--extend:hover { opacity: 0.88; }
+
+.ob-review-box {
+  margin-top: 16px;
+  padding: 18px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.ob-review__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.ob-review__icon { font-size: 16px; }
+.ob-review__title { font-size: 14px; font-weight: 800; color: var(--text); }
+.ob-textarea {
+  width: 100%; min-height: 80px; border-radius: 8px; border: 1px solid var(--border);
+  padding: 12px; font-size: 14px; resize: none; box-sizing: border-box;
+}
+.ob-btn--primary {
+  display: block;
+  width: 100%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+.ob-btn--primary:hover { opacity: 0.88; }
+.ob-review--submitted,
+.ob-review--editing {
+  margin-top: 10px;
+}
+.ob-review__body {
+  margin: 10px 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.ob-review__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ob-btn--secondary,
+.ob-btn--text {
+  appearance: none;
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ob-btn--secondary {
+  color: var(--primary);
+  background: #fff;
+  border: 1px solid var(--primary);
+}
+.ob-btn--text {
+  color: #b42318;
+  background: transparent;
+  border: 1px solid #fecaca;
+}
+.ob-btn--secondary:hover,
+.ob-btn--text:hover { opacity: .8; }
+.ob-btn--secondary:disabled,
+.ob-btn--text:disabled { cursor: not-allowed; opacity: .55; }
+
+.ob-accordion {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ob-accordion__trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  list-style: none;
+  background: #fff;
+  user-select: none;
+}
+.ob-accordion__trigger::-webkit-details-marker { display: none; }
+.ob-accordion__chevron {
+  width: 16px;
+  height: 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") center/contain no-repeat;
+  transition: transform 0.25s;
+  flex-shrink: 0;
+}
+.ob-accordion[open] .ob-accordion__chevron { transform: rotate(180deg); }
+.ob-accordion__body {
+  padding: 4px 16px 14px;
+  background: #fafbfc;
+  border-top: 1px solid var(--border);
+}
+
+.ob-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ob-info-row:last-child { border-bottom: none; }
+.ob-info-label { color: var(--muted); flex-shrink: 0; }
+.ob-info-value { font-weight: 600; color: var(--text); text-align: right; }
+.ob-info-value--strong { font-weight: 800; color: var(--primary); }
+.ob-info-value--note { font-style: italic; color: var(--muted); }
+
+.ob-app-download {
+  margin-top: 14px;
+  border: 1px solid #ede9fe;
+  border-radius: 12px;
+  background: #f5f3ff;
+}
+.ob-app-download__inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  flex-wrap: wrap;
+}
+.ob-app-download__icon { font-size: 28px; flex-shrink: 0; }
+.ob-app-download__text {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ob-app-download__text strong { font-size: 13px; font-weight: 800; color: #4c1d95; }
+.ob-app-download__text span { font-size: 12px; color: #6d28d9; }
+.ob-app-download__links { display: flex; gap: 8px; flex-wrap: wrap; }
+.ob-app-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.ob-app-btn:hover { opacity: 0.85; }
+.ob-app-btn--ios { background: #000; color: #fff; }
+.ob-app-btn--android { background: #2ea44f; color: #fff; }
+
+.ob-policy-link {
+  margin-top: 12px;
+  text-align: right;
+}
+.ob-policy-link a {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px dashed currentColor;
+}
+.ob-policy-link a:hover { color: var(--primary); }
+.ob-policy-link__divider { display: inline-block; margin: 0 8px; color: var(--muted); font-size: 12px; font-weight: 600; }
+
+/* ── Booking card — tour TY style ── */
+.ob-card--tnty {
+  border-top: 5px solid #5b2bd8;
+}
+.ob-bk-head {
+  text-align: center;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.ob-bk-eyebrow {
+  display: inline-block;
+  background: rgba(91,43,216,0.08);
+  color: #5b2bd8;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ob-bk-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #3a156f;
+  line-height: 1.3;
+}
+.ob-bk-pill {
+  display: inline-block;
+  background: rgba(91,43,216,0.08);
+  color: #3a156f;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.ob-bk-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ob-bk-detail {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f5f6f8;
+  padding: 12px 14px;
+}
+.ob-bk-detail--wide {
+  grid-column: 1 / -1;
+}
+.ob-bk-detail-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 5px;
+}
+.ob-bk-detail-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ── Empty / Login ── */
+.ob-empty {
+  padding: 60px 20px;
+  text-align: center;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 15px;
+}
+.ob-login-prompt {
+  padding: 60px 20px;
+  text-align: center;
+  background: #fff;
+  border-radius: 16px;
+}
+.ob-login-prompt p { margin-bottom: 16px; font-weight: 700; }
+.ob-btn--login {
+  text-decoration: none;
+  display: inline-block;
+  width: auto;
+  padding: 12px 40px;
+}
+
+
+/* ── Responsive ── */
+@media (max-width: 749px) {
+  .ob-app-download__inner { flex-direction: column; }
+}
+</style>
+
+<script src="{{ 'orders-bookings-reviews.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'booking-current-date.js' | asset_url }}" defer="defer"></script>
+<script>
+(function(){
+  var root = document.querySelector('[data-orders-bookings]');
+  if (!root) return;
+
+  /* ── Tab switching (URL로 구분: ?tab=orders | ?tab=booking) ── */
+  var obTabs = root.querySelectorAll('[data-ob-tab]');
+  var obPanels = root.querySelectorAll('[data-ob-tab-panel]');
+  var OB_VALID_TABS = ['orders', 'booking'];
+
+  function normalizeObTab(key) {
+    if (key === 'bookings') return 'booking'; // 관용 표기 허용
+    return OB_VALID_TABS.indexOf(key) !== -1 ? key : 'orders';
+  }
+
+  function getObTabFromUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var q = params.get('tab');
+      if (q) return normalizeObTab(q.toLowerCase());
+      var hash = (window.location.hash || '').replace('#', '').toLowerCase();
+      if (hash) return normalizeObTab(hash);
+    } catch (e) {}
+    return 'orders';
+  }
+
+  function syncObTabToUrl(key) {
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set('tab', key);
+      url.hash = '';
+      window.history.replaceState({ obTab: key }, '', url.toString());
+    } catch (e) {}
+  }
+
+  function openObTab(key, updateUrl) {
+    key = normalizeObTab(key);
+    obTabs.forEach(function(tab) {
+      tab.classList.toggle('is-active', tab.getAttribute('data-ob-tab') === key);
+    });
+    obPanels.forEach(function(panel) {
+      var active = panel.getAttribute('data-ob-tab-panel') === key;
+      panel.hidden = !active;
+      panel.classList.toggle('is-active', active);
+    });
+    if (updateUrl !== false) syncObTabToUrl(key);
+  }
+  obTabs.forEach(function(tab) {
+    tab.addEventListener('click', function() { openObTab(tab.getAttribute('data-ob-tab')); });
+  });
+  // 뒤로/앞으로 가기 시 URL의 탭 상태 반영
+  window.addEventListener('popstate', function() { openObTab(getObTabFromUrl(), false); });
+  // 초기 로드: URL의 ?tab= 값으로 탭 열기(없으면 orders), URL도 정규화
+  openObTab(getObTabFromUrl());
+
+  /* ── Booking guest breakdown fallback ── */
+  function normalizeGuestCount(value) {
+    var count = parseInt(value, 10);
+    if (isNaN(count) || count < 0) return 0;
+    return count;
+  }
+
+  function normalizeGuestKey(value) {
+    return String(value || '').toLowerCase().replace(/[\s_-]/g, '');
+  }
+
+  function pickGuestCount(data, keys) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return 0;
+    for (var i = 0; i < keys.length; i += 1) {
+      var value = data[keys[i]];
+      if (value !== undefined && value !== null && value !== '') {
+        return normalizeGuestCount(value);
+      }
+    }
+
+    var normalizedLookup = {};
+    keys.forEach(function(key) {
+      normalizedLookup[normalizeGuestKey(key)] = true;
+    });
+
+    var dataKeys = Object.keys(data);
+    for (var j = 0; j < dataKeys.length; j += 1) {
+      var dataKey = dataKeys[j];
+      if (!normalizedLookup[normalizeGuestKey(dataKey)]) continue;
+      var normalizedValue = data[dataKey];
+      if (normalizedValue !== undefined && normalizedValue !== null && normalizedValue !== '') {
+        return normalizeGuestCount(normalizedValue);
+      }
+    }
+
+    return 0;
+  }
+
+  function getTravelersData(data) {
+    if (!data || typeof data !== 'object') return null;
+    if (Array.isArray(data)) return data;
+    if (data.travelers && typeof data.travelers === 'object') return data.travelers;
+    if (data.guestCounts && typeof data.guestCounts === 'object') return data.guestCounts;
+    if (data.guests && typeof data.guests === 'object') return data.guests;
+    return data;
+  }
+
+  function typeFromText(value) {
+    var text = String(value || '').toLowerCase();
+    if (!text) return '';
+    if (text.indexOf('adult') !== -1 || text.indexOf('성인') !== -1) return 'adult';
+    if (text.indexOf('infant') !== -1 || text.indexOf('baby') !== -1 || text.indexOf('toddler') !== -1 || text.indexOf('유아') !== -1 || text.indexOf('영아') !== -1) return 'infant';
+    if (text.indexOf('child') !== -1 || text.indexOf('children') !== -1 || text.indexOf('teen') !== -1 || text.indexOf('youth') !== -1 || text.indexOf('청소년') !== -1 || text.indexOf('어린이') !== -1) return 'child';
+    return '';
+  }
+
+  function countsFromArray(items) {
+    var counts = { adult: 0, child: 0, infant: 0 };
+    items.forEach(function(item) {
+      if (!item || typeof item !== 'object') return;
+      var type = typeFromText(item.type || item.ticketType || item.ticket_type || item.label || item.name || item.title);
+      if (!type) return;
+      var count = normalizeGuestCount(item.count || item.quantity || item.qty || item.value);
+      counts[type] += count;
+    });
+    return counts;
+  }
+
+  function formatGuestBreakdown(adult, child, infant) {
+    var total = adult + child + infant;
+    if (total <= 0) return '';
+    var parts = [];
+    if (adult > 0) parts.push('Adult ' + adult);
+    if (child > 0) parts.push('Child ' + child);
+    if (infant > 0) parts.push('Infant ' + infant);
+    return parts.join(', ');
+  }
+
+  function applyTravelersJsonGuests() {
+    root.querySelectorAll('[data-booking-guests][data-travelers-json]').forEach(function(el) {
+      if (el.getAttribute('data-guest-breakdown') === 'true') return;
+      var raw = el.getAttribute('data-travelers-json');
+      if (!raw) return;
+
+      var data;
+      try {
+        data = JSON.parse(raw);
+      } catch (error) {
+        return;
+      }
+      var travelersData = getTravelersData(data);
+      if (!travelersData || typeof travelersData !== 'object') return;
+
+      var counts = Array.isArray(travelersData)
+        ? countsFromArray(travelersData)
+        : {
+          adult: pickGuestCount(travelersData, ['adult', 'adults', 'adult_count', 'adultCount', 'travelers_adult', 'travelersAdult']),
+          child: pickGuestCount(travelersData, ['child', 'children', 'teen', 'teens', 'youth', 'child_count', 'childCount', 'teen_count', 'teenCount', 'travelers_child', 'travelersChild']),
+          infant: pickGuestCount(travelersData, ['infant', 'infants', 'infant_count', 'infantCount', 'travelers_infant', 'travelersInfant'])
+        };
+      var adult = counts.adult || 0;
+      var child = counts.child || 0;
+      var infant = counts.infant || 0;
+      var label = formatGuestBreakdown(adult, child, infant);
+      if (label) el.textContent = label;
+    });
+  }
+
+  applyTravelersJsonGuests();
+
+  /* ── Days remaining calculation ── */
+  var accessUnavailableLabel = {{ 'access_details.unavailable' | t | json }};
+  var accessUnavailableStatus = {{ 'access_details.status_unavailable' | t | json }};
+  var KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+  var MS_PER_DAY = 86400000;
+  var entitlementRows = Array.prototype.slice.call(root.querySelectorAll('[data-order-days]'));
+
+  function setDaysValue(row, label, tone) {
+    var valueEl = row ? row.querySelector('[data-days-value]') : null;
+    if (!valueEl) return;
+    valueEl.textContent = label;
+    valueEl.style.color = '';
+    if (tone === 'expired') valueEl.style.color = '#ef4444';
+    else if (tone === 'soon') valueEl.style.color = '#f59e0b';
+  }
+
+  function setAccessStatus(row, label, tone) {
+    var card = row ? row.closest('[data-order-card]') : null;
+    var badge = card ? card.querySelector('[data-order-access-status]') : null;
+    if (!badge) return;
+
+    badge.textContent = label;
+    badge.classList.remove('ob-status-badge--success', 'ob-status-badge--critical', 'ob-status-badge--attention', 'ob-status-badge--neutral');
+    badge.classList.add(tone === 'expired' ? 'ob-status-badge--critical' : tone === 'unavailable' ? 'ob-status-badge--neutral' : 'ob-status-badge--success');
+    if (card) card.classList.toggle('ob-card--inactive', tone === 'expired');
+  }
+
+  function kstDateStartMs(value) {
+    var date = value instanceof Date ? value : new Date(String(value));
+    if (isNaN(date.getTime())) return null;
+    var kstDate = new Date(date.getTime() + KST_OFFSET_MS);
+    return Date.UTC(kstDate.getUTCFullYear(), kstDate.getUTCMonth(), kstDate.getUTCDate());
+  }
+
+  function remainingDaysFromExpiry(expiresAt) {
+    var expiryDay = kstDateStartMs(expiresAt);
+    var today = kstDateStartMs(new Date());
+    if (expiryDay === null || today === null) return null;
+    return Math.floor((expiryDay - today) / MS_PER_DAY);
+  }
+
+  function formatExpiryDate(expiresAt) {
+    var date = new Date(String(expiresAt));
+    if (isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Seoul',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date);
+  }
+
+  function applyRemainingDays(row, remaining, expiresAt) {
+    if (typeof remaining !== 'number' || !isFinite(remaining)) {
+      applyAccessUnavailable(row);
+      return;
+    }
+    var expiryDate = formatExpiryDate(expiresAt);
+    if (remaining < 0) {
+      setDaysValue(row, expiryDate ? 'Expired · Ended on ' + expiryDate : 'Expired', 'expired');
+      setAccessStatus(row, 'Expired', 'expired');
+      return;
+    }
+    setDaysValue(row, remaining + ' days' + (expiryDate ? ' · Ends on ' + expiryDate : ''), remaining <= 30 ? 'soon' : '');
+    setAccessStatus(row, 'Active', 'active');
+  }
+
+  function applyAccessUnavailable(row) {
+    setDaysValue(row, accessUnavailableLabel);
+    setAccessStatus(row, accessUnavailableStatus, 'unavailable');
+  }
+
+  function buildEntitlementsUrl(customerId) {
+    return '/apps/bta-booking/guide-extension/entitlements?logged_in_customer_id=' +
+      encodeURIComponent(customerId) + '&_ts=' + Date.now();
+  }
+
+  function getEntitlementItemsByType(data) {
+    var itemsByType = {};
+    if (!data || !Array.isArray(data.items)) return itemsByType;
+    data.items.forEach(function(item) {
+      if (item && item.type) itemsByType[item.type] = item;
+    });
+    return itemsByType;
+  }
+
+  function pickEntitlementForRow(row, itemsByType, uiHints) {
+    var type = row.getAttribute('data-guide-type') || '';
+    var item = itemsByType[type] || null;
+    var bundleItem = itemsByType.BUNDLE || null;
+    if (
+      (!item || item.status === 'NONE') &&
+      bundleItem &&
+      bundleItem.status === 'ACTIVE' &&
+      ((type === 'PDF' && uiHints && uiHints.pdfAccessViaBundle) ||
+        (type === 'VIDEO' && uiHints && uiHints.videoAccessViaBundle))
+    ) {
+      return bundleItem;
+    }
+    return item;
+  }
+
+  function applyEntitlementDays(data) {
+    var itemsByType = getEntitlementItemsByType(data);
+    var uiHints = (data && data.uiHints) || {};
+    entitlementRows.forEach(function(row) {
+      var item = pickEntitlementForRow(row, itemsByType, uiHints);
+      if (!item || (item.status !== 'ACTIVE' && item.status !== 'EXPIRED')) {
+        applyAccessUnavailable(row);
+        return;
+      }
+      if (item.status === 'EXPIRED') {
+        var expiredDate = formatExpiryDate(item.expiresAtKst);
+        setDaysValue(row, expiredDate ? 'Expired · Ended on ' + expiredDate : 'Expired', 'expired');
+        setAccessStatus(row, 'Expired', 'expired');
+        return;
+      }
+      applyRemainingDays(row, remainingDaysFromExpiry(item.expiresAtKst), item.expiresAtKst);
+    });
+  }
+
+  function loadEntitlementDays() {
+    if (!entitlementRows.length) return;
+    var customerId = root.getAttribute('data-customer-id');
+    if (!customerId) {
+      entitlementRows.forEach(applyAccessUnavailable);
+      return;
+    }
+    fetch(buildEntitlementsUrl(customerId), {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(function(response) {
+        return response.json().then(function(payload) {
+          if (!response.ok || !payload || payload.ok === false) {
+            throw new Error('entitlements failed');
+          }
+          return payload.data || payload;
+        });
+      })
+      .then(applyEntitlementDays)
+      .catch(function(error) {
+        console.warn('[Orders & Bookings] Unable to load entitlement days:', error);
+        entitlementRows.forEach(applyAccessUnavailable);
+      });
+  }
+
+  loadEntitlementDays();
+
+  /* ── Extension Modal ── */
+  var extensionModal = root.querySelector('[data-extension-modal]');
+  var extensionModalTitle = root.querySelector('[data-extension-modal-title]');
+  var extensionModalDesc = root.querySelector('[data-extension-modal-desc]');
+  var extensionModalCloseEls = root.querySelectorAll('[data-extension-modal-close]');
+
+  function openExtensionModal(type, label) {
+    if (extensionModal) extensionModal.hidden = false;
+    if (extensionModalTitle) extensionModalTitle.textContent = label ? 'Extend ' + label : 'Extend Access Period';
+    if (extensionModalDesc) extensionModalDesc.textContent = label
+      ? 'Select how many 30-day units you want to add to your ' + label + ', then proceed to checkout.'
+      : 'Select how many 30-day units you want to add, then proceed to checkout.';
+    document.dispatchEvent(new CustomEvent('guide-extension:select-type', { detail: { type: type } }));
+  }
+  function closeExtensionModal() {
+    if (extensionModal) extensionModal.hidden = true;
+  }
+  root.querySelectorAll('[data-open-extension]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      openExtensionModal(btn.getAttribute('data-extension-type'), btn.getAttribute('data-extension-label') || '');
+    });
+  });
+  extensionModalCloseEls.forEach(function(el) { el.addEventListener('click', closeExtensionModal); });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && extensionModal && !extensionModal.hidden) closeExtensionModal();
+  });
+
+  /* Cancelled/refunded records remain in Shopify for accounting, but customers
+     can remove them from this My Page list. The preference is stored on the
+     customer account so it follows the customer across devices. */
+  var orderVisibilityEndpoint = '/apps/bta-booking/orders/visibility';
+  function hideSavedOrders(ids) {
+    if (!Array.isArray(ids)) return;
+    ids.forEach(function(id) {
+      root.querySelectorAll('[data-my-order-card][data-order-id="' + String(id).replace(/"/g, '') + '"]').forEach(function(card) {
+        card.hidden = true;
+      });
+    });
+  }
+  fetch(orderVisibilityEndpoint, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    .then(function(response) { return response.ok ? response.json() : null; })
+    .then(function(payload) { hideSavedOrders(payload && payload.data && payload.data.hiddenOrderIds); })
+    .catch(function() {});
+  root.addEventListener('click', function(event) {
+    var button = event.target.closest('[data-hide-order]');
+    if (!button) return;
+    var orderId = button.getAttribute('data-order-id');
+    if (!orderId || !window.confirm('Remove this cancelled or refunded item from your list?')) return;
+    button.disabled = true;
+    fetch(orderVisibilityEndpoint, {
+      method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'hide', orderId: orderId })
+    }).then(function(response) { return response.ok ? response.json() : Promise.reject(); })
+      .then(function() { hideSavedOrders([orderId]); })
+      .catch(function() { button.disabled = false; });
+  });
+})();
+</script>
+
+
+{%- else -%}
+  {% render 'member-login-required' %}
+{%- endif -%}
+{% schema %}
+{
+  "name": "Orders & Bookings",
+  "settings": [
+    { "type": "url", "id": "app_store_url", "label": "App Store URL" },
+    { "type": "url", "id": "play_store_url", "label": "Google Play URL" },
+    { "type": "url", "id": "refund_policy_url", "label": "Refund Policy page URL" },
+    { "type": "header", "content": "Spacing" },
+    { "type": "range", "id": "padding_top", "min": 0, "max": 100, "step": 4, "unit": "px", "label": "Top padding", "default": 40 },
+    { "type": "range", "id": "padding_bottom", "min": 0, "max": 100, "step": 4, "unit": "px", "label": "Bottom padding", "default": 40 }
+  ],
+  "presets": [{ "name": "Orders & Bookings" }]
+}
+{% endschema %}

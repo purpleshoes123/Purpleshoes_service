@@ -1,0 +1,26 @@
+{% doc %}
+  Returns allowed or blocked for the storefront page body.
+  @example
+  {% capture access %}{% render 'member-content-access' %}{% endcapture %}
+{% enddoc %}
+{%- liquid
+  capture public_intro_access
+    render 'public-intro-access'
+  endcapture
+  assign public_intro_access = public_intro_access | strip
+  assign access = 'blocked'
+  assign public_handles = 'guide-thankyou,squeezthank,freeguideoptin,free-guide-optin,starter-kit-viewer,signin,signup2,members-only,data-sharing-opt-out' | split: ','
+  assign public_types = 'index,policy,customers/login,customers/register,customers/activate_account,customers/reset_password,challenge,404' | split: ','
+  if customer or request.design_mode
+    assign access = 'allowed'
+  elsif public_intro_access == 'allowed'
+    assign access = 'allowed'
+  elsif public_types contains request.page_type
+    assign access = 'allowed'
+  elsif request.page_type == 'page' and public_handles contains page.handle
+    assign access = 'allowed'
+  elsif request.path == routes.account_recover_url
+    assign access = 'allowed'
+  endif
+  echo access
+-%}

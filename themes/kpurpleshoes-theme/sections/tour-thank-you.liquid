@@ -1,0 +1,946 @@
+{%- liquid
+  assign has_tour_booking = false
+  assign booking_order_name = ''
+  assign booking_order_url = ''
+  assign booking_tour_title = section.settings.tour_title | default: 'Your Experience Tour'
+  assign booking_pickup = ''
+  assign booking_time = ''
+  assign booking_date = ''
+  assign booking_duration = ''
+  assign booking_guests = ''
+  assign booking_start = ''
+  assign booking_variant = ''
+  assign booking_quantity = 0
+  assign booking_contact_name = ''
+  assign booking_contact_phone = ''
+  assign booking_dietary = ''
+  assign booking_adult = ''
+  assign booking_child = ''
+  assign booking_teen = ''
+  assign booking_infant = ''
+  assign booking_total_pax = ''
+  assign booking_party_size = ''
+  assign booking_travelers_adult = ''
+  assign booking_travelers_child = ''
+  assign booking_travelers_infant = ''
+  assign booking_travelers_json = ''
+  assign booking_group_id = ''
+  assign booking_inferred_adult_count = 0
+  assign booking_inferred_child_count = 0
+  assign booking_inferred_infant_count = 0
+  assign booking_has_inferred_guest_breakdown = false
+  assign booking_product_start_label = ''
+
+  if customer
+    for customer_order in customer.orders
+      for line_item in customer_order.line_items
+        assign line_is_tour = false
+        assign template_suffix = line_item.product.template_suffix | default: '' | downcase
+        assign product_handle = line_item.product.handle | default: '' | downcase
+        assign product_title = line_item.title | default: line_item.product.title | default: '' | downcase
+        assign product_type = line_item.product.type | default: '' | downcase
+
+        if template_suffix contains 'travel' or product_handle contains 'tour' or product_title contains 'tour' or product_type contains 'tour'
+          assign line_is_tour = true
+        endif
+
+        for property in line_item.properties
+          assign pk = property.first | downcase | strip
+          assign pk_key = pk | replace: ' ', '' | replace: '_', '' | replace: '-', ''
+          if pk_key == 'bookinggroupid' or pk_key == 'traveldate' or pk_key == 'starttimelabel' or pk contains 'date' or pk contains 'traveler' or pk contains 'adult' or pk contains 'teen' or pk contains 'child' or pk contains 'infant' or pk contains 'booking'
+            assign line_is_tour = true
+          endif
+        endfor
+
+        if line_is_tour
+          assign has_tour_booking = true
+          assign booking_order_name = customer_order.name
+          assign booking_order_url = customer_order.customer_url
+          assign booking_tour_title = line_item.product.title | default: line_item.title
+          assign booking_variant = line_item.variant_title
+          assign booking_quantity = line_item.quantity
+
+          assign booking_product_start_label = line_item.product.metafields.travel.start_time_label.value | default: ''
+
+          for property in line_item.properties
+            assign pk = property.first | downcase | strip
+            assign pk_key = pk | replace: ' ', '' | replace: '_', '' | replace: '-', ''
+            assign pv = property.last | strip
+            if pv == blank
+              continue
+            endif
+            if pk_key == 'bookinggroupid'
+              assign booking_group_id = pv
+            elsif pk == 'pickup_location' or pk contains 'pickup'
+              assign booking_pickup = pv
+            elsif pk == 'start_time_label' or pk == 'start_time'
+              assign booking_time = pv
+            elsif pk == 'tour_duration'
+              assign booking_duration = pv
+            elsif pk == 'travel_date'
+              assign booking_date = pv
+            elsif pk == 'booking_date' or pk == '_booking_date' or pk == 'booking[date]' or pk == 'booking date' or pk == 'date'
+              if booking_date == blank
+                assign booking_date = pv
+              endif
+            elsif pk == 'start_date' or pk == 'booking[start]' or pk == 'booking start' or pk == 'start date' or pk == 'start'
+              if booking_date == blank
+                assign booking_date = pv | slice: 0, 10
+              endif
+            elsif pk_key == 'travelersummary'
+              assign booking_guests = pv
+            elsif pk_key == 'totalpax'
+              assign booking_total_pax = pv
+            elsif pk_key == 'partysize'
+              assign booking_party_size = pv
+            elsif pk == 'reservation_contact_name'
+              assign booking_contact_name = pv
+            elsif pk == 'reservation_contact_phone_e164'
+              assign booking_contact_phone = pv
+            elsif pk == 'dietary_restrictions'
+              assign booking_dietary = pv
+            elsif pk_key == 'adult' or pk_key == 'adults' or pk_key == 'adultcount'
+              assign booking_adult = pv
+            elsif pk_key == 'child' or pk_key == 'children' or pk_key == 'childcount'
+              assign booking_child = pv
+            elsif pk_key == 'teen' or pk_key == 'teens' or pk_key == 'youth' or pk_key == 'teencount'
+              assign booking_teen = pv
+            elsif pk_key == 'infant' or pk_key == 'infants' or pk_key == 'infantcount'
+              assign booking_infant = pv
+            elsif pk_key == 'travelersadult' or pk_key == 'traveleradult'
+              assign booking_travelers_adult = pv
+            elsif pk_key == 'travelerschild' or pk_key == 'travelerchild'
+              assign booking_travelers_child = pv
+            elsif pk_key == 'travelersinfant' or pk_key == 'travelerinfant'
+              assign booking_travelers_infant = pv
+            elsif pk_key == 'travelersjson' or pk_key == 'travelers'
+              assign booking_travelers_json = pv
+            endif
+          endfor
+
+          for aggregate_line_item in customer_order.line_items
+            assign aggregate_line_is_tour = false
+            assign aggregate_template_suffix = aggregate_line_item.product.template_suffix | default: '' | downcase
+            assign aggregate_product_handle = aggregate_line_item.product.handle | default: '' | downcase
+            assign aggregate_product_title = aggregate_line_item.title | default: aggregate_line_item.product.title | default: '' | downcase
+            assign aggregate_product_type = aggregate_line_item.product.type | default: '' | downcase
+            assign aggregate_booking_group_id = ''
+
+            if aggregate_template_suffix contains 'travel' or aggregate_product_handle contains 'tour' or aggregate_product_title contains 'tour' or aggregate_product_type contains 'tour'
+              assign aggregate_line_is_tour = true
+            endif
+
+            for property in aggregate_line_item.properties
+              assign aggregate_pk = property.first | downcase | strip
+              assign aggregate_pk_key = aggregate_pk | replace: ' ', '' | replace: '_', '' | replace: '-', ''
+              assign aggregate_pv = property.last | strip
+              if aggregate_pk_key == 'bookinggroupid'
+                assign aggregate_booking_group_id = aggregate_pv
+              endif
+              if aggregate_pk_key == 'bookinggroupid' or aggregate_pk_key == 'traveldate' or aggregate_pk_key == 'starttimelabel' or aggregate_pk contains 'date' or aggregate_pk contains 'traveler' or aggregate_pk contains 'adult' or aggregate_pk contains 'teen' or aggregate_pk contains 'child' or aggregate_pk contains 'infant' or aggregate_pk contains 'booking'
+                assign aggregate_line_is_tour = true
+              endif
+            endfor
+
+            if aggregate_line_is_tour
+              if booking_group_id != blank and aggregate_booking_group_id != booking_group_id
+                continue
+              endif
+
+              assign aggregate_variant_text = aggregate_line_item.variant.title | default: aggregate_line_item.variant_title | default: '' | downcase
+              if aggregate_variant_text == blank or aggregate_variant_text == 'default title'
+                assign aggregate_guest_type_text = aggregate_line_item.title | default: aggregate_line_item.product.title | default: '' | downcase
+              else
+                assign aggregate_guest_type_text = aggregate_variant_text
+              endif
+
+              if aggregate_guest_type_text contains 'adult' or aggregate_guest_type_text contains '성인'
+                assign booking_inferred_adult_count = booking_inferred_adult_count | plus: aggregate_line_item.quantity
+                assign booking_has_inferred_guest_breakdown = true
+              elsif aggregate_guest_type_text contains 'infant' or aggregate_guest_type_text contains 'baby' or aggregate_guest_type_text contains 'toddler' or aggregate_guest_type_text contains '유아' or aggregate_guest_type_text contains '영아'
+                assign booking_inferred_infant_count = booking_inferred_infant_count | plus: aggregate_line_item.quantity
+                assign booking_has_inferred_guest_breakdown = true
+              elsif aggregate_guest_type_text contains 'child' or aggregate_guest_type_text contains 'children' or aggregate_guest_type_text contains 'teen' or aggregate_guest_type_text contains 'youth' or aggregate_guest_type_text contains '청소년' or aggregate_guest_type_text contains '어린이'
+                assign booking_inferred_child_count = booking_inferred_child_count | plus: aggregate_line_item.quantity
+                assign booking_has_inferred_guest_breakdown = true
+              endif
+            endif
+          endfor
+
+          if booking_duration == blank
+            assign booking_duration = line_item.product.metafields.custom.tour_duration | default: ''
+          endif
+
+          if booking_time == blank and booking_product_start_label != blank
+            assign booking_time = booking_product_start_label
+          endif
+
+          if booking_date != blank
+            assign booking_month_display = booking_date | date: '%b.' | upcase
+            assign booking_day_display = booking_date | date: '%-d'
+            assign booking_year_display = booking_date | date: '%Y'
+            assign booking_date_display = booking_month_display | append: ' ' | append: booking_day_display | append: ', ' | append: booking_year_display
+            if booking_time != blank
+              assign booking_start = booking_date_display | append: ' · ' | append: booking_time
+            else
+              assign booking_start = booking_date_display
+            endif
+          elsif booking_time != blank
+            assign booking_start = booking_time
+          endif
+
+          break
+        endif
+      endfor
+      if has_tour_booking
+        break
+      endif
+    endfor
+  endif
+
+  assign display_pickup = booking_pickup | default: section.settings.pickup_value | default: 'Confirmed by email'
+  assign display_start = booking_start | default: section.settings.start_value | default: 'Confirmed by email'
+  assign display_duration = booking_duration | default: section.settings.duration_value | default: 'Confirmed by email'
+  assign display_guests = booking_guests | default: 'Confirmed by email'
+  assign display_cancel = section.settings.cancel_value | default: '9:00 AM on the day before your tour'
+  assign display_travelers = ''
+  assign display_guest_total = 0
+  assign has_guest_total = false
+  assign has_guest_breakdown = false
+  assign display_breakdown_adult = 0
+  assign display_breakdown_child = 0
+  assign display_breakdown_infant = 0
+  assign booking_child_total = 0
+  assign booking_has_child_count = false
+  if booking_child != blank
+    assign booking_child_total = booking_child_total | plus: booking_child
+    assign booking_has_child_count = true
+  endif
+  if booking_teen != blank
+    assign booking_child_total = booking_child_total | plus: booking_teen
+    assign booking_has_child_count = true
+  endif
+  if booking_adult != blank or booking_has_child_count or booking_infant != blank
+    assign display_breakdown_adult = booking_adult | plus: 0
+    assign display_breakdown_child = booking_child_total | plus: 0
+    assign display_breakdown_infant = booking_infant | plus: 0
+    assign display_guest_total = display_breakdown_adult | plus: display_breakdown_child | plus: display_breakdown_infant
+    if display_guest_total > 0
+      assign has_guest_breakdown = true
+      assign has_guest_total = true
+    endif
+  endif
+
+  assign booking_has_traveler_count_properties = false
+  if booking_travelers_adult != blank or booking_travelers_child != blank or booking_travelers_infant != blank
+    assign booking_has_traveler_count_properties = true
+  endif
+  if has_guest_breakdown == false and booking_has_traveler_count_properties
+    assign display_breakdown_adult = booking_travelers_adult | plus: 0
+    assign display_breakdown_child = booking_travelers_child | plus: 0
+    assign display_breakdown_infant = booking_travelers_infant | plus: 0
+    assign display_guest_total = display_breakdown_adult | plus: display_breakdown_child | plus: display_breakdown_infant
+    if display_guest_total > 0
+      assign has_guest_breakdown = true
+      assign has_guest_total = true
+    endif
+  endif
+
+  if has_guest_breakdown == false and booking_has_inferred_guest_breakdown
+    assign display_breakdown_adult = booking_inferred_adult_count | plus: 0
+    assign display_breakdown_child = booking_inferred_child_count | plus: 0
+    assign display_breakdown_infant = booking_inferred_infant_count | plus: 0
+    assign display_guest_total = display_breakdown_adult | plus: display_breakdown_child | plus: display_breakdown_infant
+    if display_guest_total > 0
+      assign has_guest_breakdown = true
+      assign has_guest_total = true
+    endif
+  endif
+
+  if has_guest_breakdown
+    assign display_breakdown_label = ''
+    if display_breakdown_adult > 0
+      assign display_breakdown_label = 'Adult ' | append: display_breakdown_adult
+    endif
+    if display_breakdown_child > 0
+      if display_breakdown_label != blank
+        assign display_breakdown_label = display_breakdown_label | append: ', '
+      endif
+      assign display_breakdown_label = display_breakdown_label | append: 'Child ' | append: display_breakdown_child
+    endif
+    if display_breakdown_infant > 0
+      if display_breakdown_label != blank
+        assign display_breakdown_label = display_breakdown_label | append: ', '
+      endif
+      assign display_breakdown_label = display_breakdown_label | append: 'Infant ' | append: display_breakdown_infant
+    endif
+    assign display_travelers = display_breakdown_label
+  endif
+
+  assign booking_summary_has_breakdown = false
+  assign booking_summary_label = booking_guests
+  if booking_guests != blank
+    assign booking_guests_lc = booking_guests | downcase
+    if booking_guests_lc contains 'adult' or booking_guests_lc contains 'child' or booking_guests_lc contains 'children' or booking_guests_lc contains 'teen' or booking_guests_lc contains 'youth' or booking_guests_lc contains 'infant' or booking_guests_lc contains '성인' or booking_guests_lc contains '청소년' or booking_guests_lc contains '어린이' or booking_guests_lc contains '유아' or booking_guests_lc contains '영아'
+      assign booking_summary_has_breakdown = true
+      assign booking_summary_label = booking_summary_label | replace: 'Teen ', 'Child ' | replace: 'Teens ', 'Child ' | replace: 'Youth ', 'Child ' | replace: 'teen ', 'Child ' | replace: 'teens ', 'Child ' | replace: 'youth ', 'Child '
+    endif
+  endif
+  if display_travelers == blank and booking_summary_has_breakdown
+    assign display_travelers = booking_summary_label
+  endif
+
+  if display_travelers == blank and booking_total_pax != blank
+    assign display_guest_total = booking_total_pax | plus: 0
+    if display_guest_total > 0
+      assign has_guest_total = true
+    endif
+  endif
+  if display_travelers == blank and has_guest_total == false and booking_party_size != blank
+    assign display_guest_total = booking_party_size | plus: 0
+    if display_guest_total > 0
+      assign has_guest_total = true
+    endif
+  endif
+  if display_travelers == blank and has_guest_total
+    assign display_guest_label = 'guests'
+    if display_guest_total == 1
+      assign display_guest_label = 'guest'
+    endif
+    assign display_travelers = display_guest_total | append: ' ' | append: display_guest_label
+  endif
+  if display_travelers == blank
+    if booking_guests != blank
+      assign display_travelers = booking_guests
+    elsif booking_variant != blank and booking_variant != 'Default Title'
+      assign display_travelers = booking_variant | append: ' x ' | append: booking_quantity
+    elsif booking_quantity > 0
+      assign display_travelers = booking_quantity | append: ' guest(s)'
+    else
+      assign display_travelers = 'Confirmed by email'
+    endif
+  endif
+  assign display_contact_name = booking_contact_name | default: 'Confirmed by email'
+  assign display_contact_phone = booking_contact_phone | default: 'Confirmed by email'
+  assign display_dietary = booking_dietary | default: 'None'
+  assign referral_url = section.settings.referral_link
+  if referral_url == blank
+    assign referral_url = request.origin | append: '/pages/freeguideoptin'
+  endif
+-%}
+
+<section
+  class="tnty"
+  data-section="tour-thank-you"
+  data-customer-id="{{ customer.id | default: '' }}"
+  data-share-activate-endpoint="/apps/bta-booking/coupons/extra10/activate-share"
+  data-referral-url="{{ referral_url | escape }}"
+>
+  <div class="tnty__container">
+
+    <header class="tnty__header">
+      <p class="tnty__logo">{{ section.settings.logo_text | default: shop.name }}</p>
+      <div class="tnty__badge">
+        <span class="tnty__badge-dot" aria-hidden="true"></span>
+        {{ section.settings.confirmed_badge | default: "Reservation Confirmed" }}
+      </div>
+      <h1 class="tnty__headline">{{ section.settings.headline | default: "Thanks for your reservation!" }}</h1>
+      <p class="tnty__subheadline">{{ section.settings.subheadline | default: "Your Journey Begins! Get Ready to Step Into Korea." }}</p>
+    </header>
+
+    <div class="tnty__reservation">
+      <div class="tnty__reservation-head">
+        <span class="tnty__eyebrow">{{ section.settings.card_eyebrow | default: "Tour Confirmation" }}</span>
+        <h2 class="tnty__tour-title">{{ booking_tour_title }}</h2>
+        {%- if has_tour_booking and booking_order_name != blank -%}
+          <a class="tnty__order-pill" href="{{ booking_order_url }}">{{ booking_order_name }}</a>
+        {%- else -%}
+          <span class="tnty__order-pill tnty__order-pill--static">{{ section.settings.pending_badge | default: "Confirmed" }}</span>
+        {%- endif -%}
+      </div>
+
+      {%- unless has_tour_booking -%}
+        <p class="tnty__booking-hint">{{ section.settings.no_booking_text | default: "Sign in with the account used at checkout to see your booking details here. Your full reservation details are also sent by email." }}</p>
+      {%- endunless -%}
+
+      <div class="tnty__details">
+        <div class="tnty__detail">
+          <span class="tnty__detail-label">{{ section.settings.guests_label | default: "Guests" }}</span>
+          <span
+            class="tnty__detail-value"
+            data-tnty-guests
+            {% if has_guest_breakdown %}data-guest-breakdown="true"{% endif %}
+            {% if booking_travelers_json != blank and has_guest_breakdown == false %}data-travelers-json="{{ booking_travelers_json | escape }}"{% endif %}
+          >{{ display_travelers }}</span>
+        </div>
+        <div class="tnty__detail">
+          <span class="tnty__detail-label">{{ section.settings.start_label | default: "Start time" }}</span>
+          <span class="tnty__detail-value">{{ display_start }}</span>
+        </div>
+        <div class="tnty__detail tnty__detail--wide">
+          <span class="tnty__detail-label">{{ section.settings.pickup_label | default: "Pickup point" }}</span>
+          <span class="tnty__detail-value">{{ display_pickup }}</span>
+        </div>
+        <div class="tnty__detail">
+          <span class="tnty__detail-label">Reservation contact name</span>
+          <span class="tnty__detail-value">{{ display_contact_name }}</span>
+        </div>
+        <div class="tnty__detail">
+          <span class="tnty__detail-label">Reservation contact phone</span>
+          <span class="tnty__detail-value">{{ display_contact_phone }}</span>
+        </div>
+        <div class="tnty__detail tnty__detail--wide">
+          <span class="tnty__detail-label">Dietary restrictions</span>
+          <span class="tnty__detail-value">{{ display_dietary }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tnty__notice">
+      <p class="tnty__notice-text">{{ section.settings.notice_text | default: "Your reservation is confirmed. A confirmation email has been sent to you." | newline_to_br }}</p>
+      <p class="tnty__instruction">Your local guide will contact you before the tour<br>
+to introduce themselves and share important tour information,<br>
+including any weather-related updates.<br><br>
+If you need to make any changes to your reservation<br>
+or have questions about your booking,<br>
+please contact us at <a href="mailto:support@kpurpleshoes.com">support@kpurpleshoes.com</a>.</p>
+    </div>
+
+    {%- if section.settings.show_referral_section -%}
+      <div class="tnty__referral">
+        <h2 class="tnty__referral-title">{{ section.settings.referral_title | default: "Get an Extra $10 OFF Coupon" }}</h2>
+        <p class="tnty__referral-desc">{{ section.settings.referral_desc | default: "Share & Save! Share this link with a friend. Your coupon unlocks when they click it." }}</p>
+        <div class="tnty__referral-field-wrap">
+          <input type="text" class="tnty__referral-input" value="{{ referral_url }}" readonly id="tnty-referral-url" aria-label="Referral link">
+          <button type="button" class="tnty__copy-btn" data-copy-target="tnty-referral-url">
+            {{ section.settings.copy_button_label | default: "Copy Link" }}
+          </button>
+        </div>
+        <p class="tnty__referral-status" data-referral-status aria-live="polite" hidden></p>
+        <ul class="tnty__benefits">
+          <li><span class="tnty__check" aria-hidden="true">✅</span> <strong>No expiration date</strong></li>
+          <li><span class="tnty__check" aria-hidden="true">✅</span> <strong>Stackable</strong> — combine it with other coupons for extra savings</li>
+          <li><span class="tnty__check" aria-hidden="true">✅</span> You can find your coupon in <strong>My Page &gt; My Coupons</strong>.</li>
+        </ul>
+      </div>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<style>
+  .tnty {
+    --tnty-bg: #f5f6f8;
+    --tnty-card: #ffffff;
+    --tnty-text: #111827;
+    --tnty-muted: #6b7280;
+    --tnty-purple: #5b2bd8;
+    --tnty-purple-dark: #3a156f;
+    --tnty-purple-soft: rgba(91,43,216,0.08);
+    --tnty-green: #34c759;
+    --tnty-radius: 16px;
+    --tnty-space: 24px;
+    --tnty-space-lg: 40px;
+    font-family: 'Poppins', sans-serif;
+    background: var(--tnty-bg);
+    padding: 32px 20px 56px;
+    min-height: 100vh;
+  }
+  .tnty__container { max-width: 680px; margin: 0 auto; }
+
+  /* Header */
+  .tnty__header { text-align: center; margin-bottom: var(--tnty-space-lg); }
+  .tnty__logo {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--tnty-muted); margin: 0 0 16px; text-transform: uppercase;
+  }
+  .tnty__badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--tnty-purple-soft); color: var(--tnty-purple);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999px; padding: 6px 14px; margin-bottom: 20px;
+  }
+  .tnty__badge-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--tnty-purple); flex-shrink: 0;
+    animation: tnty-pulse 2s ease-in-out infinite;
+  }
+  @keyframes tnty-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .tnty__headline {
+    font-size: clamp(26px, 5vw, 34px); font-weight: 800; color: var(--tnty-text);
+    margin: 0 0 12px; line-height: 1.2; letter-spacing: -0.02em;
+  }
+  .tnty__subheadline {
+    font-size: 17px; color: var(--tnty-muted); margin: 0; line-height: 1.5;
+  }
+
+  /* Reservation card */
+  .tnty__reservation {
+    background: var(--tnty-card); border-radius: var(--tnty-radius);
+    border-top: 5px solid var(--tnty-purple);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    padding: var(--tnty-space); margin-bottom: var(--tnty-space);
+  }
+  .tnty__reservation-head { text-align: center; margin-bottom: 20px; }
+  .tnty__eyebrow {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--tnty-purple);
+    background: var(--tnty-purple-soft); border-radius: 999px;
+    padding: 4px 12px; margin-bottom: 10px;
+  }
+  .tnty__tour-title {
+    font-size: clamp(18px, 3vw, 22px); font-weight: 800;
+    color: var(--tnty-purple-dark); margin: 0 0 10px; line-height: 1.3;
+  }
+  .tnty__order-pill {
+    display: inline-block; border-radius: 999px;
+    background: var(--tnty-purple-soft); color: var(--tnty-purple-dark);
+    padding: 6px 14px; font-size: 12px; font-weight: 700;
+    text-decoration: none; letter-spacing: 0.03em;
+  }
+  .tnty__order-pill--static { cursor: default; }
+  .tnty__booking-hint {
+    border-radius: 12px; background: #fff6e8; color: #8a4b0f;
+    font-size: 13px; font-weight: 600; line-height: 1.5;
+    margin: 0 0 16px; padding: 12px 14px;
+  }
+  .tnty__details {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+  }
+  .tnty__detail {
+    border: 1px solid #e5e7eb; border-radius: 12px;
+    background: var(--tnty-bg); padding: 14px 16px;
+  }
+  .tnty__detail--wide { grid-column: 1 / -1; }
+  .tnty__detail-label {
+    display: block; font-size: 11px; font-weight: 700;
+    color: var(--tnty-muted); letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .tnty__detail-value {
+    display: block; font-size: 15px; color: var(--tnty-text);
+    font-weight: 700; line-height: 1.35;
+  }
+
+  /* Notice */
+  .tnty__notice {
+    background: var(--tnty-card); border-radius: var(--tnty-radius);
+    padding: 20px 24px; margin-bottom: var(--tnty-space);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+  .tnty__notice-text {
+    font-size: 15px; font-weight: 600; color: var(--tnty-text); margin: 0 0 6px;
+  }
+  .tnty__instruction { font-size: 14px; color: var(--tnty-muted); margin: 0; line-height: 1.55; }
+
+  /* App download */
+  .tnty__app-download {
+    background: var(--tnty-card); border-radius: var(--tnty-radius);
+    padding: var(--tnty-space); margin-bottom: var(--tnty-space-lg);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05); text-align: center;
+  }
+  .tnty__app-title { font-size: 15px; font-weight: 700; color: var(--tnty-text); margin: 0 0 6px; }
+  .tnty__app-desc { font-size: 14px; color: var(--tnty-muted); margin: 0 0 20px; line-height: 1.5; }
+  .tnty__app-row {
+    display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap;
+  }
+  .tnty__app-icon, .tnty__app-icon-placeholder {
+    width: 80px; height: 80px; border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tnty__app-icon-placeholder {
+    background: var(--tnty-purple); color: #fff;
+    font-size: 14px; font-weight: 600; text-decoration: none;
+  }
+  .tnty__qr, .tnty__qr-placeholder { width: 140px; height: 140px; border-radius: 8px; }
+  .tnty__qr-placeholder {
+    background: #eee; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--tnty-muted);
+  }
+  .tnty__offline-note { font-size: 13px; color: var(--tnty-muted); margin: 14px 0 0; }
+
+  /* Referral */
+  .tnty__referral {
+    background: var(--tnty-card); border-radius: var(--tnty-radius);
+    padding: var(--tnty-space); margin-bottom: var(--tnty-space);
+    box-shadow: 0 2px 12px rgba(53,16,127,0.08);
+    border: 1px solid rgba(111,64,255,0.12);
+  }
+  .tnty__referral-title {
+    font-size: 22px; font-weight: 800; color: var(--tnty-text);
+    margin: 0 0 8px; text-align: center;
+  }
+  .tnty__referral-desc {
+    font-size: 15px; color: var(--tnty-muted); margin: 0 0 16px; text-align: center; line-height: 1.55;
+  }
+  .tnty__referral-field-wrap {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  }
+  .tnty__referral-input {
+    flex: 1 1 200px; min-width: 0; padding: 12px 14px;
+    font-size: 14px; border: 1px solid rgba(111,64,255,0.2); border-radius: 10px;
+    background: var(--tnty-bg); font-family: inherit; color: var(--tnty-text);
+  }
+  .tnty__copy-btn {
+    padding: 12px 20px; font-size: 15px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #35107f 0%, #6f40ff 100%);
+    border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;
+    font-family: inherit; transition: opacity 0.15s;
+    box-shadow: 0 4px 14px rgba(111,64,255,0.28);
+  }
+  .tnty__copy-btn:hover { opacity: 0.88; }
+  .tnty__copy-btn[disabled] { opacity: 0.64; cursor: wait; }
+  .tnty__referral-status {
+    font-size: 13px; font-weight: 600; line-height: 1.5;
+    margin: 10px 0 0; color: var(--tnty-purple-dark);
+  }
+  .tnty__referral-status.is-error { color: #b42318; }
+
+  /* Benefits */
+  .tnty__benefits {
+    list-style: none; margin: 20px 0 0; padding: 0;
+    border-top: 1px solid rgba(111,64,255,0.1); padding-top: 16px;
+  }
+  .tnty__benefits li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 15px; color: var(--tnty-text); margin-bottom: 10px; line-height: 1.6;
+  }
+  .tnty__benefits li:last-child { margin-bottom: 0; }
+  .tnty__check { flex-shrink: 0; width: 22px; text-align: center; line-height: 1.6; }
+
+  @media (max-width: 600px) {
+    .tnty { padding: 24px 16px 48px; }
+    .tnty__details { grid-template-columns: 1fr; }
+    .tnty__detail--wide { grid-column: 1; }
+    .tnty__app-row { flex-direction: column; }
+  }
+</style>
+
+<script>
+(function () {
+  var root = document.querySelector('.tnty[data-section="tour-thank-you"]');
+  if (!root) return;
+
+  function normalizeGuestCount(value) {
+    var count = parseInt(value, 10);
+    if (isNaN(count) || count < 0) return 0;
+    return count;
+  }
+
+  function normalizeGuestKey(value) {
+    return String(value || '').toLowerCase().replace(/[\s_-]/g, '');
+  }
+
+  function pickGuestCount(data, keys) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return 0;
+    for (var i = 0; i < keys.length; i += 1) {
+      var value = data[keys[i]];
+      if (value !== undefined && value !== null && value !== '') {
+        return normalizeGuestCount(value);
+      }
+    }
+
+    var normalizedLookup = {};
+    keys.forEach(function(key) {
+      normalizedLookup[normalizeGuestKey(key)] = true;
+    });
+
+    var dataKeys = Object.keys(data);
+    for (var j = 0; j < dataKeys.length; j += 1) {
+      var dataKey = dataKeys[j];
+      if (!normalizedLookup[normalizeGuestKey(dataKey)]) continue;
+      var normalizedValue = data[dataKey];
+      if (normalizedValue !== undefined && normalizedValue !== null && normalizedValue !== '') {
+        return normalizeGuestCount(normalizedValue);
+      }
+    }
+
+    return 0;
+  }
+
+  function getTravelersData(data) {
+    if (!data || typeof data !== 'object') return null;
+    if (Array.isArray(data)) return data;
+    if (data.travelers && typeof data.travelers === 'object') return data.travelers;
+    if (data.guestCounts && typeof data.guestCounts === 'object') return data.guestCounts;
+    if (data.guests && typeof data.guests === 'object') return data.guests;
+    return data;
+  }
+
+  function typeFromText(value) {
+    var text = String(value || '').toLowerCase();
+    if (!text) return '';
+    if (text.indexOf('adult') !== -1 || text.indexOf('성인') !== -1) return 'adult';
+    if (text.indexOf('infant') !== -1 || text.indexOf('baby') !== -1 || text.indexOf('toddler') !== -1 || text.indexOf('유아') !== -1 || text.indexOf('영아') !== -1) return 'infant';
+    if (text.indexOf('child') !== -1 || text.indexOf('children') !== -1 || text.indexOf('teen') !== -1 || text.indexOf('youth') !== -1 || text.indexOf('청소년') !== -1 || text.indexOf('어린이') !== -1) return 'child';
+    return '';
+  }
+
+  function countsFromArray(items) {
+    var counts = { adult: 0, child: 0, infant: 0 };
+    items.forEach(function(item) {
+      if (!item || typeof item !== 'object') return;
+      var type = typeFromText(item.type || item.ticketType || item.ticket_type || item.label || item.name || item.title);
+      if (!type) return;
+      var count = normalizeGuestCount(item.count || item.quantity || item.qty || item.value);
+      counts[type] += count;
+    });
+    return counts;
+  }
+
+  function formatGuestBreakdown(adult, child, infant) {
+    var total = adult + child + infant;
+    if (total <= 0) return '';
+    var parts = [];
+    if (adult > 0) parts.push('Adult ' + adult);
+    if (child > 0) parts.push('Child ' + child);
+    if (infant > 0) parts.push('Infant ' + infant);
+    return parts.join(', ');
+  }
+
+  function applyTravelersJsonGuests() {
+    root.querySelectorAll('[data-tnty-guests][data-travelers-json]').forEach(function(el) {
+      if (el.getAttribute('data-guest-breakdown') === 'true') return;
+      var raw = el.getAttribute('data-travelers-json');
+      if (!raw) return;
+
+      var data;
+      try {
+        data = JSON.parse(raw);
+      } catch (error) {
+        return;
+      }
+
+      var travelersData = getTravelersData(data);
+      if (!travelersData || typeof travelersData !== 'object') return;
+
+      var counts = Array.isArray(travelersData)
+        ? countsFromArray(travelersData)
+        : {
+          adult: pickGuestCount(travelersData, ['adult', 'adults', 'adult_count', 'adultCount', 'travelers_adult', 'travelersAdult']),
+          child: pickGuestCount(travelersData, ['child', 'children', 'teen', 'teens', 'youth', 'child_count', 'childCount', 'teen_count', 'teenCount', 'travelers_child', 'travelersChild']),
+          infant: pickGuestCount(travelersData, ['infant', 'infants', 'infant_count', 'infantCount', 'travelers_infant', 'travelersInfant'])
+        };
+      var label = formatGuestBreakdown(counts.adult || 0, counts.child || 0, counts.infant || 0);
+      if (label) el.textContent = label;
+    });
+  }
+
+  applyTravelersJsonGuests();
+
+  var btn = root.querySelector('[data-copy-target]');
+  if (!btn) return;
+  var id = btn.getAttribute('data-copy-target');
+  var input = document.getElementById(id);
+  if (!input) return;
+  var originalLabel = btn.textContent.trim();
+  var status = root.querySelector('[data-referral-status]');
+  var inFlight = false;
+  var alreadyActiveCodes = {
+    EXTRA10_ALREADY_ACTIVE: true,
+    EXTRA10_ALREADY_GRANTED: true,
+    EXTRA10_ALREADY_ISSUED: true,
+    EXTRA10_ALREADY_REDEEMED: true
+  };
+
+  function createClientRequestId(prefix) {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return (prefix || 'tourthank') + '-' + window.crypto.randomUUID();
+    }
+
+    return (prefix || 'tourthank') + '-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  function setStatus(message, isError) {
+    if (!status) return;
+    status.textContent = message || '';
+    status.hidden = !message;
+    status.classList.toggle('is-error', Boolean(isError));
+  }
+
+  function setBusy(isBusy) {
+    inFlight = isBusy;
+    btn.disabled = isBusy;
+    btn.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+    if (isBusy) {
+      btn.textContent = 'Activating...';
+    } else if (btn.textContent.trim() === 'Activating...') {
+      btn.textContent = originalLabel;
+    }
+  }
+
+  function parseResponse(response) {
+    return response.json().catch(function () {
+      return null;
+    }).then(function (payload) {
+      var errorData = payload && payload.error ? payload.error : null;
+
+      if (!response.ok || !payload || payload.ok === false) {
+        var error = new Error((errorData && errorData.message) || 'Request failed');
+        error.code = (errorData && errorData.code) || '';
+        error.correlationId = (payload && payload.meta && payload.meta.correlationId) || response.headers.get('X-Correlation-Id') || '';
+        throw error;
+      }
+
+      return payload;
+    });
+  }
+
+  function requestEnvelope(url, options) {
+    var fetchOptions = {
+      method: options && options.method ? options.method : 'GET',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' }
+    };
+
+    if (options && options.body) {
+      fetchOptions.headers['Content-Type'] = 'application/json';
+      fetchOptions.body = JSON.stringify(options.body);
+    }
+
+    return fetch(url, fetchOptions).catch(function (error) {
+      error.code = error.code || 'NETWORK_ERROR';
+      throw error;
+    }).then(parseResponse);
+  }
+
+  function getErrorMessage(error) {
+    if (error && error.code === 'AUTH_LOGIN_REQUIRED') {
+      return 'Please sign in again to activate your Extra $10 coupon.';
+    }
+    if (error && alreadyActiveCodes[error.code]) {
+      return 'Your Extra $10 coupon is already active in My Coupons.';
+    }
+    if (error && error.code === 'VALIDATION_ERROR') {
+      return 'We could not prepare your share link. Please refresh and try again.';
+    }
+    if (error && (error.code === 'RATE_LIMITED' || error.code === 'NETWORK_ERROR')) {
+      return 'The share service is busy right now. Please try again in a moment.';
+    }
+    return 'We could not activate your coupon right now. Please try again.';
+  }
+
+  function activateExtra10Coupon() {
+    var endpoint = root.dataset.shareActivateEndpoint || '/apps/bta-booking/coupons/extra10/activate-share';
+    return requestEnvelope(endpoint, {
+      method: 'POST',
+      body: {
+        shareUrl: root.dataset.referralUrl || input.value,
+        source: 'tour-thank-you',
+        clientRequestId: createClientRequestId('tourthank-share')
+      }
+    });
+  }
+
+  function copyReferralLink() {
+    var value = input.value;
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      return navigator.clipboard.writeText(value).catch(function () {
+        fallbackCopy(value);
+      });
+    }
+
+    fallbackCopy(value);
+    return Promise.resolve();
+  }
+
+  function fallbackCopy(value) {
+    input.focus();
+    try {
+      input.select();
+      input.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+    } catch (error) {
+      var helper = document.createElement('textarea');
+      helper.value = value;
+      helper.setAttribute('readonly', 'readonly');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      try { document.execCommand('copy'); } catch (copyError) {}
+      document.body.removeChild(helper);
+    }
+  }
+
+  btn.addEventListener('click', function () {
+    if (inFlight) return;
+    if (!root.dataset.customerId) {
+      setStatus('Please sign in again to activate your Extra $10 coupon.', true);
+      return;
+    }
+
+    setBusy(true);
+    setStatus('Activating your Extra $10 coupon...', false);
+
+    activateExtra10Coupon().catch(function (error) {
+      if (alreadyActiveCodes[error.code]) return null;
+      throw error;
+    }).then(function () {
+      return copyReferralLink();
+    }).then(function () {
+      setStatus('Your Extra $10 coupon is active. The link has been copied.', false);
+      btn.textContent = 'Copied!';
+      setTimeout(function () { btn.textContent = originalLabel; }, 2000);
+    }).catch(function (error) {
+      setStatus(getErrorMessage(error), true);
+    }).finally(function () {
+      setBusy(false);
+    });
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Tour Thank You",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "header", "content": "Header" },
+    { "type": "text", "id": "logo_text", "label": "Logo / brand name", "default": "Purple Shoes" },
+    { "type": "text", "id": "confirmed_badge", "label": "Confirmed badge", "default": "Reservation Confirmed" },
+    { "type": "text", "id": "headline", "label": "Main headline", "default": "Thanks for your reservation!" },
+    { "type": "text", "id": "subheadline", "label": "Sub headline", "default": "Your Journey Begins! Get Ready to Step Into Korea." },
+    { "type": "header", "content": "Reservation card" },
+    { "type": "text", "id": "card_eyebrow", "label": "Card eyebrow", "default": "Tour Confirmation" },
+    { "type": "text", "id": "tour_title", "label": "Fallback tour title", "default": "Your Experience Tour" },
+    { "type": "text", "id": "pending_badge", "label": "Fallback badge", "default": "Confirmed" },
+    { "type": "textarea", "id": "no_booking_text", "label": "No booking details message", "default": "Sign in with the account used at checkout to see your booking details here. Your full reservation details are also sent by email." },
+    { "type": "text", "id": "pickup_label", "label": "Pickup label", "default": "Pickup point" },
+    { "type": "text", "id": "pickup_value", "label": "Pickup fallback", "default": "Confirmed by email" },
+    { "type": "text", "id": "start_label", "label": "Start time label", "default": "Start time" },
+    { "type": "text", "id": "start_value", "label": "Start time fallback", "default": "Confirmed by email" },
+    { "type": "text", "id": "duration_label", "label": "Duration label", "default": "Tour duration" },
+    { "type": "text", "id": "duration_value", "label": "Duration fallback", "default": "Confirmed by email" },
+    { "type": "text", "id": "guests_label", "label": "Guests label", "default": "Guests" },
+    { "type": "text", "id": "cancel_label", "label": "Cancellation label", "default": "Free cancellation before" },
+    { "type": "text", "id": "cancel_value", "label": "Cancellation policy", "default": "9:00 AM on the day before your tour" },
+    { "type": "header", "content": "Notice" },
+    { "type": "textarea", "id": "notice_text", "label": "Notice text", "default": "Your reservation is confirmed. A confirmation email has been sent to you." },
+    { "type": "textarea", "id": "instruction_text", "label": "Instruction text", "default": "Your local guide will contact you before the tour\nto introduce themselves and share important tour information,\nincluding any weather-related updates.\n\nIf you need to make any changes to your reservation\nor have questions about your booking,\nplease contact us at support@kpurpleshoes.com." },
+    { "type": "header", "content": "App download" },
+    { "type": "text", "id": "app_title", "label": "App title", "default": "All content is available exclusively on the Purple Shoes App & Web." },
+    { "type": "text", "id": "app_desc", "label": "App description", "default": "Please download the Purple Shoes app to access your guides." },
+    { "type": "image_picker", "id": "app_icon", "label": "App icon" },
+    { "type": "url", "id": "app_download_url", "label": "App download URL" },
+    { "type": "image_picker", "id": "qr_image", "label": "QR code image" },
+    { "type": "text", "id": "offline_note", "label": "Offline note", "default": "Offline Viewing Supported" },
+    { "type": "header", "content": "Referral" },
+    { "type": "checkbox", "id": "show_referral_section", "label": "Show referral section", "default": true },
+    { "type": "text", "id": "referral_title", "label": "Referral title", "default": "Get an Extra $10 OFF Coupon" },
+    { "type": "textarea", "id": "referral_desc", "label": "Referral description", "default": "Share & Save! Share this link with a friend. Your coupon unlocks when they click it." },
+    { "type": "text", "id": "referral_link", "label": "Referral link", "info": "Leave blank to use /pages/freeguideoptin." },
+    { "type": "text", "id": "copy_button_label", "label": "Copy button", "default": "Copy Link" },
+    { "type": "text", "id": "benefit_1", "label": "Benefit 1", "default": "No expiration date" },
+    { "type": "text", "id": "benefit_2", "label": "Benefit 2", "default": "Stackable — combine it with other coupons for extra savings" },
+    { "type": "text", "id": "benefit_4", "label": "Benefit 4", "default": "You can find your coupon in My Page > My Coupons" }
+  ],
+  "presets": [
+    { "name": "Tour Thank You" }
+  ]
+}
+{% endschema %}

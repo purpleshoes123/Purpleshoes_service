@@ -1,0 +1,17 @@
+{% doc %}
+  Renders a login-only shell without member page content.
+  @example
+  {% render 'member-login-required' %}
+{% enddoc %}
+{%- assign member_return_path = request.path | url_encode -%}
+<section class="page-width" data-member-content-blocked style="padding:4rem 2rem;text-align:center">
+  <h1>{{ 'customer.login_page.title' | t }}</h1>
+  <a class="button" href="{{ routes.account_login_url }}?return_to={{ member_return_path }}">{{ 'customer.log_in' | t }}</a>
+</section>
+<script>
+  (function () {
+    var loginUrl = new URL({{ routes.account_login_url | json }}, window.location.origin);
+    loginUrl.searchParams.set('return_to', window.location.pathname + window.location.search);
+    window.location.replace(loginUrl.href);
+  })();
+</script>
