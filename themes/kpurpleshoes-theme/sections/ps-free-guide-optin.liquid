@@ -1,370 +1,4 @@
-{% comment %}
-  ps-free-guide-optin.liquid
-  Free Korea Travel Guide opt-in landing page.
-  Layout: hero copy → 2-col card (video | benefits) → full-width CTA bar
-  Klaviyo list ID: VkipLH (hardcoded)
-  Klaviyo API key: entered via Shopify theme settings (klaviyo_api_key)
-{% endcomment %}
-
-<style>
-  .fgo__hidden-form { display: none !important; }
-
-  .fgo {
-    font-family: 'Poppins', sans-serif;
-    background: var(--ps-surface, #f5f6f8);
-    min-height: 100vh;
-    padding-bottom: 0;
-  }
-
-  /* ── Logo bar ── */
-  .fgo__logobar {
-    padding: 18px 24px 0;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .fgo__logo {
-    display: block;
-    height: 38px;
-    width: auto;
-  }
-  .fgo__logo-text {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--ps-purple, #5b2bd8);
-    letter-spacing: -.02em;
-  }
-
-  /* ── Hero copy ── */
-  .fgo__hero {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 52px 24px 36px;
-  }
-  .fgo__headline {
-    font-size: clamp(26px, 4vw, 46px);
-    font-weight: 800;
-    line-height: 1.2;
-    color: var(--ps-text, #111827);
-    margin: 0 0 16px;
-    max-width: 760px;
-  }
-  .fgo__headline em {
-    font-style: normal;
-    color: var(--ps-purple, #5b2bd8);
-  }
-  .fgo__subtext {
-    font-size: clamp(17px, 1.6vw, 20px);
-    color: #4b5563;
-    line-height: 1.75;
-    margin: 0 0 28px;
-    max-width: 720px;
-    white-space: normal;
-  }
-  .fgo__section-label {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--ps-purple, #5b2bd8);
-    background: rgba(91,43,216,0.08);
-    border-radius: 999px;
-    padding: 5px 14px;
-    margin: 0;
-  }
-
-  /* ── Content card ── */
-  .fgo__card {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 24px 52px;
-  }
-  .fgo__card-inner {
-    background: #fff;
-    border-radius: var(--ps-radius-lg, 22px);
-    box-shadow: var(--ps-shadow, 0 16px 40px rgba(17,24,39,0.10));
-    overflow: hidden;
-    padding: 36px 36px 40px;
-  }
-  @media (max-width: 680px) {
-    .fgo__card-inner { padding: 28px 20px 32px; }
-    .fgo__hero { padding-top: 36px; }
-  }
-
-  /* ── Benefits (full-width) ── */
-  .fgo__benefits-head {
-    text-align: center;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--ps-text, #111827);
-    margin: 0 0 28px;
-  }
-  .fgo__benefits {
-    list-style: none; margin: 0; padding: 0;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-  .fgo__benefit-group {
-    background: #f6f3ff;
-    border: 1px solid rgba(91,43,216,0.12);
-    border-radius: 16px;
-    padding: 22px 18px 20px;
-  }
-  .fgo__benefit-group-title {
-    font-size: 15px; font-weight: 800;
-    color: var(--ps-text, #111827);
-    display: flex; align-items: center; gap: 9px;
-    margin-bottom: 14px; line-height: 1.3;
-  }
-  .fgo__check {
-    width: 26px; height: 26px;
-    background: #22c55e;
-    border-radius: 7px;
-    display: inline-flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(34,197,94,0.3);
-  }
-  .fgo__check svg { width: 13px; height: 13px; }
-  .fgo__benefit-items {
-    list-style: none; padding: 0; margin: 0;
-    display: flex; flex-direction: column; gap: 7px;
-  }
-  .fgo__benefit-items li {
-    font-size: 13px;
-    color: var(--ps-muted, #6b7280);
-    padding-left: 16px;
-    position: relative;
-    line-height: 1.55;
-  }
-  .fgo__benefit-items li::before {
-    content: '•';
-    position: absolute;
-    left: 3px;
-    color: var(--ps-purple, #5b2bd8);
-    font-size: 11px;
-    top: 1px;
-  }
-  .fgo__benefits-tagline {
-    text-align: center;
-    font-size: 15px;
-    color: #111827;
-    margin: 20px 0 0;
-    font-style: italic;
-  }
-  @media (max-width: 720px) {
-    .fgo__benefits { grid-template-columns: 1fr; }
-  }
-
-  /* ── Full-width CTA bar ── */
-  .fgo__cta-bar {
-    margin-top: 0;
-    background: var(--ps-purple, #5b2bd8);
-    padding: 52px 24px 56px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .fgo__cta-inner {
-    position: relative;
-    z-index: 1;
-    max-width: 620px;
-    margin: 0 auto;
-    text-align: center;
-  }
-  .fgo__cta-eyebrow {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: var(--ps-yellow, #ffd400);
-    margin: 0 0 14px;
-  }
-  .fgo__cta-title {
-    font-size: clamp(20px, 2.8vw, 30px);
-    font-weight: 800;
-    color: #fff;
-    line-height: 1.25;
-    margin: 0 0 8px;
-  }
-  .fgo__cta-sub {
-    font-size: 14px;
-    color: rgba(255,255,255,0.65);
-    margin: 0 0 32px;
-    line-height: 1.6;
-  }
-
-  /* Form fields */
-  .fgo__form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .fgo__input-wrap {
-    position: relative;
-  }
-  .fgo__input-icon {
-    position: absolute;
-    left: 18px; top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    pointer-events: none;
-  }
-  .fgo__input-icon svg { width: 18px; height: 18px; display: block; }
-  .fgo__input {
-    width: 100%;
-    height: 56px;
-    border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 16px;
-    padding: 0 18px 0 48px;
-    font-family: inherit;
-    font-size: 15px;
-    color: #fff;
-    background: rgba(255,255,255,0.1);
-    outline: none;
-    transition: border-color .18s, background .18s;
-    box-sizing: border-box;
-    backdrop-filter: blur(8px);
-  }
-  .fgo__input:focus {
-    border-color: var(--ps-yellow, #ffd400);
-    background: rgba(255,255,255,0.15);
-  }
-  .fgo__input::placeholder { color: rgba(255,255,255,0.45); }
-
-  /* CAPTCHA slot */
-  .fgo__captcha-slot {
-    min-height: 80px;
-    border: 2px dashed rgba(255,255,255,0.2);
-    border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.78);
-    font-size: 12px;
-    letter-spacing: .02em;
-    padding: 16px 18px;
-    text-align: left;
-    backdrop-filter: blur(4px);
-  }
-  .fgo__captcha-title {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-  .fgo__captcha-copy {
-    margin: 0;
-    color: rgba(255,255,255,0.72);
-    line-height: 1.6;
-  }
-  .fgo__captcha-legal {
-    margin: 0;
-    color: rgba(255,255,255,0.52);
-    line-height: 1.6;
-  }
-  .fgo__captcha-legal a {
-    color: #fff;
-    text-decoration: underline;
-  }
-
-  .fgo__status {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.6;
-    color: rgba(255,255,255,0.88);
-  }
-  .fgo__status--error {
-    color: #ffe3a8;
-  }
-  .fgo__status--success {
-    color: #dcfce7;
-  }
-
-  /* CTA button */
-  .fgo__submit {
-    display: block;
-    width: 100%;
-    height: 58px;
-    background: var(--ps-yellow, #ffd400);
-    color: #1a0060;
-    border: none;
-    border-radius: 16px;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: .03em;
-    cursor: pointer;
-    transition: background .18s, transform .12s, box-shadow .18s;
-    box-shadow: 0 8px 28px rgba(255,212,0,0.35);
-  }
-  .fgo__submit:hover {
-    background: #ffe033;
-    box-shadow: 0 12px 36px rgba(255,212,0,0.5);
-    transform: translateY(-1px);
-  }
-  .fgo__submit:active { transform: scale(0.98); }
-  .fgo__submit:disabled { opacity: .55; cursor: not-allowed; transform: none; }
-
-  .fgo__privacy {
-    margin: 14px 0 0;
-    font-size: 11px;
-    color: rgba(255,255,255,0.35);
-    text-align: center;
-  }
-
-  /* Success state */
-  .fgo__success {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    text-align: center;
-    padding: 20px 0;
-  }
-  .fgo__success-icon {
-    width: 56px; height: 56px;
-    background: rgba(34,197,94,0.2);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .fgo__success-icon svg { width: 28px; height: 28px; color: #4ade80; }
-  .fgo__success-title {
-    font-size: 20px; font-weight: 800; color: #fff; margin: 0;
-  }
-  .fgo__success-sub {
-    font-size: 14px; color: rgba(255,255,255,0.65); margin: 0;
-  }
-
-  .fgo__form[hidden],
-  .fgo__success[hidden],
-  .fgo__status[hidden] {
-    display: none !important;
-  }
-.fgo__submit-notice {
-  margin: 14px 0 18px;
-  padding: 0 10px;
-  text-align: center;
-  color: #ffffff !important;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-@media screen and (max-width: 749px) {
-  .fgo__submit-notice {
-    margin: 12px 0 16px;
-    font-size: 13px;
-  }
-}
-.fgo__marketing-consent { display: flex; gap: 10px; align-items: flex-start; color: #fff; font-size: 14px; line-height: 1.5; margin: 16px 0; text-align: left; }
-.fgo__marketing-consent input { flex: 0 0 20px; width: 20px; height: 20px; margin: 2px 0 0; accent-color: #7136e8; }
-.fgo__subscription-notice { font-size: 14px; line-height: 1.6; }
-</style>
+{{ 'free-guide-optin.css' | asset_url | stylesheet_tag }}
 
 <div
   class="fgo"
@@ -381,111 +15,57 @@
   data-submit-loading-label="Sending..."
 >
 
-  {%- comment -%} ── Logo Bar ── {%- endcomment -%}
+
+  <img class="fgo__scenery" src="{{ 'free-guide-seoul.svg' | asset_url }}" alt="" width="1440" height="650" aria-hidden="true">
   <div class="fgo__logobar">
+    <a class="fgo__logo-link" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
     {%- if settings.logo != blank -%}
       {{
         settings.logo
         | image_url: width: 320
         | image_tag:
           class: 'fgo__logo',
-          alt: settings.logo.alt | default: shop.name,
+          alt: shop.name,
           loading: 'eager'
       }}
     {%- else -%}
       <span class="fgo__logo-text">{{ shop.name }}</span>
     {%- endif -%}
+    </a>
   </div>
 
-  {%- comment -%} ── Hero Copy ── {%- endcomment -%}
+
   <div class="fgo__hero">
     <span class="fgo__section-label">{{ section.settings.section_label | default: "Free Korea Travel Info" }}</span>
-    <h1 class="fgo__headline" style="margin-top:20px;">{{ section.settings.headline | default: "The Real Korea That Millions of Travelers Miss.<br><em>Your Trip Will Be Different.</em>" | newline_to_br }}</h1>
-    <p class="fgo__subtext">{{ section.settings.subtext | default: "Don't make the same mistakes others do in Korea — get the essential info you actually need, completely free." | newline_to_br }}</p>
+    <h1 class="fgo__headline">{{ section.settings.headline | escape | newline_to_br }}</h1>
+    <p class="fgo__subtext">{{ section.settings.subtext | escape | newline_to_br }}</p>
   </div>
 
-  {%- comment -%} ── Benefits Card ── {%- endcomment -%}
-  <div class="fgo__card">
-    <div class="fgo__card-inner">
-      <p class="fgo__benefits-head">What you'll get (FREE):</p>
-      <ul class="fgo__benefits" aria-label="What's included">
-        <li class="fgo__benefit-group">
-          <div class="fgo__benefit-group-title">
-            <span class="fgo__check" aria-hidden="true">
-              <svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>
-            </span>
-            Pre-Trip Made Simple
-          </div>
-          <ul class="fgo__benefit-items">
-            <li>Travel prep summary</li>
-            <li>Entry checklist</li>
-            <li>Packing guide</li>
-            <li>Basic Korea map</li>
-          </ul>
-        </li>
-        <li class="fgo__benefit-group">
-          <div class="fgo__benefit-group-title">
-            <span class="fgo__check" aria-hidden="true">
-              <svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>
-            </span>
-            Travel Like a Local
-          </div>
-          <ul class="fgo__benefit-items">
-            <li>Korea travel hacks</li>
-            <li>Essential manners &amp; etiquette</li>
-            <li>What makes Korea special</li>
-            <li>Must-Have Apps</li>
-          </ul>
-        </li>
-        <li class="fgo__benefit-group">
-          <div class="fgo__benefit-group-title">
-            <span class="fgo__check" aria-hidden="true">
-              <svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2"/></svg>
-            </span>
-            Plan Without Stress
-          </div>
-          <ul class="fgo__benefit-items">
-            <li>Korea's seasons &amp; weather</li>
-            <li>Festival calendar</li>
-            <li>Transportation guide</li>
-            <li>Essential Korean phrases</li>
 
-          </ul>
-        </li>
-      </ul>
-      <p class="fgo__benefits-tagline">A simple start to your first Korea trip.</p>
-    </div>
-  </div>
-
-  {%- comment -%} ── Full-width CTA Bar ── {%- endcomment -%}
   <div class="fgo__cta-bar">
     <div class="fgo__cta-inner">
       <p class="fgo__cta-eyebrow">{{ section.settings.cta_eyebrow | default: "FREE • NO CREDIT CARD REQUIRED" }}</p>
-      <h2 class="fgo__cta-title">{{ section.settings.cta_title | default: "Get Instant Access to the Free Starter Kit" }}</h2>
+      <h2 class="fgo__sr-only">{{ section.settings.cta_title | escape }}</h2>
       <form class="fgo__form" id="FgoForm-{{ section.id }}" data-fgo-form novalidate>
         <div class="fgo__input-wrap">
-          <span class="fgo__input-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <polyline points="2,4 12,13 22,4"/>
-            </svg>
-          </span>
+          <label class="fgo__email-label" for="FgoEmail-{{ section.id }}">{{ 'free_guide_optin.email_label' | t }}</label>
           <input
             type="email"
             class="fgo__input"
             id="FgoEmail-{{ section.id }}"
             name="email"
-            placeholder="{{ section.settings.email_placeholder | default: 'Enter your email address' }}"
+            placeholder="{{ section.settings.email_placeholder | default: 'Enter your email address' | escape }}"
             autocomplete="email"
             required
             data-fgo-email
-            aria-label="Email address"
+            autocapitalize="none"
+            spellcheck="false"
           >
         </div>
 
         <label class="fgo__marketing-consent">
-          <input type="checkbox" data-fgo-marketing-consent>
-          <span>{{ 'free_guide_marketing.consent' | t }}</span>
+          <input type="checkbox" data-fgo-marketing-consent aria-describedby="FgoConsentHelp-{{ section.id }}">
+          <span>{{ 'free_guide_optin.marketing_consent' | t }}<span class="fgo__consent-helper" id="FgoConsentHelp-{{ section.id }}">{{ 'free_guide_optin.marketing_helper' | t }}</span></span>
         </label>
         <button
           type="submit"
@@ -495,26 +75,23 @@
         >
           {{ section.settings.cta_label | default: "Unlock My Free Starter Kit" }}
         </button>
-<p class="fgo__submit-notice">
-  This may take a few seconds. Please keep this page open.
-</p>
+<p class="fgo__submit-notice">{{ 'free_guide_optin.submitting_notice' | t }}</p>
         <div
           class="fgo__captcha-slot"
           id="FgoCaptcha-{{ section.id }}"
           data-captcha
-          aria-label="CAPTCHA verification"
+          aria-label="{{ 'free_guide_optin.captcha_label' | t | escape }}"
         >
-          <p class="fgo__captcha-title">Protected by reCAPTCHA</p>
+          <svg class="fgo__shield" viewBox="0 0 32 36" fill="currentColor" aria-hidden="true"><path d="m16 1 13 5v10c0 9-6 15-13 19C9 31 3 25 3 16V6z"/><path d="m10 18 4 4 8-9" fill="none" stroke="#fff" stroke-width="3"/></svg>
+          <div>
+          <p class="fgo__captcha-title">{{ 'free_guide_optin.captcha_title' | t }}</p>
           <p class="fgo__captcha-copy" data-fgo-captcha-status>
-            We verify your request before providing access to your free Starter Kit.
+            {{ 'free_guide_optin.captcha_copy' | t }}
           </p>
           <p class="fgo__captcha-legal">
-            This site is protected by reCAPTCHA and the Google
-            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-            and
-            <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
-            apply.
+            {{ 'free_guide_optin.captcha_legal_html' | t }}
           </p>
+          </div>
         </div>
 
         <p class="fgo__status" id="FgoStatus-{{ section.id }}" data-fgo-status aria-live="polite" hidden></p>
@@ -526,14 +103,72 @@
             <polyline points="5,12 10,17 19,8"/>
           </svg>
         </div>
-        <p class="fgo__success-title">You're in.</p>
-        <p class="fgo__success-sub">Your free Starter Kit is ready.</p>
+        <p class="fgo__success-title">{{ 'free_guide_optin.success_title' | t }}</p>
+        <p class="fgo__success-sub">{{ 'free_guide_optin.success_copy' | t }}</p>
         <p class="fgo__subscription-notice" data-fgo-subscription-notice hidden>{{ 'free_guide_marketing.incomplete' | t }}</p>
-        <a class="fgo__submit" href="/pages/squeezthank">Open My Free Starter Kit</a>
+        <a class="fgo__submit" href="/pages/squeezthank">{{ 'free_guide_optin.success_link' | t }}</a>
       </div>
     </div>
   </div>
 
+  <div class="fgo__card">
+    <div class="fgo__card-inner">
+      <h2 class="fgo__benefits-head">{{ 'free_guide_optin.benefits_heading' | t }}</h2>
+      <ul class="fgo__benefits" aria-label="{{ 'free_guide_optin.benefits_label' | t | escape }}">
+        <li class="fgo__benefit-group">
+          <div class="fgo__benefit-group-title">
+            <span class="fgo__check" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="currentColor"><path d="m28 18-10-7V4a2 2 0 0 0-4 0v7L4 18v4l10-4v7l-4 3v2l6-2 6 2v-2l-4-3v-7l10 4z"/></svg>
+            </span>
+            {{ 'free_guide_optin.pre_trip.title' | t }}
+          </div>
+          <ul class="fgo__benefit-items">
+            <li>{{ 'free_guide_optin.pre_trip.item_1' | t }}</li>
+            <li>{{ 'free_guide_optin.pre_trip.item_2' | t }}</li>
+            <li>{{ 'free_guide_optin.pre_trip.item_3' | t }}</li>
+            <li>{{ 'free_guide_optin.pre_trip.item_4' | t }}</li>
+          </ul>
+        </li>
+        <li class="fgo__benefit-group">
+          <div class="fgo__benefit-group-title">
+            <span class="fgo__check" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.8"><rect x="6" y="3" width="20" height="23" rx="5" fill="currentColor"/><rect x="10" y="7" width="12" height="8" rx="2" fill="#eee5ff" stroke="none"/><path d="m11 26-4 5m14-5 4 5"/><circle cx="11" cy="21" r="1" stroke="#eee5ff"/><circle cx="21" cy="21" r="1" stroke="#eee5ff"/></svg>
+            </span>
+            {{ 'free_guide_optin.local.title' | t }}
+          </div>
+          <ul class="fgo__benefit-items">
+            <li>{{ 'free_guide_optin.local.item_1' | t }}</li>
+            <li>{{ 'free_guide_optin.local.item_2' | t }}</li>
+            <li>{{ 'free_guide_optin.local.item_3' | t }}</li>
+            <li>{{ 'free_guide_optin.local.item_4' | t }}</li>
+          </ul>
+        </li>
+        <li class="fgo__benefit-group">
+          <div class="fgo__benefit-group-title">
+            <span class="fgo__check" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 2A11 11 0 0 0 5 13c0 8 11 18 11 18s11-10 11-18A11 11 0 0 0 16 2m0 16a5 5 0 1 1 0-10 5 5 0 0 1 0 10"/></svg>
+            </span>
+            {{ 'free_guide_optin.planning.title' | t }}
+          </div>
+          <ul class="fgo__benefit-items">
+            <li>{{ 'free_guide_optin.planning.item_1' | t }}</li>
+            <li>{{ 'free_guide_optin.planning.item_2' | t }}</li>
+            <li>{{ 'free_guide_optin.planning.item_3' | t }}</li>
+            <li>{{ 'free_guide_optin.planning.item_4' | t }}</li>
+
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+
+
+  <div class="fgo__closing">
+    <h2 class="fgo__benefits-tagline">{{ 'free_guide_optin.tagline' | t }}</h2>
+    <span class="fgo__closing-rule" aria-hidden="true"></span>
+    <p class="fgo__closing-copy">{{ 'free_guide_optin.closing_copy' | t }}</p>
+  </div>
 </div>
 
 <script src="{{ 'free-guide-optin.js' | asset_url }}" defer="defer"></script>
@@ -550,19 +185,19 @@
       "type": "text",
       "id": "section_label",
       "label": "Eyebrow pill label",
-      "default": "Free Korea Travel Info"
+      "default": "FREE KOREA TRAVEL STARTER KIT"
     },
     {
       "type": "textarea",
       "id": "headline",
       "label": "Headline",
-      "default": "The Real Korea That Millions of Travelers Miss.<br><em>Your Trip Will Be Different.</em>"
+      "default": "The Essentials for Your First Korea Trip"
     },
     {
       "type": "textarea",
       "id": "subtext",
       "label": "Sub-text",
-      "default": "Don't make the same mistakes others do in Korea — get the essential info you actually need, completely free."
+      "default": "No more jumping between blogs, maps, and random tips.\nGet the essentials for your first Korea trip in one free video and guidebook."
     },
     {
       "type": "header",

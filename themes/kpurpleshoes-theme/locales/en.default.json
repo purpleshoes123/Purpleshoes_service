@@ -8,6 +8,44 @@
  * ------------------------------------------------------------
  */
 {
+  "free_guide_optin": {
+    "benefits_heading": "What you’ll get (FREE):",
+    "benefits_label": "What's included",
+    "email_label": "Email address",
+    "marketing_consent": "I agree to receive travel tips and promotional emails from Purple Shoes. (Optional)",
+    "marketing_helper": "Your free Starter Kit is available without marketing emails.",
+    "submitting_notice": "This may take a few seconds. Please keep this page open.",
+    "captcha_label": "CAPTCHA verification",
+    "captcha_title": "Protected by reCAPTCHA",
+    "captcha_copy": "We verify your request before providing access to your free Starter Kit.",
+    "captcha_legal_html": "This site is protected by reCAPTCHA and the Google <a href=\"https://policies.google.com/privacy\" target=\"_blank\" rel=\"noopener noreferrer\">Privacy Policy</a> and <a href=\"https://policies.google.com/terms\" target=\"_blank\" rel=\"noopener noreferrer\">Terms of Service</a> apply.",
+    "success_title": "You're in.",
+    "success_copy": "Your free Starter Kit is ready.",
+    "success_link": "Open My Free Starter Kit",
+    "tagline": "A simple start to your first Korea trip.",
+    "closing_copy": "Practical tips, checklists and resources to help you travel with confidence.",
+    "pre_trip": {
+      "title": "Pre-Trip Made Simple",
+      "item_1": "Travel prep summary",
+      "item_2": "Entry checklist",
+      "item_3": "Packing guide",
+      "item_4": "Basic Korea map"
+    },
+    "local": {
+      "title": "Travel Like a Local",
+      "item_1": "Korea travel hacks",
+      "item_2": "Essential manners & etiquette",
+      "item_3": "What makes Korea special",
+      "item_4": "Must-Have Apps"
+    },
+    "planning": {
+      "title": "Plan Without Stress",
+      "item_1": "Korea's seasons & weather",
+      "item_2": "Festival calendar",
+      "item_3": "Transportation guide",
+      "item_4": "Essential Korean phrases"
+    }
+  },
   "free_guide_marketing": {
     "consent": "Optional: Email me Korea travel tips and offers from Purple Shoes. I can unsubscribe at any time. My free Starter Kit is available without this option.",
     "incomplete": "Your free guide request succeeded, but we could not confirm your marketing email subscription. You can still open your guide below. If a confirmation email arrives, follow its link to finish subscribing."
