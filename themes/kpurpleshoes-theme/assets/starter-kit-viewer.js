@@ -1,9 +1,23 @@
 (function () {
   'use strict';
 
-  function initMobilePdf(root) {
+  function preserveAttribution(root) {
+    var current = new URL(window.location.href);
+    if (current.protocol !== 'https:' && current.protocol !== 'http:') return;
+    var keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'gclid', 'fbclid', 'msclkid'];
+    root.querySelectorAll('[data-skv-cta]').forEach(function (link) {
+      var destination = new URL(link.getAttribute('href'), window.location.origin);
+      if (destination.origin !== window.location.origin) return;
+      keys.forEach(function (key) {
+        if (current.searchParams.has(key)) destination.searchParams.set(key, current.searchParams.get(key));
+      });
+      link.href = destination.pathname + destination.search + destination.hash;
+    });
+  }
+
+  function initGuidebook(root) {
     var viewer = root.querySelector('[data-skv-pdf-mobile]');
-    if (!viewer || viewer.dataset.initialized || !window.matchMedia('(max-width: 760px)').matches) return;
+    if (!viewer || viewer.dataset.initialized) return;
     viewer.dataset.initialized = 'true';
 
     var image = viewer.querySelector('[data-skv-pdf-image]');
@@ -20,7 +34,8 @@
       if (number < 1 || number > pages.length) return;
       currentPage = number;
       image.src = pages[number - 1];
-      image.alt = 'Starter Guidebook page ' + number + ' of ' + pages.length;
+      viewer.querySelector('.skv__pdf-page').scrollTop = 0;
+      image.alt = (viewer.getAttribute('data-page-description') || 'Starter Guidebook page __NUMBER__').replace('__NUMBER__', number);
       count.textContent = number + ' / ' + pages.length;
       previous.disabled = number === 1;
       next.disabled = number === pages.length;
@@ -38,76 +53,38 @@
     });
     close.addEventListener('click', function () {
       viewer.classList.remove('is-expanded');
+      var trigger = root.querySelector('[data-skv-pdf-fullscreen]');
+      if (trigger) trigger.focus();
     });
     showPage(1);
   }
 
-  function syncDesktopPdf(root) {
-    var frame = root.querySelector('.skv__pdf');
-    if (!frame) return;
-    if (window.matchMedia('(max-width: 760px)').matches) {
-      if (frame.hasAttribute('src')) frame.removeAttribute('src');
-      return;
-    }
-    if (!frame.hasAttribute('src')) frame.src = frame.getAttribute('data-pdf-url') + '#toolbar=0';
-  }
-
-  function updateConversionCta(root, state) {
-    var title = root.querySelector('[data-skv-cta-title]');
-    var copy = root.querySelector('[data-skv-cta-copy]');
-    var cta = root.querySelector('[data-skv-cta]');
-    if (!title || !copy || !cta) return;
-
-    var guideKitUrl = root.getAttribute('data-guide-kit-url') || '/products/korea-guide-kit';
-    if (state === 'guide50') {
-      copy.textContent = 'Your 50% Welcome Offer is ready.';
-      cta.textContent = 'View My 50% Welcome Offer';
-      cta.href = guideKitUrl;
-      return;
-    }
-
-    if (state === 'customer') {
-      copy.textContent = 'Explore the complete Korea Guide Kit and see everything included.';
-      cta.textContent = 'Explore the Korea Guide Kit';
-      cta.href = guideKitUrl;
-      return;
-    }
-
-    copy.textContent = 'Create your account to unlock your 50% Welcome Offer for 24 hours.';
-    cta.textContent = 'Create My Account';
-    cta.href = '/';
-  }
-
-  function loadCouponState(root) {
-    var customerId = root.getAttribute('data-customer-id');
-    if (!customerId) {
-      updateConversionCta(root, 'guest');
-      return;
-    }
-
-    var endpoint = root.getAttribute('data-coupon-summary-endpoint');
-    if (!endpoint) {
-      updateConversionCta(root, 'customer');
-      return;
-    }
-
-    var separator = endpoint.indexOf('?') === -1 ? '?' : '&';
-    var url = endpoint + separator + 'logged_in_customer_id=' + encodeURIComponent(customerId) + '&_ts=' + Date.now();
-    Promise.resolve(window.psWelcomeOfferReady).then(function () {
-      return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
-    })
-      .then(function (response) {
-        if (!response.ok) throw new Error('Coupon summary unavailable');
-        return response.json();
-      })
-      .then(function (payload) {
-        var summary = payload && payload.data ? payload.data : payload;
-        var guide50 = summary && summary.coupons && summary.coupons.guide50;
-        updateConversionCta(root, guide50 && guide50.available === true ? 'guide50' : 'customer');
-      })
-      .catch(function () {
-        updateConversionCta(root, 'customer');
-      });
+  function initMapVideo(root) {
+    var video = root.querySelector('[data-skv-map-video]');
+    var button = root.querySelector('[data-skv-map-play]');
+    var status = root.querySelector('[data-skv-map-status]');
+    if (!video || !button || video.dataset.initialized) return;
+    video.dataset.initialized = 'true';
+    button.hidden = false;
+    button.addEventListener('click', function () {
+      button.hidden = true;
+      if (status) status.hidden = true;
+      var attempt = video.play();
+      if (attempt && typeof attempt.catch === 'function') {
+        attempt.catch(function () {
+          button.hidden = false;
+          if (status) status.hidden = false;
+        });
+      }
+    });
+    video.addEventListener('play', function () {
+      button.hidden = true;
+      if (status) status.hidden = true;
+    });
+    video.addEventListener('error', function () {
+      button.hidden = true;
+      if (status) status.hidden = false;
+    });
   }
 
   function openPdfFullscreen(button) {
@@ -115,23 +92,9 @@
     var frame = targetId ? document.getElementById(targetId) : null;
     if (!frame) return;
 
-    if (window.matchMedia('(max-width: 760px)').matches) {
-      var mobileViewer = frame.parentElement.querySelector('[data-skv-pdf-mobile]');
-      if (mobileViewer) {
-        mobileViewer.classList.add('is-expanded');
-        return;
-      }
-    }
-
-    var requestFullscreen = frame.requestFullscreen || frame.webkitRequestFullscreen || frame.msRequestFullscreen;
-    if (requestFullscreen) {
-      Promise.resolve(requestFullscreen.call(frame)).catch(function () {
-        window.open(frame.getAttribute('data-pdf-url') || frame.src, '_blank', 'noopener');
-      });
-      return;
-    }
-
-    window.open(frame.getAttribute('data-pdf-url') || frame.src, '_blank', 'noopener');
+    frame.classList.add('is-expanded');
+    var closeButton = frame.querySelector('[data-skv-pdf-close]');
+    if (closeButton) closeButton.focus();
   }
 
   document.addEventListener('click', function (event) {
@@ -141,13 +104,23 @@
     openPdfFullscreen(button);
   });
 
-  document.querySelectorAll('[data-section="starter-kit-viewer"]').forEach(function (root) {
-    loadCouponState(root);
-    syncDesktopPdf(root);
-    initMobilePdf(root);
-    window.addEventListener('resize', function () {
-      syncDesktopPdf(root);
-      initMobilePdf(root);
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('[data-skv-pdf-mobile].is-expanded [data-skv-pdf-close]').forEach(function (button) {
+      button.click();
     });
+  });
+
+  function initViewer(root) {
+    if (root.dataset.skvInitialized) return;
+    root.dataset.skvInitialized = 'true';
+    preserveAttribution(root);
+    initMapVideo(root);
+    initGuidebook(root);
+  }
+
+  document.querySelectorAll('[data-section="starter-kit-viewer"]').forEach(initViewer);
+  document.addEventListener('shopify:section:load', function (event) {
+    event.target.querySelectorAll('[data-section="starter-kit-viewer"]').forEach(initViewer);
   });
 })();

@@ -1,0 +1,21 @@
+{% doc %}
+Renders a decorative icon for the Starter Kit viewer.
+@param {string} name - Icon name
+@example
+{% render 'starter-kit-icon', name: 'book' %}
+{% enddoc %}
+<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  {%- case name -%}
+    {%- when 'clipboard' -%}<rect x="7" y="6" width="18" height="23" rx="3"/><path d="M12 4h8v5h-8zm0 11h8m-8 6h6"/>
+    {%- when 'train' -%}<rect x="6" y="3" width="20" height="22" rx="5"/><path d="M7 15h18M11 9h10m-11 16-4 5m16-5 4 5"/><circle cx="11" cy="20" r="1"/><circle cx="21" cy="20" r="1"/>
+    {%- when 'pin' -%}<path d="M26 13c0 8-10 17-10 17S6 21 6 13a10 10 0 1 1 20 0Z"/><circle cx="16" cy="13" r="4"/>
+    {%- when 'food' -%}<path d="M5 3v8a4 4 0 0 0 8 0V3M9 3v26M24 3c-5 4-6 10-6 15h6m0-15v26"/>
+    {%- when 'map' -%}<path d="m3 8 9-5 9 5 8-5v21l-8 5-9-5-9 5Zm9-5v21m9-16v21"/>
+    {%- when 'navigation' -%}<path d="m3 13 26-10-10 26-4-12Z"/>
+    {%- when 'book' -%}<path d="M16 7C12 3 7 3 3 5v23c4-2 9-2 13 1 4-3 9-3 13-1V5c-4-2-9-2-13 2Zm0 0v22"/>
+    {%- when 'heart' -%}<path d="M16 29 5 18a6.5 6.5 0 0 1 11-7 6.5 6.5 0 0 1 11 7Zm0-25V1M6 6 3 3m23 3 3-3"/>
+    {%- when 'arrow' -%}<path d="M5 16h22M18 7l9 9-9 9"/>
+    {%- when 'chevron' -%}<path d="m12 7 9 9-9 9"/>
+    {%- when 'play' -%}<path d="m11 6 17 10-17 10Z" fill="currentColor" stroke="none"/>
+  {%- endcase -%}
+</svg>

@@ -19,9 +19,15 @@
         "video_copy": "Watch the essential travel tips for your first Korea trip.",
         "pdf_title": "Starter Kit Guidebook",
         "pdf_copy": "Read the essential Korea travel information at your own pace.",
-        "guide_kit_url": "/products/korea-guide-kit"
+        "guide_kit_url": "/pages/guide-plans",
+        "eyebrow": "Free Starter Kit",
+        "title": "Your Korea Trip\nStarts Here",
+        "hero_image": "shopify://shop_images/938207a5477970309a67488f9a0400dc.png",
+        "cta_label": "Explore the Full Korea Guide Kit"
       }
     }
   },
-  "order": ["starter_kit_viewer"]
+  "order": [
+    "starter_kit_viewer"
+  ]
 }

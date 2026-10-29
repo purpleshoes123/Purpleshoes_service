@@ -1,61 +1,32 @@
-{% comment %}
-  Public Starter Kit Viewer.
-  This is intentionally public until the planned email-verification gate is enabled.
-  Configure the PDF and video URLs in the Theme Editor; do not attach these files
-  to the squeeze email.
-{% endcomment %}
-
-<style>
-  .skv { background: #f7f7fb; color: #161225; font-family: var(--font-body-family, Arial, sans-serif); padding: clamp(32px, 5vw, 72px) 24px clamp(56px, 7vw, 96px); }
-  .skv__hero, .skv__content { max-width: 1200px; margin-inline: auto; }
-  .skv__hero { box-sizing: border-box; border-radius: 24px; background: linear-gradient(125deg, #35107f 0%, #5122bf 58%, #7442ec 100%); padding: clamp(42px, 6vw, 72px) 28px; text-align: center; box-shadow: 0 18px 42px rgba(52, 16, 127, .16); }
-  .skv__eyebrow { margin: 0 0 12px; color: #e7dcff !important; font-size: 12px; letter-spacing: .12em; font-weight: 800; text-transform: uppercase; }
-  .skv .skv__title { max-width: 760px; margin: 0 auto 14px; color: #fff !important; font-family: var(--font-heading-family, Arial, sans-serif); font-size: clamp(34px, 5vw, 58px); line-height: 1.08; letter-spacing: -.035em; }
-  .skv .skv__title::after, .skv .skv__card-title::after, .skv .skv__next h2::after { content: none !important; display: none !important; }
-  .skv__subtitle { max-width: 620px; margin: 0 auto; color: rgba(255,255,255,.88) !important; font-size: 17px; line-height: 1.65; }
-  .skv__content { padding-top: 28px; }
-  .skv__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
-  .skv__card { overflow: hidden; background: #fff; border: 1px solid #e5e2ed; border-radius: 18px; box-shadow: 0 8px 24px rgba(29, 20, 53, .07); }
-  .skv__card-head { padding: 24px 26px 18px; border-bottom: 1px solid #eeeaf4; }
-  .skv__card-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-  .skv .skv__card-title { margin: 0 0 8px; color: #171222 !important; font-family: var(--font-heading-family, Arial, sans-serif); font-size: 22px; line-height: 1.25; }
-  .skv__card-copy { margin: 0; color: #655e70; font-size: 14px; line-height: 1.55; }
-  .skv__video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #17111f; }
-  .skv__pdf { display: block; width: 100%; height: min(44vh, 420px); border: 0; background: #f1eff6; }
-  .skv__pdf-mobile { display: none; background: #f1eff6; }
-  .skv__pdf-toolbar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; background: #fff; }
-  .skv__pdf-toolbar button { min-height: 40px; padding: 7px 12px; border: 1px solid #d9d2e8; border-radius: 8px; background: #fff; color: #4c258f; font: inherit; font-weight: 700; }
-  .skv__pdf-toolbar button:disabled { opacity: .45; }
-  .skv__pdf-toolbar [data-skv-pdf-close] { display: none; }
-  .skv__pdf-page { display: flex; justify-content: center; padding: 12px; overflow: auto; }
-  .skv__pdf-page img { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 3px 12px rgba(29, 20, 53, .12); }
-  .skv__pdf-mobile.is-expanded { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; width: 100vw; height: 100dvh; overflow: auto; }
-  .skv__pdf-mobile.is-expanded .skv__pdf-toolbar { position: sticky; top: 0; z-index: 1; }
-  .skv__pdf-mobile.is-expanded [data-skv-pdf-close] { display: inline-block; }
-  .skv__pdf:fullscreen, .skv__pdf:-webkit-full-screen { width: 100vw; height: 100vh; background: #f1eff6; }
-  .skv__fullscreen-btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 8px 11px; border: 1px solid #d9d2e8; border-radius: 9px; background: #fff; color: #4c258f; font: inherit; font-size: 12px; font-weight: 800; line-height: 1; cursor: pointer; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
-  .skv__fullscreen-btn:hover { border-color: #6d42ce; background: #f3efff; transform: translateY(-1px); }
-  .skv__fullscreen-btn:focus-visible { outline: 3px solid rgba(109, 66, 206, .32); outline-offset: 2px; }
-  .skv__empty { margin: 0 24px 24px; padding: 18px; border-radius: 12px; background: #f5f2fa; color: #675f75; font-size: 14px; }
-  .skv__next { margin-top: 28px; padding: clamp(30px, 5vw, 48px); border-radius: 18px; background: #251052; color: #fff; text-align: center; }
-  .skv .skv__next h2 { margin: 0 0 10px; color: #fff !important; font-family: var(--font-heading-family, Arial, sans-serif); font-size: clamp(25px, 3vw, 36px); }
-  .skv__next p { max-width: 600px; margin: 0 auto 24px; color: rgba(255,255,255,.82) !important; line-height: 1.65; }
-  .skv__cta { display: inline-block; padding: 15px 26px; border-radius: 999px; background: #ffc400; color: #1b1430 !important; font-weight: 800; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
-  .skv__cta:hover { color: #1b1430 !important; transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.22); }
-  @media (max-width: 760px) { .skv { padding: 28px 16px 56px; } .skv__hero { border-radius: 18px; padding: 42px 20px; } .skv__grid { grid-template-columns: 1fr; } .skv__card-head { padding: 20px; } .skv__pdf { display: none; } .skv__pdf-mobile { display: block; } .skv__next { padding: 30px 20px; } }
-</style>
+{{ 'starter-kit-viewer.css' | asset_url | stylesheet_tag }}
+{%- liquid
+  assign default_cta_label = 'starter_kit_viewer.cta_label' | t
+  assign cta_label = section.settings.cta_label | default: default_cta_label
+  assign guide_kit_url = section.settings.guide_kit_url | default: '/pages/guide-plans'
+  assign hero_image = section.settings.hero_image | default: images['938207a5477970309a67488f9a0400dc.png']
+  assign map_video_url = 'purple-map-demo.mp4' | asset_url
+  if section.settings.map_video_url != blank
+    assign map_video_url = section.settings.map_video_url
+  endif
+-%}
 
 <section
   class="skv"
   data-section="starter-kit-viewer"
-  data-customer-id="{{ customer.id | default: '' }}"
-  data-coupon-summary-endpoint="/apps/bta-booking/coupons/summary"
-  data-guide-kit-url="{{ section.settings.guide_kit_url | default: '/products/korea-guide-kit' }}"
 >
   <header class="skv__hero">
-    <p class="skv__eyebrow">{{ section.settings.eyebrow | default: 'Free Korea Travel Starter Kit' }}</p>
-    <h1 class="skv__title">{{ section.settings.title | default: 'Your Korea trip starts here.' }}</h1>
-    <p class="skv__subtitle">{{ section.settings.subtitle | default: 'Start with the essentials.\nWatch the video and read the guide at your own pace.' | newline_to_br }}</p>
+    {%- if hero_image != blank -%}
+      {{ hero_image | image_url: width: 1800 | image_tag: class: 'skv__hero-image', loading: 'eager', fetchpriority: 'high', widths: '600, 900, 1200, 1800', sizes: '(min-width: 1250px) 1200px, 100vw', alt: '' }}
+    {%- endif -%}
+    <div class="skv__hero-copy">
+      <p class="skv__eyebrow">{{ section.settings.eyebrow | escape }}</p>
+      <h1 class="skv__title">{{ section.settings.title | escape | newline_to_br }}</h1>
+      <p class="skv__subtitle">{{ section.settings.subtitle | escape | newline_to_br }}</p>
+    </div>
+    <div class="skv__hero-offer">
+      <h2 class="skv__offer-title">{{ 'starter_kit_viewer.offer_heading' | t }}</h2>
+      <a class="skv__cta" data-skv-cta href="{{ guide_kit_url | escape }}">{{ cta_label | escape }}{% render 'starter-kit-icon', name: 'chevron' %}</a>
+    </div>
   </header>
 
   <div class="skv__content">
@@ -68,10 +39,10 @@
         {% if section.settings.video_url != blank %}
           <video class="skv__video" controls playsinline preload="metadata" controlsList="nodownload noremoteplayback" disablepictureinpicture>
             <source src="{{ section.settings.video_url | escape }}">
-            Your browser does not support this video.
+            {{ 'starter_kit_viewer.video_fallback' | t }}
           </video>
         {% else %}
-          <p class="skv__empty">The Starter Kit video will be available here shortly.</p>
+          <p class="skv__empty">{{ 'starter_kit_viewer.video_unavailable' | t }}</p>
         {% endif %}
       </article>
 
@@ -80,23 +51,22 @@
           <div class="skv__card-title-row">
           <h2 class="skv__card-title">{{ section.settings.pdf_title | default: 'Starter Kit Guidebook' }}</h2>
             {% if section.settings.pdf_url != blank %}
-              <button class="skv__fullscreen-btn" type="button" data-skv-pdf-fullscreen data-skv-pdf-target="StarterKitPdf-{{ section.id }}" aria-label="Open {{ section.settings.pdf_title | default: 'Starter Guide PDF' | escape }} in full screen">
-                <span aria-hidden="true">⛶</span> Full screen
+              <button class="skv__fullscreen-btn" type="button" data-skv-pdf-fullscreen data-skv-pdf-target="StarterKitPdf-{{ section.id }}" aria-label="{{ 'starter_kit_viewer.fullscreen_label' | t | escape }}">
+                <span aria-hidden="true">⛶</span> {{ 'starter_kit_viewer.fullscreen' | t }}
               </button>
             {% endif %}
           </div>
           <p class="skv__card-copy">{{ section.settings.pdf_copy | default: 'Read the essential Korea travel information at your own pace.' | newline_to_br }}</p>
         </div>
         {% if section.settings.pdf_url != blank %}
-          <iframe class="skv__pdf" id="StarterKitPdf-{{ section.id }}" data-pdf-url="{{ section.settings.pdf_url | escape }}" title="{{ section.settings.pdf_title | default: 'Starter Guide PDF' | escape }}" loading="lazy" allowfullscreen></iframe>
-          <div class="skv__pdf-mobile" data-skv-pdf-mobile aria-label="{{ section.settings.pdf_title | default: 'Starter Guide PDF' | escape }}">
+          <div class="skv__pdf-mobile" id="StarterKitPdf-{{ section.id }}" data-pdf-url="{{ section.settings.pdf_url | escape }}" data-skv-pdf-mobile data-page-description="{{ 'starter_kit_viewer.page_description' | t: number: '__NUMBER__', total: 48 | escape }}" aria-label="{{ section.settings.pdf_title | default: 'Starter Guide PDF' | escape }}">
             <div class="skv__pdf-toolbar">
-              <button type="button" data-skv-pdf-prev disabled aria-label="Previous PDF page">Previous</button>
+              <button type="button" data-skv-pdf-prev disabled aria-label="{{ 'starter_kit_viewer.previous_label' | t | escape }}">{{ 'starter_kit_viewer.previous' | t }}</button>
               <span data-skv-pdf-count aria-live="polite">1 / 48</span>
-              <button type="button" data-skv-pdf-next disabled aria-label="Next PDF page">Next</button>
-              <button type="button" data-skv-pdf-close aria-label="Close full screen">Close</button>
+              <button type="button" data-skv-pdf-next disabled aria-label="{{ 'starter_kit_viewer.next_label' | t | escape }}">{{ 'starter_kit_viewer.next' | t }}</button>
+              <button type="button" data-skv-pdf-close aria-label="{{ 'starter_kit_viewer.close_label' | t | escape }}">{{ 'starter_kit_viewer.close' | t }}</button>
             </div>
-            <div class="skv__pdf-page"><img data-skv-pdf-image src="{{ 'starter-guide-page-01.jpg' | asset_url }}" alt="Starter Guidebook page 1 of 48" width="1445" height="2045" loading="lazy"></div>
+            <div class="skv__pdf-page"><img data-skv-pdf-image src="{{ 'starter-guide-page-01.jpg' | asset_url }}" alt="{{ 'starter_kit_viewer.page_description' | t: number: 1, total: 48 | escape }}" width="1445" height="2045" loading="lazy"></div>
             <div hidden>
               {% for page_number in (1..48) %}
                 {% assign page_suffix = page_number | prepend: '0' | slice: -2, 2 %}
@@ -106,15 +76,61 @@
             </div>
           </div>
         {% else %}
-          <p class="skv__empty">The Starter Guide PDF will be available here shortly.</p>
+          <p class="skv__empty">{{ 'starter_kit_viewer.pdf_unavailable' | t }}</p>
         {% endif %}
       </article>
     </div>
 
+    <section class="skv__comparison" aria-labelledby="SkvComparison-{{ section.id }}">
+      <h2 class="skv__comparison-title" id="SkvComparison-{{ section.id }}">{{ 'starter_kit_viewer.comparison_heading' | t }}</h2>
+      <p class="skv__comparison-copy">{{ 'starter_kit_viewer.comparison_copy' | t }}</p>
+      <div class="skv__comparison-grid">
+        <article class="skv__compare-card">
+          <h3 class="skv__compare-title">{{ 'starter_kit_viewer.free_title' | t }}</h3>
+          <p class="skv__compare-sub">{{ 'starter_kit_viewer.free_subtitle' | t }}</p>
+          <ul class="skv__compare-list">
+            <li class="skv__compare-item"><span class="skv__icon">{% render 'starter-kit-icon', name: 'clipboard' %}</span><p>{{ 'starter_kit_viewer.free_prep' | t }}</p></li>
+            <li class="skv__compare-item"><span class="skv__icon">{% render 'starter-kit-icon', name: 'train' %}</span><p>{{ 'starter_kit_viewer.free_transport' | t }}</p></li>
+            <li class="skv__compare-item"><span class="skv__icon">{% render 'starter-kit-icon', name: 'pin' %}</span><p>{{ 'starter_kit_viewer.free_map' | t }}</p></li>
+          </ul>
+        </article>
+        <span class="skv__compare-arrow" aria-hidden="true">{% render 'starter-kit-icon', name: 'arrow' %}</span>
+        <article class="skv__compare-card skv__compare-card--full">
+          <h3 class="skv__compare-title">{{ 'starter_kit_viewer.full_title' | t }}</h3>
+          <p class="skv__compare-sub">{{ 'starter_kit_viewer.full_subtitle' | t }}</p>
+          <ul class="skv__compare-list">
+            <li class="skv__compare-item"><span class="skv__icon">{% render 'starter-kit-icon', name: 'food' %}</span><p>{{ 'starter_kit_viewer.full_food' | t }}</p></li>
+            <li class="skv__compare-item"><span class="skv__icon">{% render 'starter-kit-icon', name: 'map' %}</span><p>{{ 'starter_kit_viewer.full_regions' | t }}</p></li>
+            <li class="skv__compare-item"><span class="skv__icon">{% render 'starter-kit-icon', name: 'navigation' %}</span><p>{{ 'starter_kit_viewer.full_map' | t }}<span class="skv__map-helper">{{ 'starter_kit_viewer.map_helper' | t }}</span></p></li>
+          </ul>
+          <div class="skv__composition"><span class="skv__icon">{% render 'starter-kit-icon', name: 'book' %}</span><p><strong>{{ 'starter_kit_viewer.composition' | t }}</strong><br>{{ 'starter_kit_viewer.access' | t }}</p></div>
+        </article>
+      </div>
+      <div class="skv__trust">{% render 'starter-kit-icon', name: 'heart' %}<p><strong>{{ 'starter_kit_viewer.trust_heading' | t }}</strong><br>{{ 'starter_kit_viewer.trust_copy' | t }}</p></div>
+    </section>
+
+    <section class="skv__map-demo" aria-labelledby="SkvMap-{{ section.id }}">
+      <div>
+        <h2 class="skv__map-title" id="SkvMap-{{ section.id }}">{{ 'starter_kit_viewer.map_heading' | t }}</h2>
+        <p class="skv__map-copy">{{ 'starter_kit_viewer.map_copy' | t }}</p>
+        <p class="skv__map-caption">{{ 'starter_kit_viewer.map_helper' | t }}</p>
+      </div>
+      <div class="skv__map-media">
+        <h3 class="skv__map-label">{{ 'starter_kit_viewer.map_video_heading' | t }}</h3>
+        <div class="skv__map-frame" data-skv-map-frame>
+          <video class="skv__map-video" data-skv-map-video controls playsinline preload="none" poster="{{ 'purple-map-demo-poster.jpg' | asset_url }}" aria-label="{{ 'starter_kit_viewer.map_video_heading' | t | escape }}">
+            <source src="{{ map_video_url | escape }}" type="video/mp4">
+            {{ 'starter_kit_viewer.video_fallback' | t }}
+          </video>
+          <button class="skv__map-play" type="button" data-skv-map-play hidden aria-label="{{ 'starter_kit_viewer.map_play' | t | escape }}">{% render 'starter-kit-icon', name: 'play' %}</button>
+        </div>
+        <p class="skv__map-status" data-skv-map-status hidden role="status">{{ 'starter_kit_viewer.map_error' | t }}</p>
+      </div>
+    </section>
+
     <div class="skv__next" data-skv-next>
-      <h2 data-skv-cta-title>{{ section.settings.cta_title | default: 'Ready for the full Korea Guide Kit?' }}</h2>
-      <p data-skv-cta-copy>{% if customer %}Explore the complete Korea Guide Kit and see everything included.{% else %}Create your account to unlock your 50% Welcome Offer for 24 hours.{% endif %}</p>
-      <a class="skv__cta" data-skv-cta href="{% if customer %}{{ section.settings.guide_kit_url | default: '/products/korea-guide-kit' }}{% else %}{{ routes.root_url }}{% endif %}">{% if customer %}Explore the Korea Guide Kit{% else %}Create My Account{% endif %}</a>
+      <a class="skv__cta" data-skv-cta href="{{ guide_kit_url | escape }}">{{ cta_label | escape }}{% render 'starter-kit-icon', name: 'chevron' %}</a>
+      <p>{{ 'starter_kit_viewer.cta_helper' | t }}</p>
     </div>
   </div>
 </section>
@@ -125,24 +141,97 @@
 {
   "name": "Starter Kit Viewer",
   "settings": [
-    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Free Korea Travel Starter Kit" },
-    { "type": "text", "id": "title", "label": "Title", "default": "Your Korea trip starts here." },
-    { "type": "textarea", "id": "subtitle", "label": "Subtitle", "default": "Start with the essentials.\nWatch the video and read the guide at your own pace." },
-    { "type": "header", "content": "Starter video" },
-    { "type": "text", "id": "video_title", "label": "Title", "default": "Starter Kit Video" },
-    { "type": "textarea", "id": "video_copy", "label": "Description", "default": "Watch the essential travel tips for your first Korea trip." },
-    { "type": "url", "id": "video_url", "label": "Video URL" },
-    { "type": "header", "content": "Starter PDF" },
-    { "type": "text", "id": "pdf_title", "label": "Title", "default": "Starter Kit Guidebook" },
-    { "type": "textarea", "id": "pdf_copy", "label": "Description", "default": "Read the essential Korea travel information at your own pace." },
-    { "type": "url", "id": "pdf_url", "label": "PDF URL" },
-    { "type": "header", "content": "Account conversion" },
-    { "type": "text", "id": "cta_title", "label": "CTA title", "default": "Ready for the full Korea Guide Kit?" },
-    { "type": "textarea", "id": "cta_copy", "label": "Fallback CTA copy", "default": "Create your account to unlock your 50% Welcome Offer for 24 hours." },
-    { "type": "text", "id": "cta_label", "label": "CTA label", "default": "Create My Account" },
-    { "type": "url", "id": "guide_kit_url", "label": "Korea Guide Kit page URL" },
-    { "type": "text", "id": "signin_label", "label": "Top link label", "default": "Create an account" }
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Free Starter Kit"
+    },
+    {
+      "type": "textarea",
+      "id": "title",
+      "label": "Title",
+      "default": "Your Korea Trip\nStarts Here"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Start with the essentials.\nWatch the video and read the guide at your own pace."
+    },
+    {
+      "type": "header",
+      "content": "Starter video"
+    },
+    {
+      "type": "text",
+      "id": "video_title",
+      "label": "Title",
+      "default": "Starter Kit Video"
+    },
+    {
+      "type": "textarea",
+      "id": "video_copy",
+      "label": "Description",
+      "default": "Watch the essential travel tips for your first Korea trip."
+    },
+    {
+      "type": "url",
+      "id": "video_url",
+      "label": "Video URL"
+    },
+    {
+      "type": "header",
+      "content": "Starter PDF"
+    },
+    {
+      "type": "text",
+      "id": "pdf_title",
+      "label": "Title",
+      "default": "Starter Kit Guidebook"
+    },
+    {
+      "type": "textarea",
+      "id": "pdf_copy",
+      "label": "Description",
+      "default": "Read the essential Korea travel information at your own pace."
+    },
+    {
+      "type": "url",
+      "id": "pdf_url",
+      "label": "PDF URL"
+    },
+    {
+      "type": "header",
+      "content": "Guide Kit details"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "CTA label",
+      "default": "Explore the Full Korea Guide Kit"
+    },
+    {
+      "type": "url",
+      "id": "guide_kit_url",
+      "label": "Korea Guide Kit page URL"
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Hero photo"
+    },
+    {
+      "type": "url",
+      "id": "map_video_url",
+      "label": "Purple Map demonstration video URL",
+      "info": "Leave blank to use the supplied Purple Map demonstration video."
+    }
   ],
-  "presets": [{ "name": "Starter Kit Viewer" }]
+  "presets": [
+    {
+      "name": "Starter Kit Viewer"
+    }
+  ]
 }
 {% endschema %}
