@@ -13,13 +13,9 @@
     "squeeze_thankyou": {
       "type": "ps-squeeze-thankyou",
       "settings": {
-        "hero_title": "You're in.",
-        "hero_sub": "Your free Starter Kit is ready.",
-        "hero_note": "Start with the essentials for your first Korea trip,\nand explore at your own pace.",
-        "upsell_headline": "You've got the basics —\nnow let's do it right.",
-        "kit_label": "Inside the full Korea Guide Kit:",
-        "kit_items": "Full guidebook|Video guide|1,500+ handpicked spots on our map|Routes ready to use — no searching needed",
-        "cta_note": "Start planning your Korea trip with Purple Shoes.",
+        "hero_title": "Your Free\nStarter Kit Is Ready.",
+        "hero_sub": "Start with the essentials for your first Korea trip.",
+        "hero_note": "Free access. No purchase required.",
         "cta_label": "Open My Free Starter Kit",
         "cta_url": "https://kpurpleshoes.com/pages/starter-kit-viewer"
       }

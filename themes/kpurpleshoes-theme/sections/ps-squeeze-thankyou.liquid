@@ -1,248 +1,63 @@
-<style>
-.sqty {
-  font-family: 'Poppins', sans-serif;
-  background: var(--ps-surface, #f5f6f8);
-  min-height: 100vh;
-  padding-bottom: 60px;
-}
+{{ 'squeeze-thankyou.css' | asset_url | stylesheet_tag }}
 
-/* ── Logo bar ── */
-.sqty__logobar {
-  padding: 18px 24px 18px;
-  max-width: 900px;
-  margin: 0 auto;
-}
-.sqty__logo {
-  display: block;
-  height: 38px;
-  width: auto;
-}
-.sqty__logo-text {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--ps-purple, #5b2bd8);
-  letter-spacing: -.02em;
-}
-
-/* ── Hero ── */
-.sqty__hero {
-  background: linear-gradient(135deg, #35107f 0%, #5b2bd8 60%, #6f40ff 100%);
-  padding: 56px 24px 60px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-.sqty__hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.07) 0%, transparent 60%);
-  pointer-events: none;
-}
-.sqty__hero-inner {
-  max-width: 640px;
-  margin: 0 auto;
-  position: relative;
-}
-.sqty__check-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  background: rgba(255,255,255,0.15);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-  font-size: 28px;
-  margin-bottom: 20px;
-}
-.sqty__hero-title {
-  font-size: clamp(36px, 6vw, 64px);
-  font-weight: 900;
-  color: #fff;
-  margin: 0 0 14px;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-}
-.sqty__hero-sub {
-  font-size: clamp(16px, 2vw, 20px);
-  font-weight: 500;
-  color: rgba(255,255,255,0.92);
-  margin: 0 0 10px;
-  line-height: 1.5;
-}
-.sqty__hero-note {
-  font-size: 14px;
-  color: rgba(255,255,255,0.9);
-  margin: 24px 0;
-  line-height: 1.7;
-}
-
-/* ── Body ── */
-.sqty__body {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-/* ── Upsell card ── */
-.sqty__upsell {
-  background: #fff;
-  border-radius: 20px;
-  border: 1px solid rgba(91,43,216,0.12);
-  box-shadow: 0 4px 24px rgba(53,16,127,0.09);
-  padding: 36px 32px 32px;
-  margin-top: -32px;
-  position: relative;
-}
-.sqty__upsell-headline {
-  font-size: clamp(22px, 3.5vw, 30px);
-  font-weight: 900;
-  color: #1a0a3d;
-  margin: 0 0 24px;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-.sqty__kit-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 800;
-  color: #5b2bd8;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  margin-bottom: 14px;
-}
-.sqty__kit-label::before {
-  content: '';
-  display: inline-block;
-  width: 3px;
-  height: 14px;
-  background: #5b2bd8;
-  border-radius: 2px;
-}
-.sqty__kit-list {
-  list-style: none;
-  margin: 0 0 28px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.sqty__kit-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a0a3d;
-  line-height: 1.4;
-}
-.sqty__kit-list li::before {
-  content: '✓';
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  background: linear-gradient(135deg, #5b2bd8, #6f40ff);
-  color: #fff;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 900;
-  margin-top: 1px;
-}
-.sqty__divider {
-  border: none;
-  border-top: 1px solid rgba(91,43,216,0.1);
-  margin: 0 0 24px;
-}
-.sqty__cta-note {
-  font-size: 14px;
-  color: #6b7280;
-  text-align: center;
-  margin: 0 0 16px;
-}
-.sqty__cta-btn {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  max-width: 420px;
-  margin: 28px auto 16px;
-  background: #ffe16a;
-  color: #26104d;
-  text-align: center;
-  font-size: 17px;
-  font-weight: 800;
-  padding: 18px 24px;
-  border-radius: 14px;
-  text-decoration: none;
-  letter-spacing: 0.01em;
-  box-shadow: 0 6px 20px rgba(91,43,216,0.35);
-  transition: opacity 0.2s, transform 0.15s;
-}
-.sqty__cta-btn:hover {
-  opacity: 0.92;
-  transform: translateY(-1px);
-}
-
-/* ── Footer nudge ── */
-.sqty__footer-nudge {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 13px;
-  color: #9ca3af;
-}
-.sqty__footer-nudge a {
-  color: #5b2bd8;
-  font-weight: 700;
-  text-decoration: none;
-}
-.sqty__footer-nudge a:hover { text-decoration: underline; }
-
-@media (max-width: 480px) {
-  .sqty__upsell {
-    padding: 28px 20px 24px;
-    margin-top: -24px;
-  }
-}
-</style>
+{%- liquid
+  assign default_helper = 'squeeze_thankyou.access_note' | t
+-%}
 
 <div class="sqty">
-  <!-- ── Logo bar ── -->
   <div class="sqty__logobar">
-    {%- if settings.logo != blank -%}
-      {{
-        settings.logo
-        | image_url: width: 320
-        | image_tag:
-          class: 'sqty__logo',
-          alt: settings.logo.alt | default: shop.name,
-          width: settings.logo.width,
-          height: settings.logo.height,
-          loading: 'eager'
-      }}
-    {%- else -%}
-      <span class="sqty__logo-text">{{ shop.name }}</span>
-    {%- endif -%}
+    <a class="sqty__logo-link" href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
+      {%- if settings.logo != blank -%}
+        {{
+          settings.logo
+          | image_url: width: 640
+          | image_tag:
+            class: 'sqty__logo',
+            alt: shop.name,
+            loading: 'eager'
+        }}
+      {%- else -%}
+        <span class="sqty__logo-text">{{ shop.name | escape }}</span>
+      {%- endif -%}
+    </a>
   </div>
 
-  <!-- ── Hero ── -->
   <div class="sqty__hero">
     <div class="sqty__hero-inner">
-      <div class="sqty__check-badge" aria-hidden="true">✓</div>
-      <h1 class="sqty__hero-title">{{ section.settings.hero_title | default: "You're in." }}</h1>
-      <p class="sqty__hero-sub">{{ section.settings.hero_sub | default: "Your free Starter Kit is ready." | escape | newline_to_br }}</p>
-      <p class="sqty__hero-note">{{ section.settings.hero_note | escape | newline_to_br }}</p>
-      <a href="{{ section.settings.cta_url | default: '/pages/starter-kit-viewer' }}" class="sqty__cta-btn">
+      <div class="sqty__check-badge" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 25 8 10 17-24"/>
+        </svg>
+      </div>
+      <h1 class="sqty__hero-title">{{ section.settings.hero_title | escape | newline_to_br }}</h1>
+      <p class="sqty__hero-sub">{{ section.settings.hero_sub | escape | newline_to_br }}</p>
+      <a href="{{ section.settings.cta_url | default: '/pages/starter-kit-viewer' | escape }}" class="sqty__cta-btn">
         {{ section.settings.cta_label | default: 'Open My Free Starter Kit' | escape }}
       </a>
-      <p class="sqty__hero-note">Free • Instant access • No credit card required</p>
+      <p class="sqty__hero-note">{{ section.settings.hero_note | default: default_helper | escape | newline_to_br }}</p>
     </div>
   </div>
 
+  <ul class="sqty__features" aria-label="{{ 'squeeze_thankyou.features_label' | t | escape }}">
+    <li class="sqty__feature">
+      <span class="sqty__feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="currentColor"><path d="M15 8a3 3 0 0 1 4-2l24 15a3.5 3.5 0 0 1 0 6L19 42a3 3 0 0 1-4-2z"/></svg>
+      </span>
+      <p class="sqty__feature-caption">{{ 'squeeze_thankyou.video_html' | t }}</p>
+    </li>
+    <li class="sqty__feature">
+      <span class="sqty__feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><path d="M24 10C18 5 10 5 4 8v32c6-3 14-3 20 1 6-4 14-4 20-1V8c-6-3-14-3-20 2Zm0 0v31"/></svg>
+      </span>
+      <p class="sqty__feature-caption">{{ 'squeeze_thankyou.guidebook_html' | t }}</p>
+    </li>
+    <li class="sqty__feature">
+      <span class="sqty__feature-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4"><circle cx="24" cy="24" r="21"/><path d="m30 18-4 10-10 4 4-10z" fill="currentColor" stroke-linejoin="round"/><circle cx="23" cy="25" r="1.5" fill="#f0e8ff" stroke="none"/></svg>
+      </span>
+      <p class="sqty__feature-caption">{{ 'squeeze_thankyou.explore_html' | t }}</p>
+    </li>
+  </ul>
 </div>
 
 <script src="{{ 'squeeze-thankyou-lead.js' | asset_url }}" defer="defer"></script>
@@ -252,14 +67,9 @@
   "name": "Squeeze Thank You",
   "settings": [
     { "type": "header", "content": "Hero" },
-    { "type": "text", "id": "hero_title", "label": "Title", "default": "You're in." },
-    { "type": "textarea", "id": "hero_sub", "label": "Subtitle", "default": "Your free Starter Kit is ready." },
-    { "type": "textarea", "id": "hero_note", "label": "Note (smaller)", "default": "Start with the essentials for your first Korea trip,\nand explore at your own pace." },
-    { "type": "header", "content": "Upsell Card" },
-    { "type": "textarea", "id": "upsell_headline", "label": "Headline", "default": "You've got the basics — now let's do it right." },
-    { "type": "text", "id": "kit_label", "label": "Kit section label", "default": "Inside the full Korea Guide Kit:" },
-    { "type": "textarea", "id": "kit_items", "label": "Kit items (pipe-separated |)", "default": "Full guidebook|Video guide|1000+ handpicked spots on our map|Routes ready to use — no searching needed" },
-    { "type": "text", "id": "cta_note", "label": "CTA note above button", "default": "Create your account to unlock everything." },
+    { "type": "textarea", "id": "hero_title", "label": "Title", "default": "Your Free\nStarter Kit Is Ready." },
+    { "type": "textarea", "id": "hero_sub", "label": "Subtitle", "default": "Start with the essentials for your first Korea trip." },
+    { "type": "textarea", "id": "hero_note", "label": "Free access note", "default": "Free access. No purchase required." },
     { "type": "text", "id": "cta_label", "label": "CTA button text", "default": "Open My Free Starter Kit" },
     { "type": "url", "id": "cta_url", "label": "CTA button URL" }
   ],

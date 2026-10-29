@@ -8,6 +8,13 @@
  * ------------------------------------------------------------
  */
 {
+  "squeeze_thankyou": {
+    "access_note": "Free access. No purchase required.",
+    "features_label": "Your free Starter Kit",
+    "video_html": "Watch the<br>Starter Kit video",
+    "guidebook_html": "Read the<br>Starter Kit guidebook",
+    "explore_html": "Explore at<br>your own pace"
+  },
   "free_guide_optin": {
     "benefits_heading": "What you’ll get (FREE):",
     "benefits_label": "What's included",
