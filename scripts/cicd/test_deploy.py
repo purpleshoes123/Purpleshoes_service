@@ -2,10 +2,11 @@ import copy
 import importlib.util
 import json
 import os
+import tempfile
 from pathlib import Path
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 spec = importlib.util.spec_from_file_location('deploy', Path(__file__).with_name('deploy.py'))
 deploy = importlib.util.module_from_spec(spec)
@@ -79,6 +80,29 @@ class DeploymentGuards(unittest.TestCase):
         self.assertIn('Upload failed assets/demo.mp4', result)
         for value in [secret, 'https://', 'a@example.com', 'opaqueToken']:
             self.assertNotIn(value, result)
+
+    def test_cli_timeout_fails_in_time_to_restore_production(self):
+        with patch.object(deploy.subprocess, 'run', side_effect=deploy.subprocess.TimeoutExpired('shopify', 300)):
+            with self.assertRaisesRegex(RuntimeError, 'timed out: theme push'):
+                deploy.cli(['theme', 'push'])
+
+    def test_large_asset_uses_encrypted_expiring_download_and_stays_out_of_cli_payload(self):
+        env = {'RELEASE_BUCKET':'fixture-bucket','AWS_ACCOUNT_ID':'123456789012','SHOPIFY_THEME_ID':'1'}
+        s3 = Mock()
+        s3.generate_presigned_url.return_value = 'https://fixture.invalid/signed?credential=private'
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root/'assets').mkdir()
+            with (root/'assets/demo.mp4').open('wb') as stream:
+                stream.truncate(5 * 1024 * 1024 + 1)
+            (root/'assets/small.js').write_text('void 0;')
+            with patch.dict(os.environ, env), patch.object(deploy,'theme_graphql',return_value={'themeFilesUpsert':{'job':None,'userErrors':[]}}) as graphql, patch.object(deploy,'cli') as cli:
+                deploy.push_theme(s3,'releases/cicd/test',root,['assets/demo.mp4','assets/small.js','assets/absent.js'],[])
+            self.assertEqual(s3.upload_file.call_args.kwargs['ExtraArgs']['ServerSideEncryption'],'AES256')
+            self.assertEqual(s3.generate_presigned_url.call_args.kwargs['ExpiresIn'],300)
+            self.assertEqual(graphql.call_args.args[1]['files'][0]['body'],{'type':'URL','value':s3.generate_presigned_url.return_value})
+            self.assertNotIn('assets/demo.mp4',cli.call_args.args[0])
+            self.assertIn('assets/small.js',cli.call_args.args[0])
 
     def test_numeric_template_required_for_rollback(self):
         class ASG:

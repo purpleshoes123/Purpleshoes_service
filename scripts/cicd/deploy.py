@@ -6,6 +6,7 @@ There are no schema migrations, customer mutations or production secrets in CI.
 import base64
 import hashlib
 import json
+import mimetypes
 import os
 from pathlib import Path
 import re
@@ -91,10 +92,63 @@ def cli(args, cwd=None):
     command = ['shopify', *args]
     if args[0] == 'theme' and '--json' not in args:
         command.append('--json')
-    result = subprocess.run(command, cwd=cwd, env=env, capture_output=True)
+    try:
+        result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, timeout=300)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError('Shopify command timed out: ' + ' '.join(args[:2])) from None
     if result.returncode:
         raise RuntimeError('Shopify command failed: ' + ' '.join(args[:2]) + '; ' + safe_diagnostic(result.stdout + result.stderr))
     return result.stdout
+
+
+def theme_graphql(query, variables):
+    request = urllib.request.Request('https://theme-kit-access.shopifyapps.com/cli/admin/api/2026-10/graphql.json',
+        data=json.dumps({'query': query, 'variables': variables}).encode(),
+        headers={'Content-Type': 'application/json', 'X-Shopify-Shop': os.environ['SHOPIFY_FLAG_STORE'],
+                 'X-Shopify-Access-Token': os.environ['SHOPIFY_CLI_THEME_TOKEN']})
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            result = json.load(response)
+        if result.get('errors'):
+            raise ValueError('GraphQL error')
+        return result['data']
+    except Exception:
+        # HTTP errors may include the signed asset URL or authentication headers.
+        raise RuntimeError('Shopify theme asset request failed; sensitive details suppressed') from None
+
+
+def push_theme(s3, prefix, root, names, theme_args):
+    small = []
+    for name in names:
+        path = root / name
+        if not path.exists():  # New files absent from a rollback backup stay unreferenced.
+            continue
+        if not name.startswith('assets/') or path.stat().st_size <= 5 * 1024 * 1024:
+            small += ['--only', name]
+            continue
+        key = prefix + '/large-assets/' + name
+        s3.upload_file(str(path), os.environ['RELEASE_BUCKET'], key,
+            ExtraArgs={'ServerSideEncryption': 'AES256', 'ExpectedBucketOwner': os.environ['AWS_ACCOUNT_ID'],
+                       'ContentType': mimetypes.guess_type(name)[0] or 'application/octet-stream'})
+        url = s3.generate_presigned_url('get_object', Params={'Bucket': os.environ['RELEASE_BUCKET'], 'Key': key}, ExpiresIn=300)
+        query = 'mutation ThemeAssetFromUrl($themeId: ID!, $files: [OnlineStoreThemeFilesUpsertFileInput!]!) { themeFilesUpsert(themeId: $themeId, files: $files) { job { id } userErrors { field message } } }'
+        payload = theme_graphql(query, {'themeId': 'gid://shopify/OnlineStoreTheme/' + os.environ['SHOPIFY_THEME_ID'],
+            'files': [{'filename': name, 'body': {'type': 'URL', 'value': url}}]})['themeFilesUpsert']
+        if payload.get('userErrors'):
+            raise RuntimeError('Shopify rejected theme asset: ' + name)
+        job = payload.get('job')
+        if job:
+            deadline = time.monotonic() + 180
+            while time.monotonic() < deadline:
+                status = theme_graphql('query ThemeAssetJob($id: ID!) { job(id: $id) { done } }', {'id': job['id']})['job']
+                if status and status['done']:
+                    break
+                time.sleep(3)
+            else:
+                raise RuntimeError('Shopify theme asset processing timed out: ' + name)
+        print('Uploaded large theme asset via expiring private download: ' + name, flush=True)
+    if small:
+        cli(['theme', 'push', *theme_args, '--path', str(root), '--allow-live', '--nodelete', *small])
 
 
 def get_object(s3, key):
@@ -186,7 +240,9 @@ def public_health():
 
 def deploy():
     import boto3
-    s3, asg, ec2, elb, ssm = [boto3.client(service) for service in ('s3', 'autoscaling', 'ec2', 'elbv2', 'ssm')]
+    from botocore.config import Config
+    s3 = boto3.client('s3', config=Config(signature_version='s3v4'))
+    asg, ec2, elb, ssm = [boto3.client(service) for service in ('autoscaling', 'ec2', 'elbv2', 'ssm')]
     assert boto3.client('sts').get_caller_identity()['Account'] == os.environ['AWS_ACCOUNT_ID']
     state = json.loads(get_object(s3, STATE_KEY))  # Missing baseline is a stop, never a full-store overwrite.
     sha = os.environ['GITHUB_SHA']
@@ -283,7 +339,7 @@ def deploy():
             cli(['app', 'deploy', '--force', '--version', 'github-' + sha[:12]], cwd=APP)
         if theme_changed:
             theme_started = True
-            cli(['theme', 'push', *theme_args, '--path', THEME, '--allow-live', '--nodelete', *selected])
+            push_theme(s3, prefix, Path(THEME), [path[len(THEME) + 1:] for path in theme_changed], theme_args)
             verify = OUT / 'theme-verify'
             verify.mkdir(parents=True, exist_ok=True)
             cli(['theme', 'pull', *theme_args, '--path', str(verify), *selected])
@@ -305,7 +361,7 @@ def deploy():
         if theme_started:
             try:
                 # Restore prior referenced files; newly uploaded, unreferenced assets remain for inspection.
-                cli(['theme', 'push', *theme_args, '--path', str(backup), '--allow-live', '--nodelete', *selected])
+                push_theme(s3, prefix + '/restore', backup, [path[len(THEME) + 1:] for path in theme_changed], theme_args)
                 restored = OUT / 'theme-restored'
                 restored.mkdir(parents=True, exist_ok=True)
                 cli(['theme', 'pull', *theme_args, '--path', str(restored), *selected])
