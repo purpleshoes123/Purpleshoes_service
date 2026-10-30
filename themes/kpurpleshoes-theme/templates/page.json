@@ -28,8 +28,5 @@
       }
     }
   },
-  "order": [
-    "main",
-    "main_coupons_4EhxXG"
-  ]
+  "order": ["main", "main_coupons_4EhxXG"]
 }

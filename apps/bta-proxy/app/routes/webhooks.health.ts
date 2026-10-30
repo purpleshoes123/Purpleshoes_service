@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { respond } from "~/lib/respond";
-import { getGkvEnv } from "~/lib/gkv/env";
+import { getGkvEnv } from "~/domains/guide-viewer/env";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
@@ -13,6 +13,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       service: "guide-kit-viewer-backend",
       enabled: env.enabled,
     },
-    { correlationId }
+    { correlationId },
   );
 };

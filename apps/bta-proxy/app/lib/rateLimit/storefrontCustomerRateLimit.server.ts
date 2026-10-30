@@ -9,10 +9,7 @@ import {
 } from "./rateLimitStore.server";
 
 export type StorefrontRateLimitMode = "off" | "observe" | "enforce";
-export type StorefrontRateLimitBucket =
-  | "mypage-read"
-  | "signed-url"
-  | "mypage-write";
+export type StorefrontRateLimitBucket = "mypage-read" | "signed-url" | "mypage-write";
 
 export interface StorefrontRateLimitDecision {
   allowed: boolean;
@@ -57,7 +54,9 @@ function warnInvalidEnvironment(
   rawValue: string | undefined,
   fallback: string,
 ): void {
-  if (!rawValue || invalidEnvironmentWarnings.has(name)) return;
+  if (!rawValue || invalidEnvironmentWarnings.has(name)) {
+    return;
+  }
   invalidEnvironmentWarnings.add(name);
   console.warn(
     JSON.stringify({
@@ -79,16 +78,16 @@ function positiveIntegerEnvironment(name: string, fallback: number): number {
 }
 
 export function getStorefrontRateLimitMode(): StorefrontRateLimitMode {
-  if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node") return "enforce";
+  if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node") {
+    return "enforce";
+  }
   const rawValue = process.env.STOREFRONT_RATE_LIMIT_V2_MODE;
-  if (rawValue === undefined || rawValue.trim() === "") return "off";
+  if (rawValue === undefined || rawValue.trim() === "") {
+    return "off";
+  }
 
   const normalized = rawValue.trim().toLowerCase();
-  if (
-    normalized === "off" ||
-    normalized === "observe" ||
-    normalized === "enforce"
-  ) {
+  if (normalized === "off" || normalized === "observe" || normalized === "enforce") {
     return normalized;
   }
 
@@ -100,10 +99,7 @@ export function getStorefrontRateLimitConfig(): StorefrontRateLimitConfig {
   return {
     mode: getStorefrontRateLimitMode(),
     windowMs:
-      positiveIntegerEnvironment(
-        "STOREFRONT_RATE_LIMIT_WINDOW_SEC",
-        DEFAULT_WINDOW_SEC,
-      ) * 1000,
+      positiveIntegerEnvironment("STOREFRONT_RATE_LIMIT_WINDOW_SEC", DEFAULT_WINDOW_SEC) * 1000,
     limits: {
       "mypage-read": positiveIntegerEnvironment(
         "STOREFRONT_RATE_LIMIT_MYPAGE_READ_PER_MIN",
@@ -118,10 +114,7 @@ export function getStorefrontRateLimitConfig(): StorefrontRateLimitConfig {
         DEFAULT_LIMITS["mypage-write"],
       ),
     },
-    redisTimeoutMs: positiveIntegerEnvironment(
-      "STOREFRONT_RATE_LIMIT_REDIS_TIMEOUT_MS",
-      300,
-    ),
+    redisTimeoutMs: positiveIntegerEnvironment("STOREFRONT_RATE_LIMIT_REDIS_TIMEOUT_MS", 300),
     circuitCooldownMs: positiveIntegerEnvironment(
       "STOREFRONT_RATE_LIMIT_REDIS_CIRCUIT_COOLDOWN_MS",
       15000,
@@ -129,13 +122,8 @@ export function getStorefrontRateLimitConfig(): StorefrontRateLimitConfig {
   };
 }
 
-export function getStorefrontCustomerIdentityFingerprint(
-  shop: string,
-  customerId: string,
-): string {
-  return createHash("sha256")
-    .update(`${shop}\0${customerId}`, "utf8")
-    .digest("hex");
+export function getStorefrontCustomerIdentityFingerprint(shop: string, customerId: string): string {
+  return createHash("sha256").update(`${shop}\0${customerId}`, "utf8").digest("hex");
 }
 
 export function buildStorefrontRateLimitKey(input: {
@@ -149,14 +137,13 @@ export function buildStorefrontRateLimitKey(input: {
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeout = setTimeout(
-      () => reject(new Error("Redis rate limit command timed out")),
-      timeoutMs,
-    );
+    timeout = setTimeout(() => reject(new Error("Redis rate limit command timed out")), timeoutMs);
   });
 
   return Promise.race([promise, timeoutPromise]).finally(() => {
-    if (timeout) clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
   });
 }
 
@@ -172,8 +159,7 @@ export function createStorefrontCustomerRateLimiter(
   const now = options.now ?? (() => Date.now());
   const getConfig = options.getConfig ?? getStorefrontRateLimitConfig;
   const getRedisStore = options.getRedisStore ?? getRedisRateLimitCounterStore;
-  const memoryStore =
-    options.memoryStore ?? new InMemoryRateLimitCounterStore(now);
+  const memoryStore = options.memoryStore ?? new InMemoryRateLimitCounterStore(now);
   const warn = options.warn ?? ((entry) => console.warn(JSON.stringify(entry)));
 
   let circuitOpenUntil = 0;
@@ -188,7 +174,9 @@ export function createStorefrontCustomerRateLimiter(
     cooldownMs: number,
   ): void {
     const current = now();
-    if (current - lastFallbackWarningAt < cooldownMs) return;
+    if (current - lastFallbackWarningAt < cooldownMs) {
+      return;
+    }
     lastFallbackWarningAt = current;
     warn({
       message: "Storefront customer rate limiter using memory fallback",
@@ -213,14 +201,18 @@ export function createStorefrontCustomerRateLimiter(
     const multiNode = process.env.DEPLOYMENT_MODE?.trim() === "multi-node";
 
     if (!redisStore || circuitOpen || (isProbe && probeInFlight)) {
-      if (multiNode) throw new Error("Shared rate limiter unavailable");
+      if (multiNode) {
+        throw new Error("Shared rate limiter unavailable");
+      }
       return {
         result: await memoryStore.increment(key, config.windowMs),
         store: "memory",
       };
     }
 
-    if (isProbe) probeInFlight = true;
+    if (isProbe) {
+      probeInFlight = true;
+    }
     try {
       const result = await withTimeout(
         redisStore.increment(key, config.windowMs),
@@ -230,14 +222,18 @@ export function createStorefrontCustomerRateLimiter(
       return { result, store: "redis" };
     } catch {
       circuitOpenUntil = now() + config.circuitCooldownMs;
-      if (multiNode) throw new Error("Shared rate limiter unavailable");
+      if (multiNode) {
+        throw new Error("Shared rate limiter unavailable");
+      }
       warnFallback(input, config.circuitCooldownMs);
       return {
         result: await memoryStore.increment(key, config.windowMs),
         store: "memory",
       };
     } finally {
-      if (isProbe) probeInFlight = false;
+      if (isProbe) {
+        probeInFlight = false;
+      }
     }
   }
 
@@ -245,9 +241,7 @@ export function createStorefrontCustomerRateLimiter(
     async check(input) {
       const config = getConfig();
       if (config.mode === "off") {
-        throw new Error(
-          "Storefront customer rate limiter must not run in off mode",
-        );
+        throw new Error("Storefront customer rate limiter must not run in off mode");
       }
 
       const identityFingerprint = getStorefrontCustomerIdentityFingerprint(
@@ -259,11 +253,7 @@ export function createStorefrontCustomerRateLimiter(
         bucket: input.bucket,
         identityFingerprint,
       });
-      const { result, store } = await increment(
-        key,
-        { ...input, identityFingerprint },
-        config,
-      );
+      const { result, store } = await increment(key, { ...input, identityFingerprint }, config);
       const limit = config.limits[input.bucket];
       const ttlMs = Math.max(0, result.ttlMs);
       const resetAt = now() + ttlMs;
@@ -285,8 +275,7 @@ export function createStorefrontCustomerRateLimiter(
   };
 }
 
-const defaultStorefrontCustomerRateLimiter =
-  createStorefrontCustomerRateLimiter();
+const defaultStorefrontCustomerRateLimiter = createStorefrontCustomerRateLimiter();
 
 /**
  * Checks the v2 customer bucket after App Proxy signature/customer validation.
@@ -300,17 +289,25 @@ export async function enforceStorefrontCustomerRateLimit(input: {
   correlationId: string;
 }): Promise<Response | void> {
   const mode = getStorefrontRateLimitMode();
-  if (mode === "off") return;
+  if (mode === "off") {
+    return;
+  }
 
   let decision: StorefrontRateLimitDecision;
   try {
     decision = await defaultStorefrontCustomerRateLimiter.check({
-      shop: input.shop, customerId: input.customerId, bucket: input.bucket,
+      shop: input.shop,
+      customerId: input.customerId,
+      bucket: input.bucket,
     });
   } catch {
-    const response = respond.fail(ErrorCode.INTERNAL_ERROR,
+    const response = respond.fail(
+      ErrorCode.INTERNAL_ERROR,
       "Service temporarily unavailable. Please try again shortly.",
-      undefined, 503, input.correlationId);
+      undefined,
+      503,
+      input.correlationId,
+    );
     response.headers.set("Retry-After", "5");
     return respond.withNoStore(response);
   }
@@ -333,7 +330,9 @@ export async function enforceStorefrontCustomerRateLimit(input: {
     );
   }
 
-  if (mode === "observe" || decision.allowed) return;
+  if (mode === "observe" || decision.allowed) {
+    return;
+  }
 
   const response = respond.fail(
     ErrorCode.RATE_LIMITED,
@@ -348,9 +347,6 @@ export async function enforceStorefrontCustomerRateLimit(input: {
   response.headers.set("Retry-After", String(decision.retryAfterSec));
   response.headers.set("X-RateLimit-Limit", String(decision.limit));
   response.headers.set("X-RateLimit-Remaining", String(decision.remaining));
-  response.headers.set(
-    "X-RateLimit-Reset",
-    String(Math.ceil(decision.resetAt / 1000)),
-  );
+  response.headers.set("X-RateLimit-Reset", String(Math.ceil(decision.resetAt / 1000)));
   return respond.withNoStore(response);
 }

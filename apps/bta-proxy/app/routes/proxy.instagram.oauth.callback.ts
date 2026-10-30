@@ -6,10 +6,13 @@ import {
   exchangeLongLivedInstagramToken,
   fetchInstagramAccountProfile,
   InstagramClientError,
-} from "~/lib/instagram/client";
-import { ensureInstagramOAuthConfig, getInstagramConfig } from "~/lib/instagram/env";
-import { consumeInstagramOAuthState, setInstagramSyncDebug } from "~/lib/instagram/store";
-import { saveInstagramConnection } from "~/lib/instagram/service";
+} from "~/domains/marketing/instagram/client";
+import { ensureInstagramOAuthConfig, getInstagramConfig } from "~/domains/marketing/instagram/env";
+import {
+  consumeInstagramOAuthState,
+  setInstagramSyncDebug,
+} from "~/domains/marketing/instagram/store";
+import { saveInstagramConnection } from "~/domains/marketing/instagram/service";
 
 function appendQuery(path: string, params: Record<string, string>): string {
   const url = new URL(path, "https://localhost");
@@ -40,7 +43,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INSTAGRAM_STATE_INVALID),
       undefined,
       getErrorStatus(ErrorCode.INSTAGRAM_STATE_INVALID),
-      correlationId
+      correlationId,
     );
   }
 
@@ -51,7 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INSTAGRAM_STATE_INVALID),
       undefined,
       getErrorStatus(ErrorCode.INSTAGRAM_STATE_INVALID),
-      correlationId
+      correlationId,
     );
   }
 
@@ -85,7 +88,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           headers: {
             "X-Correlation-Id": correlationId,
           },
-        }
+        },
       );
     }
 
@@ -94,7 +97,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INSTAGRAM_AUTH_REQUIRED, message || undefined),
       undefined,
       getErrorStatus(ErrorCode.INSTAGRAM_AUTH_REQUIRED),
-      correlationId
+      correlationId,
     );
   }
 
@@ -105,7 +108,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "code 파라미터가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -148,7 +151,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           headers: {
             "X-Correlation-Id": correlationId,
           },
-        }
+        },
       );
     }
 
@@ -159,7 +162,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         instagramUsername: profile.instagramUsername,
         instagramUserId: profile.instagramUserId,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     const codeValue = toFailureCode(error);
@@ -185,19 +188,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           headers: {
             "X-Correlation-Id": correlationId,
           },
-        }
+        },
       );
     }
 
     return respond.fail(
       codeValue,
-      getErrorMessage(
-        codeValue,
-        error instanceof Error ? error.message : undefined
-      ),
+      getErrorMessage(codeValue, error instanceof Error ? error.message : undefined),
       error instanceof InstagramClientError ? error.details : undefined,
       status,
-      correlationId
+      correlationId,
     );
   }
 };

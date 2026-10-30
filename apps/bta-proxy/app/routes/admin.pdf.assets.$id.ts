@@ -5,9 +5,9 @@ import {
   deleteScopedAsset,
   getScopedAsset,
   upsertScopedAsset,
-} from "~/lib/gkv/adminContent.server";
-import { toValidationFailResponse } from "~/lib/gkv/adminUiResponses";
-import { pdfAssetUpsertSchema } from "~/lib/gkv/adminUiSchemas";
+} from "~/domains/guide-viewer/adminContent.server.ts";
+import { toValidationFailResponse } from "~/domains/guide-viewer/adminUiResponses";
+import { pdfAssetUpsertSchema } from "~/domains/guide-viewer/adminUiSchemas";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
@@ -15,7 +15,9 @@ const KIND = "PDF" as const;
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
@@ -25,7 +27,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "asset id가 필요합니다."),
       undefined,
       400,
-      correlationId
+      correlationId,
     );
   }
 
@@ -36,7 +38,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "에셋을 찾을 수 없습니다."),
       undefined,
       404,
-      correlationId
+      correlationId,
     );
   }
 
@@ -45,7 +47,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
@@ -55,7 +59,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "asset id가 필요합니다."),
       undefined,
       400,
-      correlationId
+      correlationId,
     );
   }
 
@@ -71,7 +75,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
         undefined,
         405,
-        correlationId
+        correlationId,
       );
     }
 
@@ -87,7 +91,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         isActive: payload.isActive,
         description: payload.description,
       },
-      id
+      id,
     );
 
     return respond.ok(data, { correlationId });
@@ -101,7 +105,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, error.message),
         { fieldErrors: { form: error.message } },
         422,
-        correlationId
+        correlationId,
       );
     }
 
@@ -110,7 +114,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       500,
-      correlationId
+      correlationId,
     );
   }
 };

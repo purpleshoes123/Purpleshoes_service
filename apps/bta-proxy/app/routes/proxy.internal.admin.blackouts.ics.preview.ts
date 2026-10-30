@@ -4,7 +4,7 @@ import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { listGlobalBlackouts, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { parseIcsToDates, isIcsParseError } from "~/lib/icsParser";
+import { parseIcsToDates, isIcsParseError } from "~/domains/bookings/icsParser";
 
 async function resolveAdminClient(shop: string) {
   const admin = await getAdminApiClient(shop);
@@ -32,15 +32,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "ICS 파일이 필요합니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       icsText = await (file as File).text();
       includePast = formData.get("includePast") === "true";
       const formFrom = formData.get("from");
       const formTo = formData.get("to");
-      if (typeof formFrom === "string") from = formFrom;
-      if (typeof formTo === "string") to = formTo;
+      if (typeof formFrom === "string") {
+        from = formFrom;
+      }
+      if (typeof formTo === "string") {
+        to = formTo;
+      }
     } else {
       const body = await request.json();
       icsText = body?.ics || "";
@@ -55,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "ICS 내용이 비어 있습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -65,7 +69,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       const url = new URL(request.url);
       shop = url.searchParams.get("shop");
@@ -75,7 +81,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       if (!shop.includes(".")) {
@@ -95,7 +101,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
             undefined,
             getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-            correlationId
+            correlationId,
           );
         }
         throw error;
@@ -107,11 +113,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -156,7 +162,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           datesNew: toCreateDates.length,
         },
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (isIcsParseError(error)) {
@@ -165,7 +171,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, error.message),
         undefined,
         error.status,
-        correlationId
+        correlationId,
       );
     }
     if (error instanceof SyntaxError) {
@@ -174,7 +180,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 요청 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -182,7 +188,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

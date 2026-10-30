@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getStorefrontRestaurantItemsByListId } from "~/lib/gkv/storefrontViewer.server";
-import { requireGkvCustomerId } from "~/lib/gkv/customerAuth";
-import { requireV1BundleRestaurantListAccess } from "~/lib/gkv/v1RestaurantAccess.server";
+import { getStorefrontRestaurantItemsByListId } from "~/domains/guide-viewer/storefrontViewer.server.ts";
+import { requireGkvCustomerId } from "~/domains/guide-viewer/customerAuth";
+import { requireV1BundleRestaurantListAccess } from "~/domains/guide-viewer/v1RestaurantAccess.server.ts";
 import { respond } from "~/lib/respond";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -13,7 +13,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   let customerId: string | undefined;
   const auth = await requireGkvCustomerId(request);
-  if (auth instanceof Response) return auth;
+  if (auth instanceof Response) {
+    return auth;
+  }
   customerId = auth.customerId;
   const access = await requireV1BundleRestaurantListAccess({
     request,
@@ -21,12 +23,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     listId,
     correlationId,
   });
-  if (access instanceof Response) return access;
+  if (access instanceof Response) {
+    return access;
+  }
 
   return respond.ok(
     {
       items: await getStorefrontRestaurantItemsByListId(request, listId, customerId),
     },
-    { correlationId }
+    { correlationId },
   );
 };

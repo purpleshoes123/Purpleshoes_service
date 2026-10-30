@@ -3,14 +3,12 @@ import { z } from "zod";
 import { authenticate } from "~/shopify.server";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { ReviewServiceError, setReviewVisibility } from "~/lib/reviewService";
+import { ReviewServiceError, setReviewVisibility } from "~/domains/reviews/reviewService";
 import { logEvent } from "~/lib/logEvent";
 
 const toggleSchema = z.object({
   reviewId: z.string().min(1, "reviewId는 필수입니다."),
-  visible: z
-    .enum(["true", "false"])
-    .transform((value) => value === "true"),
+  visible: z.enum(["true", "false"]).transform((value) => value === "true"),
 });
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -27,14 +25,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         reason: "invalid_method",
         durationMs: Date.now() - startTime,
       },
-      { correlationId, severity: "warn" }
+      { correlationId, severity: "warn" },
     );
     return respond.fail(
       ErrorCode.REVIEW_INVALID_INPUT,
       getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, "지원하지 않는 메서드입니다."),
       undefined,
       getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-      correlationId
+      correlationId,
     );
   }
 
@@ -58,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         reviewId: validated.reviewId,
         visible: validated.visible,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     const updated = await setReviewVisibility({
@@ -76,17 +74,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         status: updated.status,
         durationMs: Date.now() - startTime,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     return respond.ok({ item: updated }, { correlationId });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) {
+      throw error;
+    }
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       logEvent(
         "review.admin.toggle.fail",
         {
@@ -96,14 +94,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: errorMessage,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "warn" }
+        { correlationId, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
         getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -117,14 +115,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: error.message,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "error" }
+        { correlationId, severity: "error" },
       );
       return respond.fail(
         error.code,
         getErrorMessage(error.code, error.message),
         error.details,
         getErrorStatus(error.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -137,14 +135,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         reason: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       },
-      { correlationId, severity: "error" }
+      { correlationId, severity: "error" },
     );
     return respond.fail(
       ErrorCode.INTERNAL_ERROR,
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

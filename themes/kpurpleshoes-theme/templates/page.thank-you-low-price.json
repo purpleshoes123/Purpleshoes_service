@@ -32,7 +32,5 @@
       }
     }
   },
-  "order": [
-    "thank_you_low_price"
-  ]
+  "order": ["thank_you_low_price"]
 }

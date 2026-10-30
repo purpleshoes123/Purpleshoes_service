@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { useFetcher, useLoaderData, useLocation, useNavigate } from "react-router";
@@ -16,8 +16,8 @@ import {
   TextField,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 
 type CategoryItem = {
   id: string;
@@ -74,9 +74,7 @@ function toDraft(item: CategoryItem): RowDraft {
 }
 
 function sortItems(items: CategoryItem[]): CategoryItem[] {
-  return items
-    .slice()
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+  return items.slice().sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
 }
 
 function upsertItemById(items: CategoryItem[], next: CategoryItem): CategoryItem[] {
@@ -92,14 +90,18 @@ function upsertItemById(items: CategoryItem[], next: CategoryItem): CategoryItem
 function normalizeError(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: string }).message;
-    if (message) return message;
+    if (message) {
+      return message;
+    }
   }
   return "요청 처리에 실패했습니다.";
 }
 
 function parseSortOrder(value: string): number | null {
   const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0) return null;
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return null;
+  }
   return parsed;
 }
 
@@ -108,7 +110,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     const data = await callGkvAdminApi<{ items: CategoryItem[] }>(
       request,
-      "/admin/restaurants/categories?includeInactive=true"
+      "/admin/restaurants/categories?includeInactive=true",
     );
     return json<LoaderData>({ items: data.items });
   } catch (error) {
@@ -125,15 +127,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const id = String(formData.get("id") || "");
 
     if (intent === "create") {
-      const created = await callGkvAdminApi<{ id: string }>(request, "/admin/restaurants/categories", {
-        method: "POST",
-        body: JSON.stringify({
-          name: String(formData.get("name") || ""),
-          slug: String(formData.get("slug") || "") || undefined,
-          sortOrder: Number(formData.get("sortOrder") || 0),
-          isActive: parseBool(formData.get("isActive")),
-        }),
-      });
+      const created = await callGkvAdminApi<{ id: string }>(
+        request,
+        "/admin/restaurants/categories",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            name: String(formData.get("name") || ""),
+            slug: String(formData.get("slug") || "") || undefined,
+            sortOrder: Number(formData.get("sortOrder") || 0),
+            isActive: parseBool(formData.get("isActive")),
+          }),
+        },
+      );
       return json<ActionData>({ ok: true, id: created.id, message: "카테고리를 생성했습니다." });
     }
 
@@ -236,19 +242,21 @@ export default function GkvRestaurantCategoriesPage() {
         });
       });
     },
-    [fetcher]
+    [fetcher],
   );
 
   const [categoryList, setCategoryList] = useState<CategoryItem[]>(() => sortItems(items));
   const [rowDrafts, setRowDrafts] = useState<Record<string, RowDraft>>(() =>
-    Object.fromEntries(items.map((item) => [item.id, toDraft(item)]))
+    Object.fromEntries(items.map((item) => [item.id, toDraft(item)])),
   );
   const [newName, setNewName] = useState("");
   const [newSlug, setNewSlug] = useState("");
   const [newSortOrder, setNewSortOrder] = useState("0");
   const [newIsActive, setNewIsActive] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [banner, setBanner] = useState<{ tone: "success" | "critical"; message: string } | null>(null);
+  const [banner, setBanner] = useState<{ tone: "success" | "critical"; message: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     setCategoryList(sortItems(items));
@@ -271,7 +279,10 @@ export default function GkvRestaurantCategoriesPage() {
     setRowDrafts((prev) => ({
       ...prev,
       [id]: {
-        ...(prev[id] ?? (currentItem ? toDraft(currentItem) : { name: "", slug: "", sortOrder: "0", isActive: true })),
+        ...(prev[id] ??
+          (currentItem
+            ? toDraft(currentItem)
+            : { name: "", slug: "", sortOrder: "0", isActive: true })),
         ...patch,
       },
     }));
@@ -364,7 +375,7 @@ export default function GkvRestaurantCategoriesPage() {
       };
 
       setCategoryList((prev) =>
-        sortItems(prev.map((entry) => (entry.id === item.id ? nextItem : entry)))
+        sortItems(prev.map((entry) => (entry.id === item.id ? nextItem : entry))),
       );
       setRowDrafts((prev) => ({ ...prev, [item.id]: toDraft(nextItem) }));
       setBanner({ tone: "success", message: result.message ?? "카테고리를 수정했습니다." });
@@ -376,7 +387,9 @@ export default function GkvRestaurantCategoriesPage() {
   }
 
   async function handleDelete(item: CategoryItem) {
-    if (!window.confirm(`\"${item.name}\" 카테고리를 삭제하시겠습니까?`)) return;
+    if (!window.confirm(`\"${item.name}\" 카테고리를 삭제하시겠습니까?`)) {
+      return;
+    }
 
     try {
       setBusy(true);
@@ -402,10 +415,14 @@ export default function GkvRestaurantCategoriesPage() {
   async function handleMove(item: CategoryItem, direction: "up" | "down") {
     const current = sortItems(categoryList);
     const index = current.findIndex((entry) => entry.id === item.id);
-    if (index < 0) return;
+    if (index < 0) {
+      return;
+    }
 
     const swapIndex = direction === "up" ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= current.length) return;
+    if (swapIndex < 0 || swapIndex >= current.length) {
+      return;
+    }
 
     const reordered = current.slice();
     const [moved] = reordered.splice(index, 1);
@@ -421,13 +438,17 @@ export default function GkvRestaurantCategoriesPage() {
       return (original?.sortOrder ?? 0) !== sortOrder;
     });
 
-    if (changed.length === 0) return;
+    if (changed.length === 0) {
+      return;
+    }
 
     try {
       setBusy(true);
       for (const change of changed) {
         const target = current.find((entry) => entry.id === change.id);
-        if (!target) continue;
+        if (!target) {
+          continue;
+        }
         const draft = rowDrafts[target.id] ?? toDraft(target);
 
         const fd = new FormData();
@@ -444,21 +465,25 @@ export default function GkvRestaurantCategoriesPage() {
         sortItems(
           prev.map((entry) => {
             const match = changed.find((changedItem) => changedItem.id === entry.id);
-            if (!match) return entry;
+            if (!match) {
+              return entry;
+            }
             return {
               ...entry,
               sortOrder: match.sortOrder,
               updatedAt: new Date().toISOString(),
             };
-          })
-        )
+          }),
+        ),
       );
 
       setRowDrafts((prev) => {
         const next = { ...prev };
         for (const change of changed) {
           const currentDraft = next[change.id];
-          if (!currentDraft) continue;
+          if (!currentDraft) {
+            continue;
+          }
           next[change.id] = {
             ...currentDraft,
             sortOrder: String(change.sortOrder),
@@ -609,7 +634,12 @@ export default function GkvRestaurantCategoriesPage() {
                       <Button size="micro" onClick={() => handleSave(item)} disabled={busy}>
                         Save
                       </Button>
-                      <Button size="micro" tone="critical" onClick={() => handleDelete(item)} disabled={busy}>
+                      <Button
+                        size="micro"
+                        tone="critical"
+                        onClick={() => handleDelete(item)}
+                        disabled={busy}
+                      >
                         Delete
                       </Button>
                     </InlineStack>

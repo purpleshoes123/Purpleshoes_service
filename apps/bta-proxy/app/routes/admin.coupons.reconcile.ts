@@ -2,14 +2,18 @@ import type { ActionFunctionArgs } from "react-router";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { verifyAdminApiKey } from "~/middleware/verifyAdminApiKey";
-import { reconcileSchema } from "~/lib/coupons/validation";
+import { reconcileSchema } from "~/domains/coupons/validation";
 import { getAdminApiClient } from "~/lib/shopifyAdmin";
-import { normalizeCustomerId } from "~/lib/coupons/normalize";
-import { reconcileCustomerCoupons } from "~/lib/coupons/reconcile";
+import { normalizeCustomerId } from "~/domains/coupons/normalize";
+import { reconcileCustomerCoupons } from "~/domains/coupons/reconcile";
 
 function parseBool(value: unknown): boolean | undefined {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") return value.toLowerCase() === "true";
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    return value.toLowerCase() === "true";
+  }
   return undefined;
 }
 
@@ -19,7 +23,9 @@ function parseBool(value: unknown): boolean | undefined {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
   const authResponse = verifyAdminApiKey(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   try {
     const url = new URL(request.url);
@@ -37,7 +43,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "JSON body 파싱에 실패했습니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
     }
@@ -55,7 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -66,7 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -76,11 +82,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -94,20 +100,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         dryRun,
         report,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -116,7 +120,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

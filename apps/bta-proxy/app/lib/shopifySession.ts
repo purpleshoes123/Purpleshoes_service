@@ -70,7 +70,7 @@ function getSessionUnusableReason(session: any | null): string {
 async function refreshOfflineSession(
   session: any,
   shop: string,
-  context: SessionLoadContext
+  context: SessionLoadContext,
 ): Promise<any | null> {
   if (!session?.refreshToken) {
     return null;
@@ -114,7 +114,7 @@ async function refreshOfflineSession(
             source: context.source,
             correlationId: context.correlationId,
             status: response.status,
-          })
+          }),
         );
       }
       return null;
@@ -139,9 +139,7 @@ async function refreshOfflineSession(
       session.refreshToken = payload.refresh_token;
     }
     if (typeof payload.refresh_token_expires_in === "number") {
-      session.refreshTokenExpires = new Date(
-        Date.now() + payload.refresh_token_expires_in * 1000
-      );
+      session.refreshTokenExpires = new Date(Date.now() + payload.refresh_token_expires_in * 1000);
     }
 
     await shopify.sessionStorage.storeSession(session);
@@ -153,7 +151,7 @@ async function refreshOfflineSession(
           shop: normalizedShop,
           source: context.source,
           correlationId: context.correlationId,
-        })
+        }),
       );
     }
 
@@ -165,37 +163,32 @@ async function refreshOfflineSession(
 
 export async function loadOfflineSession(
   shop: string,
-  context: SessionLoadContext = {}
+  context: SessionLoadContext = {},
 ): Promise<any | null> {
   const normalizedShop = normalizeShopDomain(shop);
   const offlineSessionId = `offline_${normalizedShop}`;
-  let session =
-    (await shopify.sessionStorage.loadSession(offlineSessionId)) || null;
+  let session = (await shopify.sessionStorage.loadSession(offlineSessionId)) || null;
 
   if (isSessionUsable(session)) {
     return session;
   }
 
   if (session) {
-    const refreshed = await refreshOfflineSession(
-      session,
-      normalizedShop,
-      context
-    );
+    const refreshed = await refreshOfflineSession(session, normalizedShop, context);
     if (refreshed && isSessionUsable(refreshed)) {
       return refreshed;
     }
   }
 
-  const finder = (shopify.sessionStorage as typeof shopify.sessionStorage & {
-    findSessionsByShop?: (shopDomain: string) => Promise<any[]>;
-  }).findSessionsByShop?.bind(shopify.sessionStorage);
+  const finder = (
+    shopify.sessionStorage as typeof shopify.sessionStorage & {
+      findSessionsByShop?: (shopDomain: string) => Promise<any[]>;
+    }
+  ).findSessionsByShop?.bind(shopify.sessionStorage);
 
   if (finder) {
     const sessions = await finder(normalizedShop);
-    const offline = sessions.find(
-      (s) => s && s.isOnline === false && isSessionUsable(s)
-    );
+    const offline = sessions.find((s) => s && s.isOnline === false && isSessionUsable(s));
     if (offline) {
       if (process.env.DEBUG_BOOKING === "1") {
         console.warn(
@@ -205,7 +198,7 @@ export async function loadOfflineSession(
             source: context.source,
             correlationId: context.correlationId,
             isOnline: offline.isOnline === true,
-          })
+          }),
         );
       }
       return offline;
@@ -220,7 +213,7 @@ export async function loadOfflineSession(
             source: context.source,
             correlationId: context.correlationId,
             isOnline: anySession.isOnline === true,
-          })
+          }),
         );
       }
       return anySession;
@@ -228,11 +221,7 @@ export async function loadOfflineSession(
 
     const offlineExpired = sessions.find((s) => s && s.isOnline === false);
     if (offlineExpired) {
-      const refreshed = await refreshOfflineSession(
-        offlineExpired,
-        normalizedShop,
-        context
-      );
+      const refreshed = await refreshOfflineSession(offlineExpired, normalizedShop, context);
       if (refreshed && isSessionUsable(refreshed)) {
         return refreshed;
       }
@@ -247,7 +236,7 @@ export async function loadOfflineSession(
         source: context.source,
         correlationId: context.correlationId,
         reason: getSessionUnusableReason(session),
-      })
+      }),
     );
   }
 

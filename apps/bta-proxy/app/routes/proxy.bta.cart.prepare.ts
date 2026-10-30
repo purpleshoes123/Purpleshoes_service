@@ -4,14 +4,14 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { memberRespond as respond } from "~/middleware/verifyMemberAppProxy";
 import { cartPrepareSchema } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
-import { prepareCartItems } from "~/lib/cartPrepareService";
-import { getTierVariantTable } from "~/lib/tierVariantPricingService";
-import { paxTierDiagnostics } from "~/lib/paxTierDiagnostics";
+import { prepareCartItems } from "~/domains/checkout/cartPrepareService";
+import { getTierVariantTable } from "~/domains/catalog/tierVariantPricingService";
+import { paxTierDiagnostics } from "~/domains/catalog/paxTierDiagnostics";
 import { getEnv } from "~/lib/env";
 import { extractShopFromRequest } from "~/lib/shopifyAdmin";
-import { resolveBookingPolicy } from "~/lib/bookingConfigResolver";
+import { resolveBookingPolicy } from "~/domains/bookings/bookingConfigResolver";
 import { maskPII } from "~/lib/masking";
-import { resolveBookingProductId } from "~/lib/bookingContext.server";
+import { resolveBookingProductId } from "~/domains/bookings/bookingContext.server.ts";
 
 /**
  * SSOT 2.1: POST /proxy/bta/cart/prepare
@@ -22,11 +22,15 @@ import { resolveBookingProductId } from "~/lib/bookingContext.server";
 export const action = async ({ request }: ActionFunctionArgs) => {
   // 1. 레이트 리밋 검증
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   // 2. App Proxy 서명 검증
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   // 3. correlationId 추출/생성
   const correlationId = respond.getCorrelationId(request);
@@ -45,13 +49,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const productId = await resolveBookingProductId(validatedInput.productId, shop);
     if (!productId) {
-      return respond.fail(ErrorCode.VALIDATION_ERROR, "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.", undefined, 400, correlationId);
+      return respond.fail(
+        ErrorCode.VALIDATION_ERROR,
+        "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.",
+        undefined,
+        400,
+        correlationId,
+      );
     }
 
     // 6. Resolver를 통해 정책 결정
@@ -71,11 +81,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          `최대 인원수(${policy.maxPax}명)를 초과했습니다.`
+          `최대 인원수(${policy.maxPax}명)를 초과했습니다.`,
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -95,11 +105,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ErrorCode.VALIDATION_ERROR,
           getErrorMessage(
             ErrorCode.VALIDATION_ERROR,
-            `상품 설정 오류: ${detail}. Ticket Type × Pax Tier(1..N) variants/price 입력 확인`
+            `상품 설정 오류: ${detail}. Ticket Type × Pax Tier(1..N) variants/price 입력 확인`,
           ),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
     }
@@ -119,7 +129,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         poolKey: policy.poolKey,
         guideUnitsRequired: policy.guideUnitsRequired,
         holdId: validatedInput.holdId,
-      }
+      },
     );
 
     // 10. 응답 반환
@@ -132,22 +142,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     // Zod 검증 에러
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -162,8 +170,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               errorType: error.name,
               errorMessage: error.message,
               shop,
-            })
-          )
+            }),
+          ),
         );
       }
 
@@ -177,11 +185,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ErrorCode.INTERNAL_ERROR,
           getErrorMessage(
             ErrorCode.INTERNAL_ERROR,
-            "Shopify Admin API 세션을 찾을 수 없습니다. 앱이 설치되어 있는지 확인하세요."
+            "Shopify Admin API 세션을 찾을 수 없습니다. 앱이 설치되어 있는지 확인하세요.",
           ),
           undefined,
           getErrorStatus(ErrorCode.INTERNAL_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -197,11 +205,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ErrorCode.VALIDATION_ERROR,
           getErrorMessage(
             ErrorCode.VALIDATION_ERROR,
-            "상품에 Ticket Type(Adult/Child/Infant) × Pax Tier(1..N) variants/가격이 설정되지 않았습니다. Shopify Admin에서 옵션 2개(Ticket Type, Pax Tier)와 3×N variants 및 가격 입력을 확인하세요."
+            "상품에 Ticket Type(Adult/Child/Infant) × Pax Tier(1..N) variants/가격이 설정되지 않았습니다. Shopify Admin에서 옵션 2개(Ticket Type, Pax Tier)와 3×N variants 및 가격 입력을 확인하세요.",
           ),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -211,7 +219,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.BOOKING_STORE_ERROR),
         undefined,
         getErrorStatus(ErrorCode.BOOKING_STORE_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -223,8 +231,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Cart Prepare 엔드포인트 오류",
           error: error instanceof Error ? error.message : String(error),
           ...(error instanceof Error && error.cause && { cause: error.cause }),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -232,7 +240,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

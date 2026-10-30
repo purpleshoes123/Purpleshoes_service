@@ -1,11 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { requireGkvCustomerId } from "~/lib/gkv/customerAuth";
+import { requireGkvCustomerId } from "~/domains/guide-viewer/customerAuth";
 import {
   pickLatestPdfAndVideoForCategory,
   toSharedCategoryIdFromGuideId,
-} from "~/lib/gkv/sharedVirtualGuides.server";
+} from "~/domains/guide-viewer/sharedVirtualGuides.server.ts";
 import {
   canAccessGuideType,
   loadGuideExtensionEntitlements,
@@ -13,31 +13,38 @@ import {
   toGuideEntitlementType,
   toVirtualGuideType,
   VIRTUAL_GUIDE_TITLES,
-} from "~/lib/gkv/v1EntitlementAccess.server";
-import { resolveBundleRestaurantListId } from "~/lib/gkv/v1RestaurantAccess.server";
-import { requireActiveGkvSession } from "~/lib/gkv/sessions.server";
+} from "~/domains/guide-viewer/v1EntitlementAccess.server.ts";
+import { resolveBundleRestaurantListId } from "~/domains/guide-viewer/v1RestaurantAccess.server.ts";
+import { requireActiveGkvSession } from "~/domains/guide-viewer/sessions.server.ts";
 import { respond } from "~/lib/respond";
 
-function serializeAssetForResponse(asset: {
-  sizeBytes: bigint | null;
-  thumbnailSizeBytes: bigint | null;
-  [key: string]: unknown;
-} | null) {
-  if (!asset) return null;
+function serializeAssetForResponse(
+  asset: {
+    sizeBytes: bigint | null;
+    thumbnailSizeBytes: bigint | null;
+    [key: string]: unknown;
+  } | null,
+) {
+  if (!asset) {
+    return null;
+  }
   return {
     ...asset,
     sizeBytes: asset.sizeBytes === null ? null : Number(asset.sizeBytes),
-    thumbnailSizeBytes:
-      asset.thumbnailSizeBytes === null ? null : Number(asset.thumbnailSizeBytes),
+    thumbnailSizeBytes: asset.thumbnailSizeBytes === null ? null : Number(asset.thumbnailSizeBytes),
   };
 }
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await requireGkvCustomerId(request);
-  if (auth instanceof Response) return auth;
+  if (auth instanceof Response) {
+    return auth;
+  }
   const correlationId = respond.getCorrelationId(request);
   const session = await requireActiveGkvSession(request, auth.customerId, correlationId);
-  if (session instanceof Response) return session;
+  if (session instanceof Response) {
+    return session;
+  }
   const id = params.id;
   if (!id) {
     return respond.fail(
@@ -45,7 +52,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "guide id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -59,53 +66,44 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "guide를 찾을 수 없습니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
   const sharedCategoryId = toSharedCategoryIdFromGuideId(id);
   if (sharedCategoryId !== null) {
-    const sharedExpiresAt = resolveEntitlementExpiry(
-      "SHARED",
-      guideExtensionEntitlements,
-      now
-    );
+    const sharedExpiresAt = resolveEntitlementExpiry("SHARED", guideExtensionEntitlements, now);
     if (!sharedExpiresAt) {
       return respond.fail(
         ErrorCode.AUTH_LOGIN_REQUIRED,
         getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
         undefined,
         getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-        correlationId
+        correlationId,
       );
     }
 
     const sharedCategory = await prisma.gkvCategory.findUnique({
       where: { id: sharedCategoryId },
     });
-    if (
-      !sharedCategory ||
-      !sharedCategory.isActive ||
-      !sharedCategory.exposeAsGuide
-    ) {
+    if (!sharedCategory || !sharedCategory.isActive || !sharedCategory.exposeAsGuide) {
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "guide를 찾을 수 없습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
-    const { pdfAsset, videoAsset } =
-      await pickLatestPdfAndVideoForCategory(sharedCategoryId);
+    const { pdfAsset, videoAsset } = await pickLatestPdfAndVideoForCategory(sharedCategoryId);
     if (!pdfAsset && !videoAsset) {
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "guide를 찾을 수 없습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -130,7 +128,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         assets: sharedVirtualAssets,
         restaurantListId: null,
       },
-      { correlationId }
+      { correlationId },
     );
   }
 
@@ -154,7 +152,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "guide를 찾을 수 없습니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -166,7 +164,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
         undefined,
         getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -201,7 +199,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         assets: virtualAssets,
         restaurantListId: bundleRestaurantListId,
       },
-      { correlationId }
+      { correlationId },
     );
   }
 
@@ -214,7 +212,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
       undefined,
       getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-      correlationId
+      correlationId,
     );
   }
 
@@ -245,6 +243,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       })),
       restaurantListId: restaurant?.restaurantListId ?? null,
     },
-    { correlationId }
+    { correlationId },
   );
 };

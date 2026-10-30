@@ -1,10 +1,8 @@
-import {
-  RestaurantEditorPage,
-} from "~/lib/gkv/adminRestaurantEditorRoute";
+import { RestaurantEditorPage } from "~/domains/guide-viewer/adminRestaurantEditorRoute";
 import {
   createRestaurantEditorAction,
   createRestaurantEditorLoader,
-} from "~/lib/gkv/adminRestaurantEditorRoute.server";
+} from "~/domains/guide-viewer/adminRestaurantEditorRoute.server.ts";
 
 export const loader = createRestaurantEditorLoader("edit");
 export const action = createRestaurantEditorAction("edit");

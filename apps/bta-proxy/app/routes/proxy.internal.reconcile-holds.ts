@@ -6,10 +6,10 @@ import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import {
   listReconciliationCandidates,
   updateWebhookEventRelease,
-} from "~/lib/webhookEventStore";
-import { executeHoldRelease } from "~/lib/webhookHoldRelease";
+} from "~/domains/webhooks/webhookEventStore";
+import { executeHoldRelease } from "~/domains/webhooks/webhookHoldRelease";
 import { maskPII } from "~/lib/masking";
-import { acquireReconcileLock, releaseReconcileLock } from "~/lib/reconcileLock";
+import { acquireReconcileLock, releaseReconcileLock } from "~/domains/bookings/reconcileLock";
 
 const reconcileQuerySchema = z.object({
   limit: z
@@ -26,18 +26,18 @@ const BACKOFF_MS = [5 * 60 * 1000, 15 * 60 * 1000, 60 * 60 * 1000];
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_LIMIT = 200;
 
-function shouldRetry(
-  lastAttemptAt: Date | null,
-  retryCount: number,
-  now: number
-): boolean {
-  if (!lastAttemptAt) return true;
+function shouldRetry(lastAttemptAt: Date | null, retryCount: number, now: number): boolean {
+  if (!lastAttemptAt) {
+    return true;
+  }
   const delay = BACKOFF_MS[Math.min(retryCount, BACKOFF_MS.length - 1)];
   return now - lastAttemptAt.getTime() >= delay;
 }
 
 function safeParseJsonArray(value: string | null): string[] {
-  if (!value) return [];
+  if (!value) {
+    return [];
+  }
   try {
     const parsed = JSON.parse(value);
     return Array.isArray(parsed) ? parsed.map(String) : [];
@@ -54,7 +54,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
 
   const authResponse = await verifyInternal(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   const lockKey = "lock:reconcile-holds";
   const lockAcquired = await acquireReconcileLock(lockKey);
@@ -65,26 +67,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         skipped: 0,
         reason: "LOCKED",
       },
-      { correlationId }
+      { correlationId },
     );
   }
 
-  const pipelineEnabled =
-    process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
+  const pipelineEnabled = process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
   const dryrun = process.env.HOLD_RELEASE_VOID_DRYRUN !== "false";
 
   try {
-  if (!pipelineEnabled) {
-    return respond.ok(
-      {
-        processed: 0,
-        skipped: 0,
-        reason: "PIPELINE_DISABLED",
-        dryrun,
-      },
-      { correlationId }
-    );
-  }
+    if (!pipelineEnabled) {
+      return respond.ok(
+        {
+          processed: 0,
+          skipped: 0,
+          reason: "PIPELINE_DISABLED",
+          dryrun,
+        },
+        { correlationId },
+      );
+    }
 
     const url = new URL(request.url);
     const queryParams = reconcileQuerySchema.parse({
@@ -95,9 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const maxRetries = Number.isFinite(queryParams.maxRetries)
       ? queryParams.maxRetries!
       : DEFAULT_MAX_RETRIES;
-    const limit = Number.isFinite(queryParams.limit)
-      ? queryParams.limit!
-      : DEFAULT_LIMIT;
+    const limit = Number.isFinite(queryParams.limit) ? queryParams.limit! : DEFAULT_LIMIT;
 
     const candidates = await listReconciliationCandidates({ maxRetries, limit });
     const now = Date.now();
@@ -149,7 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         candidates: candidates.length,
         dryrun,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     console.error(
@@ -158,8 +157,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           correlationId,
           message: "Reconcile holds error",
           error: error instanceof Error ? error.message : String(error),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -167,7 +166,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   } finally {
     await releaseReconcileLock(lockKey);

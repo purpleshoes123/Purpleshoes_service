@@ -1,34 +1,32 @@
 import type { ActionFunctionArgs } from "react-router";
-import { webhookReceiptResponse } from "~/lib/webhookReceipt.server";
-import { updateWebhookEventStatus } from "~/lib/webhookEventStore";
+import { webhookReceiptResponse } from "~/domains/webhooks/webhookReceipt.server.ts";
+import { updateWebhookEventStatus } from "~/domains/webhooks/webhookEventStore";
 import { verifyWebhook } from "~/middleware/verifyWebhook";
-import { getBookingStore } from "~/lib/bookingStore";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
 import { maskPII } from "~/lib/masking";
-import {
-  extractBookingInfoFromLineItem,
-} from "~/lib/webhookUtils";
-import { groupLineItemsByBooking } from "~/lib/webhookGrouping";
+import { extractBookingInfoFromLineItem } from "~/domains/webhooks/webhookUtils";
+import { groupLineItemsByBooking } from "~/domains/webhooks/webhookGrouping";
 import { createHash, randomUUID } from "crypto";
 import {
   resolveBookingIdByGroupIndex,
   resolveBookingIdByOrderLineIndex,
   removeConfirmedBookingRecord,
   updateConfirmedBookingTravelers,
-} from "~/lib/confirmedLedger";
-import { RebuildStoreKeys, type ConfirmedBookingRecord } from "~/lib/rebuildStore";
-import { getTicketTypeByVariantId } from "~/lib/variantPricingService";
-import { extractTravelersFromLineItems } from "~/lib/webhookTravelers";
+} from "~/domains/bookings/confirmedLedger";
+import { RebuildStoreKeys, type ConfirmedBookingRecord } from "~/domains/bookings/rebuildStore";
+import { getTicketTypeByVariantId } from "~/domains/catalog/variantPricingService";
+import { extractTravelersFromLineItems } from "~/domains/webhooks/webhookTravelers";
 import { getAdminApiClient, fetchOrderLineItemsGraphQL } from "~/lib/shopifyAdmin";
 import { logEvent } from "~/lib/logEvent";
-import { upsertOrderBookingIdMetafield } from "~/lib/orderMetafieldService";
+import { upsertOrderBookingIdMetafield } from "~/domains/bookings/orderMetafieldService";
 import {
   saveWebhookEvent,
   updateWebhookEventEvaluation,
   updateWebhookEventOrderId,
-} from "~/lib/webhookEventStore";
-import { normalizeTerminalStatus } from "~/lib/webhookVoidNormalizer";
-import { extractHoldMapping } from "~/lib/webhookHoldMapping";
-import { executeHoldRelease } from "~/lib/webhookHoldRelease";
+} from "~/domains/webhooks/webhookEventStore";
+import { normalizeTerminalStatus } from "~/domains/webhooks/webhookVoidNormalizer";
+import { extractHoldMapping } from "~/domains/webhooks/webhookHoldMapping";
+import { executeHoldRelease } from "~/domains/webhooks/webhookHoldRelease";
 import {
   appendLedgerEvent,
   createLog,
@@ -38,19 +36,19 @@ import {
   recomputeEntitlement,
   revokeGuideBaseEntitlementsForOrder,
   type EntitlementType,
-} from "~/lib/guideExtension";
-import { revokeTourCodesForOrder } from "~/lib/tourCredits/revokeService";
-import { restoreTourCreditForOrder } from "~/lib/tourCredits/creditRestoreService";
-import { revokePendingTourCreditIfNeeded } from "~/lib/tourCredits/pendingRevoke";
-import { restoreGuide50ForOrder } from "~/lib/coupons/guide50Lifecycle";
-import { maskCouponCode, maskCustomerId } from "~/lib/coupons/logging";
+} from "~/domains/checkout/guideExtension";
+import { revokeTourCodesForOrder } from "~/domains/checkout/tourCredits/revokeService";
+import { restoreTourCreditForOrder } from "~/domains/checkout/tourCredits/creditRestoreService";
+import { revokePendingTourCreditIfNeeded } from "~/domains/checkout/tourCredits/pendingRevoke";
+import { restoreGuide50ForOrder } from "~/domains/coupons/guide50Lifecycle";
+import { maskCouponCode, maskCustomerId } from "~/domains/coupons/logging";
 import {
   refundContainsFullyRefundedGuideKitBundle,
   refundLineItemsAreFullyRefunded,
-} from "~/lib/coupons/orderUtils";
-import { restoreExtra10ForOrder } from "~/lib/coupons/extra10RestoreService";
-import { removeGuideBundleTour15Source } from "~/lib/coupons/tour15Sources";
-import { clearCachedTour15Balance } from "~/lib/couponDisplay/tour15BalanceCache";
+} from "~/domains/coupons/orderUtils";
+import { restoreExtra10ForOrder } from "~/domains/coupons/extra10RestoreService";
+import { removeGuideBundleTour15Source } from "~/domains/coupons/tour15Sources";
+import { clearCachedTour15Balance } from "~/domains/coupons/display/tour15BalanceCache";
 import db from "~/db.server";
 
 /**
@@ -68,14 +66,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const rawBody = verification.rawBody;
   const correlationId =
-    request.headers.get("X-Request-Id") ||
-    request.headers.get("X-Correlation-Id") ||
-    randomUUID();
+    request.headers.get("X-Request-Id") || request.headers.get("X-Correlation-Id") || randomUUID();
 
   // Phase 1: Webhook 이벤트 저장 (멱등성 보장)
   const topic = request.headers.get("X-Shopify-Topic") || "refunds/create";
   const webhookId = request.headers.get("X-Shopify-Webhook-Id");
-  
+
   let eventResult: Awaited<ReturnType<typeof saveWebhookEvent>> | null = null;
   let processingIncomplete = false;
   try {
@@ -83,7 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       topic,
       rawBody,
       null, // orderId는 JSON 파싱 후에 추출
-      webhookId
+      webhookId,
     );
 
     // 구조화 로그 추가
@@ -94,14 +90,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         eventKey: eventResult.eventKey,
         isDuplicate: eventResult.isDuplicate,
         correlationId,
-      })
+      }),
     );
 
     // 중복 이벤트면 비즈니스 로직 스킵하고 200 OK 반환
     const receiptResponse = webhookReceiptResponse(eventResult);
-    if (receiptResponse) return receiptResponse;
+    if (receiptResponse) {
+      return receiptResponse;
+    }
   } catch (error) {
-    if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node") return new Response("Webhook storage unavailable", { status: 503 });
+    if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node") {
+      return new Response("Webhook storage unavailable", { status: 503 });
+    }
     // 이벤트 저장 실패해도 기존 로직은 계속 진행 (no-op)
     console.error(
       JSON.stringify({
@@ -109,7 +109,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         topic,
         error: error instanceof Error ? error.message : String(error),
         correlationId,
-      })
+      }),
     );
   }
 
@@ -148,16 +148,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     };
 
     // 3. shop 추출
-    const shop =
-      request.headers.get("X-Shopify-Shop-Domain") ||
-      (payload as any).shop ||
-      "";
+    const shop = request.headers.get("X-Shopify-Shop-Domain") || (payload as any).shop || "";
 
     if (!shop) {
       console.error(
         JSON.stringify({
           message: "Missing shop information in webhook",
-        })
+        }),
       );
       return new Response("Missing shop information", { status: 400 });
     }
@@ -167,7 +164,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       console.error(
         JSON.stringify({
           message: "Missing order ID in webhook payload",
-        })
+        }),
       );
       return new Response("Missing order ID", { status: 400 });
     }
@@ -182,8 +179,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     // Phase 2: 정규화/추출 평가 (드라이런)
-    const pipelineEnabled =
-      process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
+    const pipelineEnabled = process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
     const dryrun = process.env.HOLD_RELEASE_VOID_DRYRUN !== "false";
     if (pipelineEnabled && eventResult && !eventResult.isDuplicate) {
       try {
@@ -205,7 +201,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             holdIds: mapping.holdIds,
             attemptIds: mapping.attemptIds,
             dryrun,
-          })
+          }),
         );
 
         await executeHoldRelease({
@@ -232,7 +228,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             error: error instanceof Error ? error.message : String(error),
             dryrun,
-          })
+          }),
         );
       }
     }
@@ -263,16 +259,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const store = getBookingStore();
     const redisClient = (store as any).client || null;
     const durableBookings = process.env.DEPLOYMENT_MODE?.trim() === "multi-node";
-    if (durableBookings && !redisClient) throw new Error("Durable booking store unavailable");
+    if (durableBookings && !redisClient) {
+      throw new Error("Durable booking store unavailable");
+    }
 
-    const rawRefundId =
-      payload.id ?? (payload as any).refund_id ?? (payload as any).refundId;
+    const rawRefundId = payload.id ?? (payload as any).refund_id ?? (payload as any).refundId;
     let refundId = rawRefundId ? String(rawRefundId) : null;
     if (!refundId && lineItemsToProcess.length > 0) {
       const fallback = [
         orderId,
         payload.created_at || "",
-        lineItemsToProcess.map((item: any) => item.id).filter(Boolean).join(","),
+        lineItemsToProcess
+          .map((item: any) => item.id)
+          .filter(Boolean)
+          .join(","),
       ].join("|");
       if (fallback) {
         refundId = createHash("sha256").update(fallback).digest("hex");
@@ -300,7 +300,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             action: "noop",
             idempotencyHit: true,
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
         return new Response("OK", { status: 200 });
       }
@@ -308,8 +308,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const missingQuantityIds: Array<string> = [];
     const normalizedLineItems = lineItemsToProcess.map((item: any) => {
-      const quantity =
-        typeof item.quantity === "number" ? item.quantity : 0;
+      const quantity = typeof item.quantity === "number" ? item.quantity : 0;
       if (item.quantityMissing) {
         missingQuantityIds.push(String(item.id ?? "unknown"));
       }
@@ -326,8 +325,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             message: "Refund line item missing quantity (treated as 0)",
             orderId: orderId.substring(0, 12) + "...",
             lineItemIds: missingQuantityIds.slice(0, 10),
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -335,7 +334,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const groups = await groupLineItemsByBooking(
       normalizedLineItems,
       extractBookingInfoFromLineItem,
-      shop
+      shop,
     );
 
     try {
@@ -358,8 +357,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   orderId,
                   bookingId,
                   error: metaResult.message,
-                })
-              )
+                }),
+              ),
             );
           }
         } else {
@@ -369,8 +368,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Order booking_id sync skipped (admin unavailable)",
                 orderId,
                 bookingId,
-              })
-            )
+              }),
+            ),
           );
         }
       } else if (groups.length > 1) {
@@ -380,8 +379,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Order booking_id sync skipped (multiple groups)",
               orderId,
               groupCount: groups.length,
-            })
-          )
+            }),
+          ),
         );
       }
     } catch (error) {
@@ -391,13 +390,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             message: "Order booking_id sync error (refunds/create)",
             orderId,
             error: error instanceof Error ? error.message : String(error),
-          })
-        )
+          }),
+        ),
       );
     }
 
     const groupedLineItemIds = new Set(
-      groups.flatMap((group) => group.lineItems.map((item) => String(item.id)))
+      groups.flatMap((group) => group.lineItems.map((item) => String(item.id))),
     );
 
     // 그룹 단위 partial refund 처리
@@ -444,7 +443,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             action: "noop",
             idempotencyHit: false,
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
         continue;
       }
@@ -456,8 +455,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Redis client unavailable; falling back to full removal",
               orderId: orderId.substring(0, 12) + "...",
               groupKey: groupKey.substring(0, 50) + "...",
-            })
-          )
+            }),
+          ),
         );
         await store.removeConfirmedBookingByGroupKey(groupKey);
         logEvent(
@@ -474,27 +473,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             resultTravelers: null,
             reason: "redis_unavailable",
           },
-          { correlationId, shop, severity: "warn" }
+          { correlationId, shop, severity: "warn" },
         );
         continue;
       }
 
-      const bookingId = await resolveBookingIdByGroupIndex(
-        redisClient,
-        shop,
-        groupKey,
-        orderId
-      );
+      const bookingId = await resolveBookingIdByGroupIndex(redisClient, shop, groupKey, orderId);
       if (!bookingId) {
-        if (durableBookings) throw new Error("Refund booking requires ledger reconciliation");
+        if (durableBookings) {
+          throw new Error("Refund booking requires ledger reconciliation");
+        }
         console.warn(
           JSON.stringify(
             maskPII({
               message: "No bookingId resolved for groupKey (refunds/create)",
               orderId: orderId.substring(0, 12) + "...",
               groupKey: groupKey.substring(0, 50) + "...",
-            })
-          )
+            }),
+          ),
         );
         await store.removeConfirmedBookingByGroupKey(groupKey);
         logEvent(
@@ -511,7 +507,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             resultTravelers: null,
             reason: "bookingId_missing",
           },
-          { correlationId, shop, severity: "warn" }
+          { correlationId, shop, severity: "warn" },
         );
         continue;
       }
@@ -519,7 +515,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const bookingKey = RebuildStoreKeys.confirmedBooking(shop, bookingId);
       const bookingData = await redisClient.get(bookingKey);
       if (!bookingData) {
-        if (durableBookings) throw new Error("Refund booking requires ledger reconciliation");
+        if (durableBookings) {
+          throw new Error("Refund booking requires ledger reconciliation");
+        }
         await store.removeConfirmedBookingByGroupKey(groupKey);
         logEvent(
           "webhook.refunds_create",
@@ -535,7 +533,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             resultTravelers: null,
             reason: "booking_not_found",
           },
-          { correlationId, shop, severity: "warn" }
+          { correlationId, shop, severity: "warn" },
         );
         continue;
       }
@@ -547,10 +545,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           try {
             const admin = await getAdminApiClient(shop);
             if (admin) {
-              const adminLineItems = await fetchOrderLineItemsGraphQL(
-                admin,
-                orderId
-              );
+              const adminLineItems = await fetchOrderLineItemsGraphQL(admin, orderId);
               inferred = extractTravelersFromLineItems(adminLineItems as any);
             }
           } catch (error) {
@@ -560,8 +555,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   message: "Failed to fetch order for travelers inference",
                   orderId: orderId.substring(0, 12) + "...",
                   error: error instanceof Error ? error.message : String(error),
-                })
-              )
+                }),
+              ),
             );
           }
         }
@@ -576,16 +571,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Booking record missing travelers; falling back to full removal",
                 orderId: orderId.substring(0, 12) + "...",
                 bookingId: bookingId.substring(0, 12) + "...",
-              })
-            )
+              }),
+            ),
           );
-          const removed = await removeConfirmedBookingRecord(
-            redisClient,
-            shop,
-            bookingId,
-            { orderId, groupKey, cleanupOrphans: true,
-              afterProjection: removed => store.removeConfirmedBookingByGroupKey(removed?.groupKey || groupKey, { shop, orderId }) }
-          );
+          const removed = await removeConfirmedBookingRecord(redisClient, shop, bookingId, {
+            orderId,
+            groupKey,
+            cleanupOrphans: true,
+            afterProjection: (removed) =>
+              store.removeConfirmedBookingByGroupKey(removed?.groupKey || groupKey, {
+                shop,
+                orderId,
+              }),
+          });
           const resolvedGroupKey = removed?.groupKey || groupKey;
           logEvent(
             "webhook.refunds_create",
@@ -601,7 +599,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               resultTravelers: null,
               reason: "legacy_fallback",
             },
-            { correlationId, shop, severity: "warn" }
+            { correlationId, shop, severity: "warn" },
           );
           continue;
         }
@@ -612,8 +610,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         child: Math.max(0, booking.travelers.child - refunded.child),
         infant: Math.max(0, booking.travelers.infant - refunded.infant),
       };
-      const remainingTotal =
-        newTravelers.adult + newTravelers.child + newTravelers.infant;
+      const remainingTotal = newTravelers.adult + newTravelers.child + newTravelers.infant;
 
       if (remainingTotal > 0) {
         const updated: ConfirmedBookingRecord = {
@@ -635,16 +632,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             deltaTravelers: refunded,
             resultTravelers: newTravelers,
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
       } else {
-        const removed = await removeConfirmedBookingRecord(
-          redisClient,
-          shop,
-          bookingId,
-          { orderId, groupKey, cleanupOrphans: true,
-            afterProjection: removed => store.removeConfirmedBookingByGroupKey(removed?.groupKey || groupKey, { shop, orderId }) }
-        );
+        const removed = await removeConfirmedBookingRecord(redisClient, shop, bookingId, {
+          orderId,
+          groupKey,
+          cleanupOrphans: true,
+          afterProjection: (removed) =>
+            store.removeConfirmedBookingByGroupKey(removed?.groupKey || groupKey, {
+              shop,
+              orderId,
+            }),
+        });
         const resolvedGroupKey = removed?.groupKey || groupKey;
         logEvent(
           "webhook.refunds_create",
@@ -659,7 +659,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             deltaTravelers: refunded,
             resultTravelers: { adult: 0, child: 0, infant: 0 },
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
       }
     }
@@ -706,7 +706,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             resultTravelers: null,
             reason: "redis_unavailable",
           },
-          { correlationId, shop, severity: "warn" }
+          { correlationId, shop, severity: "warn" },
         );
         continue;
       }
@@ -715,10 +715,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         redisClient,
         shop,
         orderId,
-        lineItemId
+        lineItemId,
       );
       if (!bookingId) {
-        if (durableBookings) throw new Error("Refund booking requires ledger reconciliation");
+        if (durableBookings) {
+          throw new Error("Refund booking requires ledger reconciliation");
+        }
         await store.removeConfirmedBooking({
           shop,
           orderId,
@@ -738,7 +740,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             resultTravelers: null,
             reason: "bookingId_missing",
           },
-          { correlationId, shop, severity: "warn" }
+          { correlationId, shop, severity: "warn" },
         );
         continue;
       }
@@ -746,7 +748,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const bookingKey = RebuildStoreKeys.confirmedBooking(shop, bookingId);
       const bookingData = await redisClient.get(bookingKey);
       if (!bookingData) {
-        if (durableBookings) throw new Error("Refund booking requires ledger reconciliation");
+        if (durableBookings) {
+          throw new Error("Refund booking requires ledger reconciliation");
+        }
         await store.removeConfirmedBooking({
           shop,
           orderId,
@@ -766,7 +770,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             resultTravelers: null,
             reason: "booking_not_found",
           },
-          { correlationId, shop, severity: "warn" }
+          { correlationId, shop, severity: "warn" },
         );
         continue;
       }
@@ -778,10 +782,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           try {
             const admin = await getAdminApiClient(shop);
             if (admin) {
-              const adminLineItems = await fetchOrderLineItemsGraphQL(
-                admin,
-                orderId
-              );
+              const adminLineItems = await fetchOrderLineItemsGraphQL(admin, orderId);
               inferred = extractTravelersFromLineItems(adminLineItems as any);
             }
           } catch (error) {
@@ -791,8 +792,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   message: "Failed to fetch order for travelers inference",
                   orderId: orderId.substring(0, 12) + "...",
                   error: error instanceof Error ? error.message : String(error),
-                })
-              )
+                }),
+              ),
             );
           }
         }
@@ -807,16 +808,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Booking record missing travelers; falling back to full removal",
                 orderId: orderId.substring(0, 12) + "...",
                 bookingId: bookingId.substring(0, 12) + "...",
-              })
-            )
+              }),
+            ),
           );
-          const removed = await removeConfirmedBookingRecord(
-            redisClient,
-            shop,
-            bookingId,
-            { orderId, groupKey: booking.groupKey, cleanupOrphans: true,
-              afterProjection: removed => store.removeConfirmedBookingByGroupKey(removed?.groupKey || booking.groupKey, { shop, orderId }) }
-          );
+          const removed = await removeConfirmedBookingRecord(redisClient, shop, bookingId, {
+            orderId,
+            groupKey: booking.groupKey,
+            cleanupOrphans: true,
+            afterProjection: (removed) =>
+              store.removeConfirmedBookingByGroupKey(removed?.groupKey || booking.groupKey, {
+                shop,
+                orderId,
+              }),
+          });
           const resolvedGroupKey = removed?.groupKey || booking.groupKey;
           logEvent(
             "webhook.refunds_create",
@@ -832,7 +836,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               resultTravelers: null,
               reason: "legacy_fallback",
             },
-            { correlationId, shop, severity: "warn" }
+            { correlationId, shop, severity: "warn" },
           );
           continue;
         }
@@ -857,28 +861,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               orderId,
               productId,
               variantId,
-            })
-          )
+            }),
+          ),
         );
         continue;
       }
 
       const newTravelers = {
-        adult: Math.max(
-          0,
-          booking.travelers.adult - (ticketType === "adult" ? quantity : 0)
-        ),
-        child: Math.max(
-          0,
-          booking.travelers.child - (ticketType === "child" ? quantity : 0)
-        ),
-        infant: Math.max(
-          0,
-          booking.travelers.infant - (ticketType === "infant" ? quantity : 0)
-        ),
+        adult: Math.max(0, booking.travelers.adult - (ticketType === "adult" ? quantity : 0)),
+        child: Math.max(0, booking.travelers.child - (ticketType === "child" ? quantity : 0)),
+        infant: Math.max(0, booking.travelers.infant - (ticketType === "infant" ? quantity : 0)),
       };
-      const remainingTotal =
-        newTravelers.adult + newTravelers.child + newTravelers.infant;
+      const remainingTotal = newTravelers.adult + newTravelers.child + newTravelers.infant;
 
       if (remainingTotal > 0) {
         const updated: ConfirmedBookingRecord = {
@@ -904,16 +898,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             },
             resultTravelers: newTravelers,
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
       } else {
-        const removed = await removeConfirmedBookingRecord(
-          redisClient,
-          shop,
-          bookingId,
-          { orderId, groupKey: booking.groupKey, cleanupOrphans: true,
-            afterProjection: removed => store.removeConfirmedBookingByGroupKey(removed?.groupKey || booking.groupKey, { shop, orderId }) }
-        );
+        const removed = await removeConfirmedBookingRecord(redisClient, shop, bookingId, {
+          orderId,
+          groupKey: booking.groupKey,
+          cleanupOrphans: true,
+          afterProjection: (removed) =>
+            store.removeConfirmedBookingByGroupKey(removed?.groupKey || booking.groupKey, {
+              shop,
+              orderId,
+            }),
+        });
         const resolvedGroupKey = removed?.groupKey || booking.groupKey;
         logEvent(
           "webhook.refunds_create",
@@ -932,7 +929,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             },
             resultTravelers: { adult: 0, child: 0, infant: 0 },
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
       }
     }
@@ -959,7 +956,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Guide base refund skipped (admin unavailable)",
               orderId,
               refundId,
-            })
+            }),
           );
         } else {
           const customerId = await fetchOrderCustomerId(admin, orderId);
@@ -969,7 +966,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Guide base refund skipped (missing customerId)",
                 orderId,
                 refundId,
-              })
+              }),
             );
           } else {
             const revokeResult = await revokeGuideBaseEntitlementsForOrder({
@@ -992,7 +989,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   revoked: revokeResult.revoked,
                   skipped: revokeResult.skipped,
                   failed: revokeResult.failed,
-                })
+                }),
               );
             }
           }
@@ -1005,7 +1002,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             refundId,
             error: error instanceof Error ? error.message : String(error),
-          })
+          }),
         );
       }
     }
@@ -1027,7 +1024,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Guide extension refund skipped (admin unavailable)",
               orderId,
               refundId,
-            })
+            }),
           );
         } else {
           const customerId = await fetchOrderCustomerId(admin, orderId);
@@ -1037,14 +1034,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Guide extension refund skipped (missing customerId)",
                 orderId,
                 refundId,
-              })
+              }),
             );
           } else {
             const occurredAt = payload.created_at || new Date().toISOString();
             const types: EntitlementType[] = ["PDF", "VIDEO", "BUNDLE"];
             for (const type of types) {
               const months = extensionMonths[type];
-              if (!months || months <= 0) continue;
+              if (!months || months <= 0) {
+                continue;
+              }
 
               try {
                 const appended = await appendLedgerEvent(admin, {
@@ -1100,7 +1099,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     refundId,
                     type,
                     error: error instanceof Error ? error.message : String(error),
-                  })
+                  }),
                 );
                 try {
                   await createLog(db, {
@@ -1114,8 +1113,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     refundId: refundId || undefined,
                     status: "FAILED",
                     errorCode: "GUIDE_EXTENSION_WEBHOOK_ERROR",
-                    errorMessage:
-                      error instanceof Error ? error.message : String(error),
+                    errorMessage: error instanceof Error ? error.message : String(error),
                     rawRef: eventResult?.eventKey || undefined,
                   });
                 } catch (logError) {
@@ -1125,11 +1123,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                       orderId,
                       refundId,
                       type,
-                      error:
-                        logError instanceof Error
-                          ? logError.message
-                          : String(logError),
-                    })
+                      error: logError instanceof Error ? logError.message : String(logError),
+                    }),
                   );
                 }
               }
@@ -1144,7 +1139,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             refundId,
             error: error instanceof Error ? error.message : String(error),
-          })
+          }),
         );
       }
     }
@@ -1158,7 +1153,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             message: "Tour coupon revoke skipped (admin unavailable)",
             orderId,
             refundId,
-          })
+          }),
         );
       } else {
         const revokeResult = await revokeTourCodesForOrder({
@@ -1174,7 +1169,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               refundId,
               revokedCodes: revokeResult.revoked,
               warnings: revokeResult.warnings,
-            })
+            }),
           );
         }
       }
@@ -1186,7 +1181,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           orderId,
           refundId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -1205,7 +1200,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           fullyRefunded,
           payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
           hasPayloadCustomerId: Boolean(payloadCustomerId),
-        })
+        }),
       );
 
       if (fullyRefunded) {
@@ -1218,7 +1213,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               refundId,
               reason: "ADMIN_UNAVAILABLE",
               payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
-            })
+            }),
           );
         } else {
           const tourRestore = await restoreTourCreditForOrder({
@@ -1241,7 +1236,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               balanceBefore: tourRestore.balanceBefore ?? null,
               balanceAfter: tourRestore.balanceAfter ?? null,
               warnings: tourRestore.warnings,
-            })
+            }),
           );
 
           const extra10Restore = await restoreExtra10ForOrder({
@@ -1262,7 +1257,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               oldCodeMasked: maskCouponCode(extra10Restore.oldCode),
               newCodeMasked: maskCouponCode(extra10Restore.newCode),
               warnings: extra10Restore.warnings,
-            })
+            }),
           );
         }
       } else {
@@ -1273,7 +1268,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             refundId,
             reason: "NOT_FULL_REFUND",
             refundLineItemsCount: refundLineItems.length,
-          })
+          }),
         );
       }
     } catch (error) {
@@ -1284,7 +1279,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           orderId,
           refundId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -1303,7 +1298,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           guideKitFullyRefunded,
           payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
           hasPayloadCustomerId: Boolean(payloadCustomerId),
-        })
+        }),
       );
 
       if (guideKitFullyRefunded) {
@@ -1316,7 +1311,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Tour15 guide bundle refund admin customer lookup start",
               orderId,
               refundId,
-            })
+            }),
           );
           customerId = await fetchOrderCustomerId(admin, orderId);
         }
@@ -1330,7 +1325,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               reason: "MISSING_CUSTOMER_ID",
               customerIdSource,
               adminAvailable: Boolean(admin),
-            })
+            }),
           );
         } else {
           const sourceResult = await removeGuideBundleTour15Source(customerId, orderId);
@@ -1341,7 +1336,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             cacheInvalidated = true;
           } catch (error) {
             warnings.push(
-              `CACHE_INVALIDATE_FAILED:${error instanceof Error ? error.message : String(error)}`
+              `CACHE_INVALIDATE_FAILED:${error instanceof Error ? error.message : String(error)}`,
             );
           }
 
@@ -1383,7 +1378,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               pendingTourSkippedReason,
               cacheInvalidated,
               warnings,
-            })
+            }),
           );
         }
       }
@@ -1395,7 +1390,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           orderId,
           refundId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -1414,7 +1409,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           guideKitFullyRefunded,
           payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
           hasPayloadCustomerId: Boolean(payloadCustomerId),
-        })
+        }),
       );
 
       if (guideKitFullyRefunded) {
@@ -1427,7 +1422,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               refundId,
               reason: "ADMIN_UNAVAILABLE",
               payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
-            })
+            }),
           );
         } else {
           let customerId = payloadCustomerId;
@@ -1438,7 +1433,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Guide50 restore admin customer lookup start",
                 orderId,
                 refundId,
-              })
+              }),
             );
             customerId = await fetchOrderCustomerId(admin, orderId);
           }
@@ -1451,7 +1446,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               customerIdMasked: maskCustomerId(customerId),
               customerIdSource,
               hasCustomerId: Boolean(customerId),
-            })
+            }),
           );
 
           if (!customerId) {
@@ -1462,7 +1457,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 refundId,
                 reason: "MISSING_CUSTOMER_ID",
                 customerIdSource,
-              })
+              }),
             );
           } else {
             const restoreResult = await restoreGuide50ForOrder({ admin, customerId, orderId });
@@ -1477,7 +1472,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   restored: restoreResult.restored,
                   reason: restoreResult.reason,
                   expiresAt: restoreResult.expiresAt,
-                })
+                }),
               );
             }
           }
@@ -1490,7 +1485,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             refundId,
             reason: "NOT_FULL_GUIDE_KIT_REFUND",
             refundLineItemsCount: refundLineItems.length,
-          })
+          }),
         );
       }
     } catch (error) {
@@ -1501,12 +1496,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           orderId,
           refundId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
     if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node" && processingIncomplete) {
-      if (eventResult?.saved) await updateWebhookEventStatus(eventResult.eventKey, "FAILED", "Business processing requires reconciliation");
+      if (eventResult?.saved) {
+        await updateWebhookEventStatus(
+          eventResult.eventKey,
+          "FAILED",
+          "Business processing requires reconciliation",
+        );
+      }
       return new Response("Webhook processing requires reconciliation", { status: 503 });
     }
     if (redisClient && refundId) {
@@ -1526,8 +1527,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         maskPII({
           message: "Refunds create webhook processing error",
           error: error instanceof Error ? error.message : String(error),
-        })
-      )
+        }),
+      ),
     );
 
     // 500 반환 (Shopify 재시도 유도)

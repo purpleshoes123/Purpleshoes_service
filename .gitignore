@@ -18,6 +18,7 @@
 
 # Generated dependencies and builds
 node_modules/
+.venv/
 build/
 dist/
 .react-router/

@@ -10,7 +10,7 @@ export function getRateLimitClientIp(request: Request): string {
     if (process.env.TRUSTED_PROXY_MODE !== "cloudfront-alb") {
       throw new Error("Verified proxy topology is required");
     }
-    const hops = forwarded?.split(",").map(value => value.trim()) ?? [];
+    const hops = forwarded?.split(",").map((value) => value.trim()) ?? [];
     const viewer = hops.at(-2);
     const edge = hops.at(-1);
     if (!viewer || !edge || !isIP(viewer) || !isIP(edge)) {
@@ -20,8 +20,10 @@ export function getRateLimitClientIp(request: Request): string {
     return isIP(viewer) === 6 ? new URL(`http://[${viewer}]/`).hostname : viewer;
   }
   // Preserve the existing single-server behavior until its proxy is migrated.
-  return forwarded?.split(",")[0]?.trim()
-    || request.headers.get("cf-connecting-ip")
-    || request.headers.get("x-real-ip")
-    || new URL(request.url).hostname;
+  return (
+    forwarded?.split(",")[0]?.trim() ||
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-real-ip") ||
+    new URL(request.url).hostname
+  );
 }

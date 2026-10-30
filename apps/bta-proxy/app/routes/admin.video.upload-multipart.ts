@@ -5,20 +5,22 @@ import {
   multipartUploadCompleteRequestSchema,
   multipartUploadPartsRequestSchema,
   videoMultipartStartRequestSchema,
-} from "~/lib/gkv/adminUiSchemas";
-import { toValidationFailResponse } from "~/lib/gkv/adminUiResponses";
+} from "~/domains/guide-viewer/adminUiSchemas";
+import { toValidationFailResponse } from "~/domains/guide-viewer/adminUiResponses";
 import {
   abortMultipartAssetUpload,
   completeMultipartAssetUpload,
   signMultipartUploadParts,
   startMultipartAssetUpload,
-} from "~/lib/gkv/uploadUrl.server";
+} from "~/domains/guide-viewer/uploadUrl.server.ts";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   if (request.method !== "POST") {
@@ -27,7 +29,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       405,
-      correlationId
+      correlationId,
     );
   }
 
@@ -43,16 +45,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           mimeType: input.mimeType,
           fileSizeBytes: input.fileSizeBytes,
         }),
-        { correlationId }
+        { correlationId },
       );
     }
 
     if (intent === "sign-parts") {
       const input = multipartUploadPartsRequestSchema.parse(payload);
-      return respond.ok(
-        { parts: await signMultipartUploadParts(input) },
-        { correlationId }
-      );
+      return respond.ok({ parts: await signMultipartUploadParts(input) }, { correlationId });
     }
 
     if (intent === "complete") {
@@ -71,7 +70,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 multipart upload 요청입니다."),
       undefined,
       422,
-      correlationId
+      correlationId,
     );
   } catch (error) {
     if (error instanceof ZodError) {
@@ -83,7 +82,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       error instanceof Error ? error.message : getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       500,
-      correlationId
+      correlationId,
     );
   }
 };

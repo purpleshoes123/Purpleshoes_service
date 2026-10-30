@@ -1,16 +1,18 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
-import { AssetEditorPage } from "~/lib/gkv/adminAssetEditorRoute";
+import { AssetEditorPage } from "~/domains/guide-viewer/adminAssetEditorRoute";
 import {
   createAssetEditorAction,
   createAssetEditorLoader,
-} from "~/lib/gkv/adminAssetEditorRoute.server";
+} from "~/domains/guide-viewer/adminAssetEditorRoute.server.ts";
 
 type DomainKey = "pdf" | "video";
 
 function resolveDomain(request: Request): DomainKey | null {
   const kind = new URL(request.url).searchParams.get("kind")?.trim().toLowerCase() || "pdf";
-  if (kind === "pdf" || kind === "video") return kind;
+  if (kind === "pdf" || kind === "video") {
+    return kind;
+  }
   return null;
 }
 

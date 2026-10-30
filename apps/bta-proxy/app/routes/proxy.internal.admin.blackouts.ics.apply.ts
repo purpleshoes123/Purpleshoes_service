@@ -3,11 +3,7 @@ import { authenticate } from "~/shopify.server";
 import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import {
-  createGlobalBlackout,
-  listGlobalBlackouts,
-  getAdminApiClient,
-} from "~/lib/shopifyAdmin";
+import { createGlobalBlackout, listGlobalBlackouts, getAdminApiClient } from "~/lib/shopifyAdmin";
 import { logEvent } from "~/lib/logEvent";
 import { parseQueryParams } from "~/lib/validation";
 
@@ -39,7 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "날짜 목록이 비어 있습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     if (!dates.every((date) => dateRegex.test(date))) {
@@ -48,7 +44,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "날짜는 YYYY-MM-DD 형식이어야 합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -58,7 +54,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       const url = new URL(request.url);
       const queryParams = parseQueryParams(url);
@@ -69,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       if (!shop.includes(".")) {
@@ -88,7 +86,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
             undefined,
             getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-            correlationId
+            correlationId,
           );
         }
         throw error;
@@ -100,11 +98,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -125,10 +123,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         continue;
       }
       const note =
-        (body.dateNotes && body.dateNotes[date]) ||
-        body.note ||
-        body.calendarTitle ||
-        undefined;
+        (body.dateNotes && body.dateNotes[date]) || body.note || body.calendarTitle || undefined;
       await createGlobalBlackout({
         admin,
         shop,
@@ -143,7 +138,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     logEvent(
       "blackout.ics.apply",
       { createdCount: createdDates.length, skippedCount },
-      { correlationId, shop, severity: "info" }
+      { correlationId, shop, severity: "info" },
     );
 
     return respond.ok(
@@ -152,7 +147,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         skippedCount,
         createdDates,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -161,7 +156,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 요청 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -169,7 +164,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

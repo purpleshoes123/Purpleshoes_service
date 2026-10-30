@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import { useEffect, useMemo, useState } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
@@ -27,15 +27,15 @@ import {
   recomputeEntitlement,
   type EntitlementType,
   type RecomputeOutcome,
-} from "~/lib/guideExtension";
-import { createLog, listLogs } from "~/lib/guideExtension/logStore";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
-import { getEmbeddedSearchEntries } from "~/lib/gkv/embeddedPath";
+} from "~/domains/checkout/guideExtension";
+import { createLog, listLogs } from "~/domains/checkout/guideExtension/logStore";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
+import { getEmbeddedSearchEntries } from "~/domains/guide-viewer/embeddedPath";
 import {
   formatCustomerSearchLabel,
   type CustomerSearchItem,
-} from "~/lib/shopifyCustomerSearch";
-import { searchCustomers } from "~/lib/shopifyCustomerSearch.server";
+} from "~/domains/members/shopifyCustomerSearch";
+import { searchCustomers } from "~/domains/members/shopifyCustomerSearch.server.ts";
 import { authenticate } from "~/shopify.server";
 
 type PermissionStatus = "ACTIVE" | "EXPIRED" | "NONE" | "ERROR";
@@ -119,8 +119,12 @@ const LEGACY_BLOCKED_MESSAGE =
 
 function normalizeCustomerId(value: string): string {
   const trimmed = value.trim();
-  if (trimmed.startsWith("gid://")) return trimmed;
-  if (/^\d+$/.test(trimmed)) return `gid://shopify/Customer/${trimmed}`;
+  if (trimmed.startsWith("gid://")) {
+    return trimmed;
+  }
+  if (/^\d+$/.test(trimmed)) {
+    return `gid://shopify/Customer/${trimmed}`;
+  }
   return trimmed;
 }
 
@@ -129,9 +133,13 @@ function isValidCustomerGid(value: string): boolean {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "-";
+  if (!value) {
+    return "-";
+  }
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
   return date.toLocaleString("ko-KR", {
     timeZone: "Asia/Seoul",
     year: "numeric",
@@ -143,12 +151,14 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 function addScope(scopes: Set<string>, scope: string) {
-  if (scope.trim()) scopes.add(scope);
+  if (scope.trim()) {
+    scopes.add(scope);
+  }
 }
 
 function buildCurrentPermissions(
   entitlements: Record<string, string | null>,
-  now: Date
+  now: Date,
 ): { items: CurrentPermissionItem[]; summary: PermissionSummary } {
   const baseItems = ENTITLEMENT_TYPES.map((type) => {
     const rawValue = entitlements[type] ?? null;
@@ -189,7 +199,7 @@ function buildCurrentPermissions(
   });
 
   const activeTypes = new Set(
-    baseItems.filter((item) => item.status === "ACTIVE").map((item) => item.type)
+    baseItems.filter((item) => item.status === "ACTIVE").map((item) => item.type),
   );
   const bundleActive = activeTypes.has("BUNDLE");
 
@@ -226,10 +236,11 @@ function buildCurrentPermissions(
   const activeItems = items.filter((item) => item.status === "ACTIVE");
   const expiredItems = items.filter((item) => item.status === "EXPIRED");
   const errorItems = items.filter((item) => item.status === "ERROR");
-  const latestExpiresAtKst = activeItems
-    .map((item) => item.expiresAtKst)
-    .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const latestExpiresAtKst =
+    activeItems
+      .map((item) => item.expiresAtKst)
+      .filter((value): value is string => Boolean(value))
+      .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
   const accessibleScopes = new Set<string>();
 
   if (activeTypes.has("PDF") || bundleActive) {
@@ -326,7 +337,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     try {
       const legacyRes = await callGkvAdminApi<{ items: EntitlementItem[] }>(
         request,
-        `/admin/entitlements?customerId=${encodeURIComponent(customerId)}`
+        `/admin/entitlements?customerId=${encodeURIComponent(customerId)}`,
       );
       data.legacyEntitlements = legacyRes.items;
     } catch (error) {
@@ -386,7 +397,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (!isValidCustomerGid(customerId)) {
         return json<ActionData>(
           { ok: false, message: "고객 ID는 Shopify Customer GID 또는 숫자 ID여야 합니다." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -394,17 +405,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         .getAll("types")
         .map((value) => String(value))
         .filter((value): value is EntitlementType =>
-          ENTITLEMENT_TYPES.includes(value as EntitlementType)
+          ENTITLEMENT_TYPES.includes(value as EntitlementType),
         );
       if (selectedTypes.length === 0) {
         return json<ActionData>(
           { ok: false, message: "재계산할 권한을 하나 이상 선택해 주세요." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
-      const reason =
-        String(formData.get("reason") || "").trim() || "manual recompute by admin";
+      const reason = String(formData.get("reason") || "").trim() || "manual recompute by admin";
       const results: RecomputeResultItem[] = [];
 
       for (const type of selectedTypes) {
@@ -483,23 +493,41 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 function summaryStatusLabel(status: SummaryStatus): string {
-  if (status === "ACTIVE") return "사용 가능";
-  if (status === "EXPIRED") return "만료됨";
-  if (status === "ERROR") return "확인 필요";
+  if (status === "ACTIVE") {
+    return "사용 가능";
+  }
+  if (status === "EXPIRED") {
+    return "만료됨";
+  }
+  if (status === "ERROR") {
+    return "확인 필요";
+  }
   return "권한 없음";
 }
 
 function permissionStatusBadge(status: PermissionStatus) {
-  if (status === "ACTIVE") return <Badge tone="success">사용 가능</Badge>;
-  if (status === "EXPIRED") return <Badge tone="attention">만료됨</Badge>;
-  if (status === "ERROR") return <Badge tone="critical">오류</Badge>;
+  if (status === "ACTIVE") {
+    return <Badge tone="success">사용 가능</Badge>;
+  }
+  if (status === "EXPIRED") {
+    return <Badge tone="attention">만료됨</Badge>;
+  }
+  if (status === "ERROR") {
+    return <Badge tone="critical">오류</Badge>;
+  }
   return <Badge>없음</Badge>;
 }
 
 function summaryStatusBadge(status: SummaryStatus) {
-  if (status === "ACTIVE") return <Badge tone="success">사용 가능</Badge>;
-  if (status === "EXPIRED") return <Badge tone="attention">만료됨</Badge>;
-  if (status === "ERROR") return <Badge tone="critical">확인 필요</Badge>;
+  if (status === "ACTIVE") {
+    return <Badge tone="success">사용 가능</Badge>;
+  }
+  if (status === "EXPIRED") {
+    return <Badge tone="attention">만료됨</Badge>;
+  }
+  if (status === "ERROR") {
+    return <Badge tone="critical">확인 필요</Badge>;
+  }
   return <Badge>권한 없음</Badge>;
 }
 
@@ -542,7 +570,9 @@ export default function GkvEntitlementsPage() {
   }, [customerId]);
 
   useEffect(() => {
-    if (!searchFetcher.data) return;
+    if (!searchFetcher.data) {
+      return;
+    }
     if (searchFetcher.data.ok) {
       setSearchError(null);
       setSearchResults(searchFetcher.data.customers ?? []);
@@ -586,19 +616,23 @@ export default function GkvEntitlementsPage() {
 
   const toggleType = (type: EntitlementType) => {
     setSelectedTypes((current) =>
-      current.includes(type)
-        ? current.filter((item) => item !== type)
-        : [...current, type]
+      current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
     );
   };
 
   const searchRows = useMemo(() => {
-    if (!searchResults.length) return [];
+    if (!searchResults.length) {
+      return [];
+    }
     return searchResults.map((customer) => [
       formatCustomerSearchLabel(customer) || "-",
       customer.email || "-",
       customer.id,
-      <Button key={`${customer.id}-select`} size="micro" onClick={() => handlePickCustomer(customer)}>
+      <Button
+        key={`${customer.id}-select`}
+        size="micro"
+        onClick={() => handlePickCustomer(customer)}
+      >
         선택
       </Button>,
     ]);
@@ -621,7 +655,11 @@ export default function GkvEntitlementsPage() {
   ]);
 
   const logRows = logs.map((item) => [
-    item.status === "SUCCESS" ? <Badge tone="success">성공</Badge> : <Badge tone="critical">실패</Badge>,
+    item.status === "SUCCESS" ? (
+      <Badge tone="success">성공</Badge>
+    ) : (
+      <Badge tone="critical">실패</Badge>
+    ),
     item.entitlementType,
     item.eventType,
     String(item.monthsDelta),
@@ -742,8 +780,8 @@ export default function GkvEntitlementsPage() {
                 {summaryStatusBadge(permissionSummary.status)}
               </InlineStack>
               <Text as="p" variant="bodySm" tone="subdued">
-                이 영역은 현재 운영 기준인 Shopify customer metafield 기반 가이드킷 권한입니다.
-                고객 앱과 마이페이지의 가이드 접근 판단에 사용되는 주 권한입니다.
+                이 영역은 현재 운영 기준인 Shopify customer metafield 기반 가이드킷 권한입니다. 고객
+                앱과 마이페이지의 가이드 접근 판단에 사용되는 주 권한입니다.
               </Text>
               {currentPermissionError ? (
                 <Banner tone="critical">{currentPermissionError}</Banner>
@@ -804,8 +842,8 @@ export default function GkvEntitlementsPage() {
                 권한 재계산
               </Text>
               <Text as="p" variant="bodySm" tone="subdued">
-                구매/연장/환불 기록을 기준으로 고객의 가이드킷 권한을 다시 계산합니다.
-                문제가 있는 고객을 점검하거나 환불 처리 후 권한 상태를 정리할 때 사용하세요.
+                구매/연장/환불 기록을 기준으로 고객의 가이드킷 권한을 다시 계산합니다. 문제가 있는
+                고객을 점검하거나 환불 처리 후 권한 상태를 정리할 때 사용하세요.
               </Text>
               <actionFetcher.Form method="post">
                 <BlockStack gap="200">
@@ -867,9 +905,9 @@ export default function GkvEntitlementsPage() {
                 이전 GKV 권한 기록
               </Text>
               <Text as="p" variant="bodySm" tone="subdued">
-                이 영역은 과거 DB 기반 권한 기록입니다. 현재 가이드킷 권한의 기준은 위의
-                "현재 가이드킷 권한"입니다. 이 화면에서는 legacy 권한의 신규 지급/회수를
-                제공하지 않습니다.
+                이 영역은 과거 DB 기반 권한 기록입니다. 현재 가이드킷 권한의 기준은 위의 "현재
+                가이드킷 권한"입니다. 이 화면에서는 legacy 권한의 신규 지급/회수를 제공하지
+                않습니다.
               </Text>
               {legacyError ? <Banner tone="critical">{legacyError}</Banner> : null}
               <DataTable

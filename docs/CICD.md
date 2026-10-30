@@ -10,23 +10,23 @@
 
 저장소 Actions 변수는 `AWS_REGION`(리전)만 사용합니다. 아래 운영 대상 식별자는 공개 저장소에서 일반 변수로 등록하지 않고 모두 Actions Secrets에 암호화해 보관합니다.
 
-| 이름 | 내용 |
-|---|---|
-| `AWS_ACCOUNT_ID` | 기존 운영 계정 번호 |
-| `RELEASE_BUCKET` | 기존 비공개 배포 버킷 |
-| `ASG_NAME` | 기존 운영 ASG |
-| `LAUNCH_TEMPLATE_ID` | 기존 시작 템플릿 ID |
-| `SHOPIFY_STORE` | 운영 `.myshopify.com` 주소 |
-| `SHOPIFY_THEME_ID` | 운영 테마 ID |
-| `PUBLIC_HEALTH_URL` | HTTPS 준비 상태 확인 URL |
+| 이름                 | 내용                       |
+| -------------------- | -------------------------- |
+| `AWS_ACCOUNT_ID`     | 기존 운영 계정 번호        |
+| `RELEASE_BUCKET`     | 기존 비공개 배포 버킷      |
+| `ASG_NAME`           | 기존 운영 ASG              |
+| `LAUNCH_TEMPLATE_ID` | 기존 시작 템플릿 ID        |
+| `SHOPIFY_STORE`      | 운영 `.myshopify.com` 주소 |
+| `SHOPIFY_THEME_ID`   | 운영 테마 ID               |
+| `PUBLIC_HEALTH_URL`  | HTTPS 준비 상태 확인 URL   |
 
 추가 Actions Secrets:
 
-| 이름 | 범위 |
-|---|---|
-| `AWS_DEPLOY_ROLE_ARN` | 해당 저장소 main의 OIDC만 신뢰하는 배포 역할. 장기 AWS 키를 저장하지 않습니다. |
-| `SHOPIFY_CLI_THEME_TOKEN` | 해당 스토어 테마 배포용 Theme Access 토큰 |
-| `SHOPIFY_SERVICE_ACCOUNT_TOKEN` | 앱 개발 권한을 가진 전용 서비스 계정 토큰. 앱 설정·확장 변경 배포 시 필요 |
+| 이름                            | 범위                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `AWS_DEPLOY_ROLE_ARN`           | 해당 저장소 main의 OIDC만 신뢰하는 배포 역할. 장기 AWS 키를 저장하지 않습니다. |
+| `SHOPIFY_CLI_THEME_TOKEN`       | 해당 스토어 테마 배포용 Theme Access 토큰                                      |
+| `SHOPIFY_SERVICE_ACCOUNT_TOKEN` | 앱 개발 권한을 가진 전용 서비스 계정 토큰. 앱 설정·확장 변경 배포 시 필요      |
 
 개인 Shopify CLI 로그인 캐시를 GitHub에 복사하지 않습니다. 토큰을 셸 인수·로그·보고서에 넣지 않습니다. 공식 Shopify 서비스 계정 인증을 지원하는 CLI 5.0.0을 고정합니다.
 

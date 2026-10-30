@@ -10,7 +10,7 @@
 {
   "kit_detail": {
     "eyebrow": "KOREA GUIDE KIT",
-    "hero_title": "Find your kind of Korea.",
+    "hero_title": "Find Your Kind of Korea.",
     "hero_lead": "Choose what to eat, where to go and how to get there.",
     "hero_copy": "Practical guidance and local picks, together in one digital Kit.",
     "included": "Korea Guide Kit — Three ways to explore.",
@@ -19,10 +19,15 @@
     "video": "Video Guide",
     "contents": "Digital guidebook + themed videos + Purple Map",
     "access": "App & web · 180-day access · Up to 3 devices",
+    "kit_devices": "App & web · Up to 3 devices",
+    "map_tagline": "Local picks. Find your way.",
+    "book_tagline": "Local know-how. Less guesswork.",
+    "video_tagline": "See Korea before you go.",
     "guest_offer": "Welcome offer price",
     "guest_condition": "with an eligible 50% welcome offer",
     "regular_kit": "Regular Kit price: USD 150",
-    "validity": "Valid for 24 hours from offer issuance.",
+    "regular_kit_label": "Regular Kit price:",
+    "validity": "Valid for 24 hours from issuance.",
     "signin": "Sign In to View My Welcome Offer",
     "guest_note": "Create an account or sign in. Purchase separately.",
     "current_offer": "Your Kit price",
@@ -137,9 +142,12 @@
     "free_cta": "Open My Free Starter Kit",
     "kit_name": "KOREA GUIDE KIT",
     "map_label": "Purple Map",
+    "map_tagline": "Local picks. Find your way.",
     "guidebook_label": "Guidebook",
+    "guidebook_tagline": "Local know-how. Less guesswork.",
     "video_label": "Video Guide",
-    "map_alt": "Purple Map showing Gyeongbokgung Palace, place details, and Naver Map attribution.",
+    "video_tagline": "See Korea before you go.",
+    "map_alt": "Purple Map showing Gyeongbokgung Palace and local place details.",
     "guidebook_alt": "Purple Shoes guidebook with Korean BBQ and Samgyeopsal guidance.",
     "video_alt": "Purple Shoes themed video guide showing Sanbangsan Mountain on Jeju.",
     "regular_price": "Regular price",
@@ -154,7 +162,7 @@
     "trust_copy": "Handpicked from our own travels and recommendations from people we trust.",
     "closing": "Ready to explore more of Korea?",
     "welcome_offer": "Your 50% welcome offer",
-    "validity": "Valid for 24 hours from offer issuance."
+    "validity": "Valid for 24 hours from issuance."
   },
   "starter_kit_viewer": {
     "cta_label": "Explore the Full Korea Guide Kit",

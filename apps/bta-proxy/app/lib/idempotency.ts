@@ -97,12 +97,14 @@ export function getIdempotencyStore(): IdempotencyStore {
       idempotencyStore = new RedisIdempotencyStore(redisUrl);
     } catch (error) {
       if (multiNode) {
-        throw new Error("Shared idempotency store initialization failed; memory fallback is disabled.");
+        throw new Error(
+          "Shared idempotency store initialization failed; memory fallback is disabled.",
+        );
       }
       console.warn(
         JSON.stringify({
           message: "Redis 연결 실패, in-memory 저장소로 폴백",
-        })
+        }),
       );
       idempotencyStore = new InMemoryIdempotencyStore();
     }
@@ -110,9 +112,12 @@ export function getIdempotencyStore(): IdempotencyStore {
     idempotencyStore = new InMemoryIdempotencyStore();
     // 주기적으로 만료된 항목 정리 (in-memory만)
     if (typeof setInterval !== "undefined") {
-      setInterval(() => {
-        (idempotencyStore as InMemoryIdempotencyStore).cleanup();
-      }, 5 * 60 * 1000); // 5분마다
+      setInterval(
+        () => {
+          (idempotencyStore as InMemoryIdempotencyStore).cleanup();
+        },
+        5 * 60 * 1000,
+      ); // 5분마다
     }
   }
 

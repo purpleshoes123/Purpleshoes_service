@@ -1,22 +1,14 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { useLoaderData, useLocation } from "react-router";
-import {
-  Badge,
-  BlockStack,
-  Button,
-  Card,
-  InlineStack,
-  Page,
-  Text,
-} from "@shopify/polaris";
+import { Badge, BlockStack, Button, Card, InlineStack, Page, Text } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import db from "~/db.server";
-import { listSendRequests } from "~/lib/mailer/sendRequestStore.server";
-import { getMailerSettingsSnapshot } from "~/lib/mailer/settings.server";
-import { MAILER_ROUTE_PATHS, MAILER_TEMPLATE_VARIABLES } from "~/lib/mailer/contracts";
-import { listTemplateSummaries } from "~/lib/mailer/templateStore.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { listSendRequests } from "~/domains/mail/sendRequestStore.server.ts";
+import { getMailerSettingsSnapshot } from "~/domains/mail/settings.server.ts";
+import { MAILER_ROUTE_PATHS, MAILER_TEMPLATE_VARIABLES } from "~/domains/mail/contracts";
+import { listTemplateSummaries } from "~/domains/mail/templateStore.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 import { authenticate } from "~/shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -117,9 +109,7 @@ export default function MailHomePage() {
               <Text as="h2" variant="headingMd">
                 Runtime Status
               </Text>
-              <Badge tone={statusTone}>
-                {statusLabel}
-              </Badge>
+              <Badge tone={statusTone}>{statusLabel}</Badge>
             </InlineStack>
             <Text as="p" variant="bodyMd">
               {data.snapshot.diagnostics.summary}
@@ -189,16 +179,14 @@ export default function MailHomePage() {
             <Text as="p" variant="bodyMd">
               Logs: {data.snapshot.persistence.sendRequestCount} total /{" "}
               {data.snapshot.persistence.pendingCount} pending /{" "}
-              {data.snapshot.persistence.sentCount} sent /{" "}
-              {data.snapshot.persistence.failedCount} failed /{" "}
-              {data.snapshot.persistence.blockedCount} blocked
+              {data.snapshot.persistence.sentCount} sent / {data.snapshot.persistence.failedCount}{" "}
+              failed / {data.snapshot.persistence.blockedCount} blocked
             </Text>
             <Text as="p" variant="bodyMd">
               Rate-limit counters: {data.snapshot.persistence.rateCounterCount}
             </Text>
             <Text as="p" variant="bodyMd">
-              Last request created:{" "}
-              {formatTimestamp(data.snapshot.activity.lastRequestCreatedAt)}
+              Last request created: {formatTimestamp(data.snapshot.activity.lastRequestCreatedAt)}
             </Text>
             {data.snapshot.missing.length > 0 ? (
               <Text as="p" variant="bodyMd">

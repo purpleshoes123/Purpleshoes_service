@@ -15,7 +15,7 @@ import {
   isActive,
   listLedgerEvents,
   normalizeToKstEndOfDay,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 
 type EntitlementStatus = "ACTIVE" | "EXPIRED" | "NONE";
 
@@ -29,9 +29,7 @@ function nowKstIso(): string {
   const kst = new Date(kstMs);
   return `${kst.getUTCFullYear()}-${pad2(kst.getUTCMonth() + 1)}-${pad2(
     kst.getUTCDate(),
-  )}T${pad2(kst.getUTCHours())}:${pad2(kst.getUTCMinutes())}:${pad2(
-    kst.getUTCSeconds(),
-  )}+09:00`;
+  )}T${pad2(kst.getUTCHours())}:${pad2(kst.getUTCMinutes())}:${pad2(kst.getUTCSeconds())}+09:00`;
 }
 
 /**
@@ -43,11 +41,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // feature flag remains a complete operational rollback.
   if (storefrontRateLimitMode === "off") {
     const rateLimitResponse = await enforceRateLimit(request);
-    if (rateLimitResponse) return rateLimitResponse;
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
   }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -56,10 +58,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (!shop) {
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
-        getErrorMessage(
-          ErrorCode.VALIDATION_ERROR,
-          "shop 파라미터가 필요합니다.",
-        ),
+        getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
         correlationId,
@@ -85,7 +84,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         path: new URL(request.url).pathname,
         correlationId,
       });
-      if (rateLimitResponse) return rateLimitResponse;
+      if (rateLimitResponse) {
+        return rateLimitResponse;
+      }
     }
 
     const admin = await getAdminApiClient(shop);
@@ -117,8 +118,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             .filter((event) => event.eventType === "EXTEND" && event.months > 0)
             .sort(
               (left, right) =>
-                new Date(right.occurredAt).getTime() -
-                new Date(left.occurredAt).getTime(),
+                new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
             )[0];
 
           if (latest) {
@@ -155,9 +155,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
       try {
         const normalized = normalizeToKstEndOfDay(rawValue);
-        const status: EntitlementStatus = isActive(normalized, now)
-          ? "ACTIVE"
-          : "EXPIRED";
+        const status: EntitlementStatus = isActive(normalized, now) ? "ACTIVE" : "EXPIRED";
         return {
           type,
           expiresAtKst: normalized,

@@ -10,16 +10,16 @@ import {
   getCustomerEntitlements,
   isActive,
   normalizeToKstEndOfDay,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 import { guideExtensionCheckoutSchema } from "~/lib/validation";
-import { createGuideExtensionDraftOrder } from "~/lib/guideExtension/draftOrder";
-import { resolveCheckoutMode } from "~/lib/checkoutMode.server";
-import { createPrivateCheckoutDraft } from "~/lib/privateCheckout/draftOrder.server";
+import { createGuideExtensionDraftOrder } from "~/domains/checkout/guideExtension/draftOrder";
+import { resolveCheckoutMode } from "~/domains/checkout/checkoutMode.server.ts";
+import { createPrivateCheckoutDraft } from "~/domains/checkout/privateCheckout/draftOrder.server.ts";
 import {
   buildThemeCartAttributes,
   createThemeCartPrepareId,
   normalizeAjaxVariantId,
-} from "~/lib/themeCartCheckout/types";
+} from "~/domains/checkout/themeCartCheckout/types";
 
 function resolveVariantId(type: "PDF" | "VIDEO" | "BUNDLE"): string | null {
   const envKey = `GUIDE_EXT_VARIANT_ID_${type}`;
@@ -35,10 +35,14 @@ function resolveVariantId(type: "PDF" | "VIDEO" | "BUNDLE"): string | null {
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -50,13 +54,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (error instanceof SyntaxError) {
         return respond.fail(
           ErrorCode.GUIDE_EXTENSION_INVALID_INPUT,
-          getErrorMessage(
-            ErrorCode.GUIDE_EXTENSION_INVALID_INPUT,
-            "잘못된 JSON 형식입니다."
-          ),
+          getErrorMessage(ErrorCode.GUIDE_EXTENSION_INVALID_INPUT, "잘못된 JSON 형식입니다."),
           undefined,
           getErrorStatus(ErrorCode.GUIDE_EXTENSION_INVALID_INPUT),
-          correlationId
+          correlationId,
         );
       }
       throw error;
@@ -71,7 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -82,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         "로그인 상태를 확인할 수 없습니다. 다시 로그인 후 시도해주세요.",
         undefined,
         getErrorStatus(ErrorCode.GUIDE_EXTENSION_NOT_ELIGIBLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -92,11 +93,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -109,7 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.GUIDE_EXTENSION_NOT_ELIGIBLE),
         undefined,
         getErrorStatus(ErrorCode.GUIDE_EXTENSION_NOT_ELIGIBLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -122,7 +123,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.GUIDE_EXTENSION_NOT_ELIGIBLE),
         undefined,
         getErrorStatus(ErrorCode.GUIDE_EXTENSION_NOT_ELIGIBLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -132,14 +133,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.GUIDE_EXTENSION_EXPIRED),
         undefined,
         getErrorStatus(ErrorCode.GUIDE_EXTENSION_EXPIRED),
-        correlationId
+        correlationId,
       );
     }
 
-    const newExpiresAt = addFixedMonthDaysKstEndOfDay(
-      normalizedCurrent,
-      validatedInput.months
-    );
+    const newExpiresAt = addFixedMonthDaysKstEndOfDay(normalizedCurrent, validatedInput.months);
 
     const variantId = resolveVariantId(validatedInput.type);
     if (!variantId) {
@@ -147,11 +145,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.GUIDE_EXTENSION_CONFIG_ERROR,
         getErrorMessage(
           ErrorCode.GUIDE_EXTENSION_CONFIG_ERROR,
-          `GUIDE_EXT_VARIANT_ID_${validatedInput.type} 설정이 필요합니다.`
+          `GUIDE_EXT_VARIANT_ID_${validatedInput.type} 설정이 필요합니다.`,
         ),
         undefined,
         getErrorStatus(ErrorCode.GUIDE_EXTENSION_CONFIG_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -201,32 +199,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             newExpiresAtKst: newExpiresAt,
           },
         },
-        { correlationId }
+        { correlationId },
       );
     }
 
-    const draftOrder = checkoutMode === "private_draft"
-      ? await createPrivateCheckoutDraft(admin, {
-          customerId,
-          lines: [{
-            merchandiseId: `gid://shopify/ProductVariant/${normalizeAjaxVariantId(variantId)}`,
-            quantity: validatedInput.months,
-            attributes: [
-              { key: "guide_extension_type", value: validatedInput.type },
-              { key: "guide_extension_months", value: String(validatedInput.months) },
-              { key: "current_expires_at_kst", value: normalizedCurrent },
-              { key: "new_expires_at_kst", value: newExpiresAt },
+    const draftOrder =
+      checkoutMode === "private_draft"
+        ? await createPrivateCheckoutDraft(admin, {
+            customerId,
+            lines: [
+              {
+                merchandiseId: `gid://shopify/ProductVariant/${normalizeAjaxVariantId(variantId)}`,
+                quantity: validatedInput.months,
+                attributes: [
+                  { key: "guide_extension_type", value: validatedInput.type },
+                  { key: "guide_extension_months", value: String(validatedInput.months) },
+                  { key: "current_expires_at_kst", value: normalizedCurrent },
+                  { key: "new_expires_at_kst", value: newExpiresAt },
+                ],
+              },
             ],
-          }],
-          discountCodes: [], kind: "GUIDE_EXTENSION", decision: "GUIDE_EXTENSION", tags, note,
-        })
-      : await createGuideExtensionDraftOrder(admin, {
-      customerId,
-      variantId,
-      quantityMonths: validatedInput.months,
-      tags,
-      note,
-    });
+            discountCodes: [],
+            kind: "GUIDE_EXTENSION",
+            decision: "GUIDE_EXTENSION",
+            tags,
+            note,
+          })
+        : await createGuideExtensionDraftOrder(admin, {
+            customerId,
+            variantId,
+            quantityMonths: validatedInput.months,
+            tags,
+            note,
+          });
 
     return respond.ok(
       {
@@ -237,20 +242,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           newExpiresAtKst: newExpiresAt,
         },
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.GUIDE_EXTENSION_INVALID_INPUT,
         getErrorMessage(ErrorCode.GUIDE_EXTENSION_INVALID_INPUT, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.GUIDE_EXTENSION_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -258,7 +261,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify({
         message: "Guide extension checkout error",
         error: error instanceof Error ? error.message : String(error),
-      })
+      }),
     );
 
     return respond.fail(
@@ -266,7 +269,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
       undefined,
       getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

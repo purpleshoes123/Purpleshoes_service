@@ -28,9 +28,7 @@
           }
         }
       },
-      "block_order": [
-        "heading_KA8876"
-      ],
+      "block_order": ["heading_KA8876"],
       "name": "t:sections.image-with-text.presets.name",
       "settings": {
         "image": "shopify://shop_images/Gemini_Generated_Image_3jayok3jayok3jay.png",
@@ -92,11 +90,7 @@
           }
         }
       },
-      "block_order": [
-        "exp1",
-        "exp2",
-        "exp3"
-      ],
+      "block_order": ["exp1", "exp2", "exp3"],
       "settings": {
         "show_hero": true,
         "hero_image": "shopify://shop_images/Gemini_Generated_Image_3jayok3jayok3jay.png",
@@ -131,9 +125,5 @@
       }
     }
   },
-  "order": [
-    "main",
-    "image_with_text_wzGKpN",
-    "tour_experiences"
-  ]
+  "order": ["main", "image_with_text_wzGKpN", "tour_experiences"]
 }

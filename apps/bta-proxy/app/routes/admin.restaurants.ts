@@ -4,18 +4,22 @@ import { ErrorCode, getErrorMessage } from "~/lib/errors";
 import {
   listRestaurants,
   upsertRestaurant,
-} from "~/lib/gkv/adminRestaurant.server";
-import { parseCsv, parseQueryBoolean, parseQueryInt, toValidationFailResponse } from "~/lib/gkv/adminUiResponses";
+} from "~/domains/guide-viewer/adminRestaurant.server.ts";
 import {
-  gkvMeatTypeSchema,
-  restaurantUpsertSchema,
-} from "~/lib/gkv/adminUiSchemas";
+  parseCsv,
+  parseQueryBoolean,
+  parseQueryInt,
+  toValidationFailResponse,
+} from "~/domains/guide-viewer/adminUiResponses";
+import { gkvMeatTypeSchema, restaurantUpsertSchema } from "~/domains/guide-viewer/adminUiSchemas";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const url = new URL(request.url);
@@ -34,9 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     veganRecommended: parseQueryBoolean(url.searchParams.get("veganRecommended")),
     meatTypes,
     isActive: parseQueryBoolean(url.searchParams.get("isActive")),
-    sort:
-      (url.searchParams.get("sort") as "priority" | "newest" | "name" | null) ??
-      "priority",
+    sort: (url.searchParams.get("sort") as "priority" | "newest" | "name" | null) ?? "priority",
     limit: parseQueryInt(url.searchParams.get("limit"), { min: 1, max: 200, fallback: 50 }),
     page: parseQueryInt(url.searchParams.get("page"), { min: 1, fallback: 1 }),
     cursor: url.searchParams.get("cursor")?.trim() || undefined,
@@ -47,7 +49,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   if (request.method !== "POST") {
@@ -56,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       405,
-      correlationId
+      correlationId,
     );
   }
 
@@ -92,7 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, error.message),
         { fieldErrors: { form: error.message } },
         422,
-        correlationId
+        correlationId,
       );
     }
 
@@ -101,7 +105,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       500,
-      correlationId
+      correlationId,
     );
   }
 };

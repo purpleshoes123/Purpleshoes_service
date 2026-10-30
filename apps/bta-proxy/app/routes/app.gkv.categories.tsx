@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import { useEffect, useMemo, useState } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
@@ -18,7 +18,7 @@ import {
   TextField,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
 
 type CategoryItem = {
   id: string;
@@ -97,7 +97,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await callGkvAdminApi<{ id: string; deleted: boolean }>(
         request,
         `/admin/gkv/categories/${id}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       return json<ActionData>({ ok: true, message: "카테고리를 삭제했습니다." });
     }
@@ -109,7 +109,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         {
           method: "PUT",
           body: JSON.stringify({ isActive: parseBool(formData.get("nextActive")) }),
-        }
+        },
       );
       return json<ActionData>({ ok: true, message: "활성 상태를 변경했습니다." });
     }
@@ -121,7 +121,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         {
           method: "PUT",
           body: JSON.stringify({ exposeAsGuide: parseBool(formData.get("nextExpose")) }),
-        }
+        },
       );
       return json<ActionData>({ ok: true, message: "Expose as Guide 설정을 변경했습니다." });
     }
@@ -136,7 +136,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             name: String(formData.get("name") || ""),
             slug: String(formData.get("slug") || ""),
           }),
-        }
+        },
       );
       return json<ActionData>({ ok: true, message: "이름/Slug를 변경했습니다." });
     }
@@ -150,7 +150,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         {
           method: "PUT",
           body: JSON.stringify({ parentId }),
-        }
+        },
       );
       return json<ActionData>({ ok: true, message: "상위 카테고리를 변경했습니다." });
     }
@@ -163,9 +163,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         {
           method: "POST",
           body: JSON.stringify({ direction }),
-        }
+        },
       );
-      return json<ActionData>({ ok: true, message: `순서를 ${direction === "up" ? "위" : "아래"}로 이동했습니다.` });
+      return json<ActionData>({
+        ok: true,
+        message: `순서를 ${direction === "up" ? "위" : "아래"}로 이동했습니다.`,
+      });
     }
 
     return json<ActionData>({ ok: false, message: "지원하지 않는 작업입니다." }, { status: 400 });
@@ -194,12 +197,18 @@ function buildTree(items: CategoryItem[]): TreeNode[] {
   }
   const sortNodes = (nodes: TreeNode[]) => {
     nodes.sort((a, b) => {
-      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      if (a.sortOrder !== b.sortOrder) {
+        return a.sortOrder - b.sortOrder;
+      }
       const nameOrder = a.name.localeCompare(b.name);
-      if (nameOrder !== 0) return nameOrder;
+      if (nameOrder !== 0) {
+        return nameOrder;
+      }
       return a.id.localeCompare(b.id);
     });
-    for (const n of nodes) sortNodes(n.children);
+    for (const n of nodes) {
+      sortNodes(n.children);
+    }
   };
   sortNodes(roots);
   return roots;
@@ -210,7 +219,9 @@ function flattenTree(roots: TreeNode[]): TreeNode[] {
   const walk = (nodes: TreeNode[]) => {
     for (const n of nodes) {
       out.push(n);
-      if (n.children.length > 0) walk(n.children);
+      if (n.children.length > 0) {
+        walk(n.children);
+      }
     }
   };
   walk(roots);
@@ -256,8 +267,12 @@ function collectDescendantIds(items: CategoryItem[], rootId: string): Set<string
 
 function buildExposeConfirmText(item: CategoryItem): string | undefined {
   const next = !item.exposeAsGuide;
-  if (!next) return undefined;
-  if (item.pdfAssetCount > 0 || item.videoAssetCount > 0) return undefined;
+  if (!next) {
+    return undefined;
+  }
+  if (item.pdfAssetCount > 0 || item.videoAssetCount > 0) {
+    return undefined;
+  }
   return [
     `이 카테고리는 현재 PDF/VIDEO가 없습니다.`,
     `자산이 추가되면 자동으로 가상 가이드에 포함됩니다.`,
@@ -283,11 +298,13 @@ function buildParentOptions(
     excludeId?: string | null;
     excludeDescendantsOf?: string | null;
     childMinDepth?: 1 | 2 | 3;
-  }
+  },
 ): ParentOption[] {
   const { excludeId, excludeDescendantsOf, childMinDepth = 1 } = options;
   const excluded = new Set<string>();
-  if (excludeId) excluded.add(excludeId);
+  if (excludeId) {
+    excluded.add(excludeId);
+  }
   if (excludeDescendantsOf) {
     for (const d of collectDescendantIds(items, excludeDescendantsOf)) {
       excluded.add(d);
@@ -301,11 +318,17 @@ function buildParentOptions(
     result.push({ id: null, label: "— 최상위 (depth=1)", depth: 0 });
   }
   for (const c of items) {
-    if (excluded.has(c.id)) continue;
+    if (excluded.has(c.id)) {
+      continue;
+    }
     // 자식이 될 노드의 depth = c.depth + 1
     const childDepth = c.depth + 1;
-    if (childDepth > 3) continue;
-    if (childDepth < childMinDepth) continue;
+    if (childDepth > 3) {
+      continue;
+    }
+    if (childDepth < childMinDepth) {
+      continue;
+    }
     const indent = "  ".repeat(c.depth - 1);
     result.push({
       id: c.id,
@@ -334,7 +357,9 @@ export default function GkvCategoriesPage() {
     setExpanded((prev) => {
       const next = new Set(prev);
       for (const c of items) {
-        if (c.depth === 1 && !next.has(c.id)) next.add(c.id);
+        if (c.depth === 1 && !next.has(c.id)) {
+          next.add(c.id);
+        }
       }
       return next;
     });
@@ -343,15 +368,18 @@ export default function GkvCategoriesPage() {
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
 
   const exposedActiveCount = items.filter((c) => c.exposeAsGuide && c.isActive).length;
   const exposedEmptyCount = items.filter(
-    (c) => c.exposeAsGuide && c.isActive && c.pdfAssetCount === 0 && c.videoAssetCount === 0
+    (c) => c.exposeAsGuide && c.isActive && c.pdfAssetCount === 0 && c.videoAssetCount === 0,
   ).length;
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -381,27 +409,35 @@ export default function GkvCategoriesPage() {
 
   const createParentOptions = useMemo(
     () => buildParentOptions(items, { childMinDepth: 1 }),
-    [items]
+    [items],
   );
   const createDepthHint = useMemo(() => {
-    if (!createParentId) return 1;
+    if (!createParentId) {
+      return 1;
+    }
     const p = items.find((c) => c.id === createParentId);
     return p ? Math.min(3, p.depth + 1) : 1;
   }, [createParentId, items]);
 
   const reparentDescendantsMaxDepth = useMemo(() => {
-    if (!reparentTarget) return reparentTarget?.depth ?? 1;
+    if (!reparentTarget) {
+      return reparentTarget?.depth ?? 1;
+    }
     const descendants = collectDescendantIds(items, reparentTarget.id);
     let max = reparentTarget.depth;
     for (const d of descendants) {
       const item = items.find((c) => c.id === d);
-      if (item && item.depth > max) max = item.depth;
+      if (item && item.depth > max) {
+        max = item.depth;
+      }
     }
     return max;
   }, [reparentTarget, items]);
 
   const reparentParentOptions = useMemo(() => {
-    if (!reparentTarget) return [];
+    if (!reparentTarget) {
+      return [];
+    }
     return buildParentOptions(items, {
       excludeId: reparentTarget.id,
       excludeDescendantsOf: reparentTarget.id,
@@ -415,8 +451,12 @@ export default function GkvCategoriesPage() {
   }, [reparentTarget, items, reparentDescendantsMaxDepth]);
 
   const reparentNewDepth = useMemo(() => {
-    if (!reparentTarget) return 1;
-    if (!reparentParentId) return 1;
+    if (!reparentTarget) {
+      return 1;
+    }
+    if (!reparentParentId) {
+      return 1;
+    }
     const p = items.find((c) => c.id === reparentParentId);
     return p ? Math.min(3, p.depth + 1) : 1;
   }, [reparentParentId, reparentTarget, items]);
@@ -436,7 +476,9 @@ export default function GkvCategoriesPage() {
 
   const submitToggleExpose = (item: CategoryItem) => {
     const confirmText = buildExposeConfirmText(item);
-    if (confirmText && !window.confirm(confirmText)) return;
+    if (confirmText && !window.confirm(confirmText)) {
+      return;
+    }
     const fd = new FormData();
     fd.set("intent", "toggle-expose");
     fd.set("id", item.id);
@@ -460,7 +502,9 @@ export default function GkvCategoriesPage() {
   };
 
   const submitDelete = (item: CategoryItem) => {
-    if (!window.confirm(`"${item.name}" 카테고리를 삭제하시겠습니까?`)) return;
+    if (!window.confirm(`"${item.name}" 카테고리를 삭제하시겠습니까?`)) {
+      return;
+    }
     const fd = new FormData();
     fd.set("intent", "delete");
     fd.set("id", item.id);
@@ -478,7 +522,9 @@ export default function GkvCategoriesPage() {
     fd.set("name", createName.trim());
     fd.set("slug", createSlug.trim());
     fd.set("depth", String(depth));
-    if (createParentId) fd.set("parentId", createParentId);
+    if (createParentId) {
+      fd.set("parentId", createParentId);
+    }
     fd.set("sortOrder", "0"); // 서버에서 자동 채움(미래) 또는 0 사용. 현재는 명시 0.
     fd.set("isActive", String(createIsActive));
     fd.set("exposeAsGuide", String(createExpose));
@@ -486,7 +532,9 @@ export default function GkvCategoriesPage() {
   };
 
   const submitRename = () => {
-    if (!renameTarget) return;
+    if (!renameTarget) {
+      return;
+    }
     if (!renameName.trim() || !renameSlug.trim()) {
       window.alert("이름과 Slug는 필수입니다.");
       return;
@@ -500,12 +548,17 @@ export default function GkvCategoriesPage() {
   };
 
   const submitReparent = () => {
-    if (!reparentTarget) return;
+    if (!reparentTarget) {
+      return;
+    }
     const fd = new FormData();
     fd.set("intent", "reparent");
     fd.set("id", reparentTarget.id);
-    if (reparentParentId) fd.set("parentId", reparentParentId);
-    else fd.set("parentId", "");
+    if (reparentParentId) {
+      fd.set("parentId", reparentParentId);
+    } else {
+      fd.set("parentId", "");
+    }
     fetcher.submit(fd, { method: "post" });
   };
 
@@ -518,22 +571,32 @@ export default function GkvCategoriesPage() {
       let cur = node;
       while (cur.parentId) {
         const parent = items.find((c) => c.id === cur.parentId);
-        if (!parent) break;
-        if (!expanded.has(parent.id)) return false;
+        if (!parent) {
+          break;
+        }
+        if (!expanded.has(parent.id)) {
+          return false;
+        }
         cur = { ...parent, children: [] } as TreeNode;
       }
       return true;
     })();
 
-    if (!isVisible) return null;
+    if (!isVisible) {
+      return null;
+    }
 
     // 형제 위/아래 가능 여부
     const siblings = items
       .filter((c) => c.parentId === node.parentId && c.depth === node.depth)
       .sort((a, b) => {
-        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+        if (a.sortOrder !== b.sortOrder) {
+          return a.sortOrder - b.sortOrder;
+        }
         const nameOrder = a.name.localeCompare(b.name);
-        if (nameOrder !== 0) return nameOrder;
+        if (nameOrder !== 0) {
+          return nameOrder;
+        }
         return a.id.localeCompare(b.id);
       });
     const idx = siblings.findIndex((s) => s.id === node.id);
@@ -552,7 +615,9 @@ export default function GkvCategoriesPage() {
           borderBottom: "1px solid #f1f1f1",
         }}
       >
-        <div style={{ paddingLeft: `${indent}px`, display: "flex", alignItems: "center", gap: "6px" }}>
+        <div
+          style={{ paddingLeft: `${indent}px`, display: "flex", alignItems: "center", gap: "6px" }}
+        >
           {hasChildren ? (
             <button
               type="button"
@@ -569,7 +634,11 @@ export default function GkvCategoriesPage() {
               {isExpanded ? "▼" : "▶"}
             </button>
           ) : (
-            <span style={{ width: 20, display: "inline-block", textAlign: "center", color: "#bbb" }}>•</span>
+            <span
+              style={{ width: 20, display: "inline-block", textAlign: "center", color: "#bbb" }}
+            >
+              •
+            </span>
           )}
           <Text as="span" variant="bodyMd">
             {node.name}
@@ -631,7 +700,12 @@ export default function GkvCategoriesPage() {
             <Button size="micro" onClick={() => submitToggleActive(node)} disabled={submitting}>
               {node.isActive ? "비활성" : "활성"}
             </Button>
-            <Button size="micro" tone="critical" onClick={() => submitDelete(node)} disabled={submitting}>
+            <Button
+              size="micro"
+              tone="critical"
+              onClick={() => submitDelete(node)}
+              disabled={submitting}
+            >
               삭제
             </Button>
           </InlineStack>
@@ -647,11 +721,13 @@ export default function GkvCategoriesPage() {
         <Banner tone="info" title="가이드로 노출 토글 안내">
           <BlockStack gap="100">
             <Text as="p" variant="bodyMd">
-              "가이드로 노출"을 켜면 해당 카테고리는 SHARED 가상 가이드(`gkv_virtual_shared_&lt;id&gt;`)로 자동 노출됩니다.
+              "가이드로 노출"을 켜면 해당 카테고리는 SHARED 가상
+              가이드(`gkv_virtual_shared_&lt;id&gt;`)로 자동 노출됩니다.
             </Text>
             <Text as="p" variant="bodySm" tone="subdued">
-              자산이 1개도 없는 카테고리도 정상입니다 — 자산이 추가되면 자동으로 가상 가이드에 포함됩니다. 현재 활성+노출 카테고리는{" "}
-              <b>{exposedActiveCount}</b>건이고, 그중 PDF/VIDEO 자산이 0건인 카테고리는 <b>{exposedEmptyCount}</b>건입니다 (정상 상태).
+              자산이 1개도 없는 카테고리도 정상입니다 — 자산이 추가되면 자동으로 가상 가이드에
+              포함됩니다. 현재 활성+노출 카테고리는 <b>{exposedActiveCount}</b>건이고, 그중
+              PDF/VIDEO 자산이 0건인 카테고리는 <b>{exposedEmptyCount}</b>건입니다 (정상 상태).
             </Text>
           </BlockStack>
         </Banner>
@@ -723,11 +799,7 @@ export default function GkvCategoriesPage() {
         ) : null}
       </BlockStack>
 
-      <Modal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title="새 카테고리"
-      >
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="새 카테고리">
         <Modal.Section>
           <BlockStack gap="300">
             <TextField
@@ -756,11 +828,7 @@ export default function GkvCategoriesPage() {
             <Text as="p" variant="bodySm" tone="subdued">
               자동 depth: <b>{createDepthHint}</b> (상위에 따라 결정)
             </Text>
-            <Checkbox
-              label="활성"
-              checked={createIsActive}
-              onChange={setCreateIsActive}
-            />
+            <Checkbox label="활성" checked={createIsActive} onChange={setCreateIsActive} />
             <Checkbox
               label="가이드로 노출 (SHARED 가상 가이드)"
               checked={createExpose}
@@ -836,7 +904,8 @@ export default function GkvCategoriesPage() {
               새 depth: <b>{reparentNewDepth}</b> (자손 depth는 자동 cascade)
             </Text>
             <Text as="p" variant="bodySm" tone="subdued">
-              ⚠ 자기 자신/자손으로는 이동할 수 없습니다. 자손 depth가 3을 초과하는 후보는 표시되지 않습니다.
+              ⚠ 자기 자신/자손으로는 이동할 수 없습니다. 자손 depth가 3을 초과하는 후보는 표시되지
+              않습니다.
             </Text>
             <InlineStack gap="200" align="end">
               <Button onClick={() => setReparentOpen(false)} disabled={submitting}>

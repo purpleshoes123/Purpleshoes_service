@@ -2,14 +2,16 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { randomUUID } from "crypto";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { listGkvAssetsWithUsage } from "~/lib/gkv/adminAssetUsage.server";
-import { assetCreateSchema } from "~/lib/gkv/adminSchemas";
+import { listGkvAssetsWithUsage } from "~/domains/guide-viewer/adminAssetUsage.server.ts";
+import { assetCreateSchema } from "~/domains/guide-viewer/adminSchemas";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   return respond.ok(await listGkvAssetsWithUsage(), { correlationId });
@@ -17,7 +19,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   try {
@@ -45,11 +49,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -57,7 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

@@ -3,12 +3,14 @@ import { randomUUID } from "crypto";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { respond } from "~/lib/respond";
-import { categoryCreateSchema } from "~/lib/gkv/adminSchemas";
+import { categoryCreateSchema } from "~/domains/guide-viewer/adminSchemas";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   const categories = await prisma.gkvCategory.findMany({
@@ -37,11 +39,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
       for (const link of mappings) {
         const kind = kindByAssetId.get(link.assetId);
-        if (!kind) continue;
+        if (!kind) {
+          continue;
+        }
         const bucket = countByCategory.get(link.categoryId);
-        if (!bucket) continue;
-        if (kind === "PDF") bucket.pdf += 1;
-        else if (kind === "VIDEO") bucket.video += 1;
+        if (!bucket) {
+          continue;
+        }
+        if (kind === "PDF") {
+          bucket.pdf += 1;
+        } else if (kind === "VIDEO") {
+          bucket.video += 1;
+        }
       }
     }
   }
@@ -64,13 +73,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         };
       }),
     },
-    { correlationId }
+    { correlationId },
   );
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   try {
@@ -82,7 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "depth=1은 parentId를 가질 수 없습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -93,11 +104,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ErrorCode.VALIDATION_ERROR,
           getErrorMessage(
             ErrorCode.VALIDATION_ERROR,
-            `depth=${payload.depth}는 depth=${payload.depth - 1} parentId가 필요합니다.`
+            `depth=${payload.depth}는 depth=${payload.depth - 1} parentId가 필요합니다.`,
           ),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
     }
@@ -120,7 +131,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       {
         id: created.id,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
@@ -129,11 +140,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -143,7 +154,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "slug는 고유해야 합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -152,7 +163,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

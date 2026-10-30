@@ -4,15 +4,15 @@ import {
   saveWebhookEvent,
   updateWebhookEventEvaluation,
   updateWebhookEventOrderId,
-} from "~/lib/webhookEventStore";
-import { normalizeTerminalStatus } from "~/lib/webhookVoidNormalizer";
-import { extractHoldMapping } from "~/lib/webhookHoldMapping";
-import { executeHoldRelease } from "~/lib/webhookHoldRelease";
+} from "~/domains/webhooks/webhookEventStore";
+import { normalizeTerminalStatus } from "~/domains/webhooks/webhookVoidNormalizer";
+import { extractHoldMapping } from "~/domains/webhooks/webhookHoldMapping";
+import { executeHoldRelease } from "~/domains/webhooks/webhookHoldRelease";
 import { createHash, randomUUID } from "crypto";
-import { extractBookingInfoFromLineItem } from "~/lib/webhookUtils";
-import { groupLineItemsByBooking } from "~/lib/webhookGrouping";
+import { extractBookingInfoFromLineItem } from "~/domains/webhooks/webhookUtils";
+import { groupLineItemsByBooking } from "~/domains/webhooks/webhookGrouping";
 import { fetchOrderLineItemsGraphQL, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { upsertOrderBookingIdMetafield } from "~/lib/orderMetafieldService";
+import { upsertOrderBookingIdMetafield } from "~/domains/bookings/orderMetafieldService";
 import {
   addFixedMonthDaysKstEndOfDay,
   appendLedgerEvent,
@@ -29,7 +29,7 @@ import {
   revokeGuideBaseEntitlementsForOrder,
   setCustomerEntitlementExpiresAt,
   type EntitlementType,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 import db from "~/db.server";
 
 /**
@@ -46,9 +46,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const rawBody = verification.rawBody;
   const correlationId =
-    request.headers.get("X-Request-Id") ||
-    request.headers.get("X-Correlation-Id") ||
-    randomUUID();
+    request.headers.get("X-Request-Id") || request.headers.get("X-Correlation-Id") || randomUUID();
 
   // Phase 1: Webhook 이벤트 저장 (멱등성 보장)
   const topic = request.headers.get("X-Shopify-Topic") || "orders/updated";
@@ -65,7 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         eventKey: eventResult.eventKey,
         isDuplicate: eventResult.isDuplicate,
         correlationId,
-      })
+      }),
     );
 
     if (eventResult.isDuplicate) {
@@ -78,7 +76,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         topic,
         error: error instanceof Error ? error.message : String(error),
         correlationId,
-      })
+      }),
     );
   }
 
@@ -106,16 +104,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     };
 
     // 3. shop 추출
-    const shop =
-      request.headers.get("X-Shopify-Shop-Domain") ||
-      (payload as any).shop ||
-      "";
+    const shop = request.headers.get("X-Shopify-Shop-Domain") || (payload as any).shop || "";
 
     if (!shop) {
       console.error(
         JSON.stringify({
           message: "Missing shop information in webhook",
-        })
+        }),
       );
       return new Response("Missing shop information", { status: 400 });
     }
@@ -125,7 +120,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       console.error(
         JSON.stringify({
           message: "Missing order ID in webhook payload",
-        })
+        }),
       );
       return new Response("Missing order ID", { status: 400 });
     }
@@ -145,7 +140,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const groups = await groupLineItemsByBooking(
           lineItems,
           extractBookingInfoFromLineItem,
-          shop
+          shop,
         );
         if (groups.length === 1) {
           const bookingId = createHash("sha256")
@@ -165,7 +160,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   orderId,
                   bookingId,
                   error: metaResult.message,
-                })
+                }),
               );
             }
           } else {
@@ -174,7 +169,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Order booking_id sync skipped (admin unavailable)",
                 orderId,
                 bookingId,
-              })
+              }),
             );
           }
         } else if (groups.length > 1) {
@@ -183,7 +178,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Order booking_id sync skipped (multiple groups)",
               orderId,
               groupCount: groups.length,
-            })
+            }),
           );
         }
       }
@@ -193,13 +188,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Order booking_id sync error (orders/updated)",
           orderId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
     const terminalStatus = normalizeTerminalStatus({ topic, payload });
-    const isPaid =
-      payload.financial_status === "paid" && !payload.cancelled_at;
+    const isPaid = payload.financial_status === "paid" && !payload.cancelled_at;
     if (isPaid) {
       let guideLineItems = lineItems;
       let baseLineItems = extractBaseLineItems(guideLineItems);
@@ -207,10 +201,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const adminFallback = await getAdminApiClient(shop);
         if (adminFallback) {
           try {
-            const adminLineItems = await fetchOrderLineItemsGraphQL(
-              adminFallback,
-              orderId
-            );
+            const adminLineItems = await fetchOrderLineItemsGraphQL(adminFallback, orderId);
             if (adminLineItems.length > 0) {
               guideLineItems = adminLineItems;
               baseLineItems = extractBaseLineItems(guideLineItems);
@@ -222,7 +213,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   message: "Guide line_items fallback failed",
                   orderId,
                   error: error instanceof Error ? error.message : String(error),
-                })
+                }),
               );
             }
           }
@@ -240,7 +231,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               variant_id: item.variant_id ?? null,
               quantity: item.quantity ?? null,
             })),
-          })
+          }),
         );
       }
       if (baseLineItems.length > 0) {
@@ -251,7 +242,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               JSON.stringify({
                 message: "Guide base skipped (admin unavailable)",
                 orderId,
-              })
+              }),
             );
           } else {
             const customerId = await fetchOrderCustomerId(admin, orderId);
@@ -260,25 +251,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 JSON.stringify({
                   message: "Guide base skipped (missing customerId)",
                   orderId,
-                })
+                }),
               );
             } else {
               const customerGid = customerId.startsWith("gid://")
                 ? customerId
                 : `gid://shopify/Customer/${customerId}`;
               const occurredAt =
-                payload.processed_at ||
-                payload.created_at ||
-                new Date().toISOString();
-              const entitlements = await getCustomerEntitlements(
-                admin,
-                customerGid
-              );
+                payload.processed_at || payload.created_at || new Date().toISOString();
+              const entitlements = await getCustomerEntitlements(admin, customerGid);
 
-              const uniqueByType = new Map<
-                EntitlementType,
-                (typeof baseLineItems)[number]
-              >();
+              const uniqueByType = new Map<EntitlementType, (typeof baseLineItems)[number]>();
               for (const item of baseLineItems) {
                 if (uniqueByType.has(item.type)) {
                   console.warn(
@@ -286,7 +269,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                       message: "Guide base duplicate line item skipped",
                       orderId,
                       type: item.type,
-                    })
+                    }),
                   );
                   continue;
                 }
@@ -294,19 +277,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               }
 
               const toTimestamp = (value?: string | null): number | null => {
-                if (!value) return null;
+                if (!value) {
+                  return null;
+                }
                 const date = new Date(value);
-                if (Number.isNaN(date.getTime())) return null;
+                if (Number.isNaN(date.getTime())) {
+                  return null;
+                }
                 return date.getTime();
               };
 
               const getLatestTimestamp = (
-                records: Array<{ occurredAt?: string | null }>
+                records: Array<{ occurredAt?: string | null }>,
               ): number | null => {
                 let latest: number | null = null;
                 for (const record of records) {
                   const ts = toTimestamp(record.occurredAt);
-                  if (ts === null) continue;
+                  if (ts === null) {
+                    continue;
+                  }
                   if (latest === null || ts > latest) {
                     latest = ts;
                   }
@@ -324,17 +313,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     customerId: customerGid,
                     type,
                   });
-                  baseEvents = events.filter(
-                    (event) => event.eventType === "BASE"
-                  );
-                  baseForOrder = baseEvents.some(
-                    (event) => event.orderId === orderId
-                  );
+                  baseEvents = events.filter((event) => event.eventType === "BASE");
+                  baseForOrder = baseEvents.some((event) => event.orderId === orderId);
                   const refundEvents = events.filter(
                     (event) =>
                       event.eventType === "REFUND" &&
                       typeof event.note === "string" &&
-                      event.note.includes("base_refund=true")
+                      event.note.includes("base_refund=true"),
                   );
                   const latestBaseAt = getLatestTimestamp(baseEvents);
                   const latestRefundAt = getLatestTimestamp(refundEvents);
@@ -393,8 +378,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                       orderId,
                       status: "FAILED",
                       errorCode: "GUIDE_EXTENSION_WEBHOOK_ERROR",
-                      errorMessage:
-                        error instanceof Error ? error.message : String(error),
+                      errorMessage: error instanceof Error ? error.message : String(error),
                       rawRef: eventResult?.eventKey || undefined,
                     });
                   }
@@ -404,21 +388,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 let months: number | null = null;
                 if (item.variantId !== null && item.variantId !== undefined) {
                   try {
-                    months = await fetchVariantAccessMonths(
-                      admin,
-                      item.variantId
-                    );
+                    months = await fetchVariantAccessMonths(admin, item.variantId);
                   } catch (error) {
                     console.warn(
                       JSON.stringify({
                         message: "Guide base months lookup failed",
                         orderId,
                         type,
-                        error:
-                          error instanceof Error
-                            ? error.message
-                            : String(error),
-                      })
+                        error: error instanceof Error ? error.message : String(error),
+                      }),
                     );
                   }
                 }
@@ -428,7 +406,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
                 const baseExpiresAt = addFixedMonthDaysKstEndOfDay(
                   normalizeToKstEndOfDay(occurredAt),
-                  months
+                  months,
                 );
 
                 await appendLedgerEvent(admin, {
@@ -444,12 +422,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   note: `order_id=${orderId}|base_expires_at=${baseExpiresAt}|months=${months}`,
                 });
 
-                await setCustomerEntitlementExpiresAt(
-                  admin,
-                  customerGid,
-                  type,
-                  baseExpiresAt
-                );
+                await setCustomerEntitlementExpiresAt(admin, customerGid, type, baseExpiresAt);
 
                 await createLog(db, {
                   shop,
@@ -474,7 +447,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Guide base processing error",
               orderId,
               error: error instanceof Error ? error.message : String(error),
-            })
+            }),
           );
         }
       }
@@ -487,10 +460,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         if (baseLineItems.length === 0 && admin) {
           try {
-            const adminLineItems = await fetchOrderLineItemsGraphQL(
-              admin,
-              orderId
-            );
+            const adminLineItems = await fetchOrderLineItemsGraphQL(admin, orderId);
             if (adminLineItems.length > 0) {
               guideLineItems = adminLineItems;
               baseLineItems = extractBaseLineItems(guideLineItems);
@@ -503,7 +473,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 orderId,
                 terminalStatus,
                 error: error instanceof Error ? error.message : String(error),
-              })
+              }),
             );
           }
         }
@@ -516,7 +486,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 orderId,
                 terminalStatus,
                 lineItemsSource,
-              })
+              }),
             );
           } else {
             const payloadCustomerId = payload.customer?.id?.toString() || null;
@@ -528,7 +498,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   orderId,
                   terminalStatus,
                   lineItemsSource,
-                })
+                }),
               );
             } else {
               const revokeResult = await revokeGuideBaseEntitlementsForOrder({
@@ -555,7 +525,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     revoked: revokeResult.revoked,
                     skipped: revokeResult.skipped,
                     failed: revokeResult.failed,
-                  })
+                  }),
                 );
               }
             }
@@ -568,13 +538,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             terminalStatus,
             error: error instanceof Error ? error.message : String(error),
-          })
+          }),
         );
       }
     }
 
-    const pipelineEnabled =
-      process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
+    const pipelineEnabled = process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
     const dryrun = process.env.HOLD_RELEASE_VOID_DRYRUN !== "false";
 
     if (pipelineEnabled && eventResult && !eventResult.isDuplicate) {
@@ -598,7 +567,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             holdIds: mapping.holdIds,
             attemptIds: mapping.attemptIds,
             dryrun,
-          })
+          }),
         );
 
         await executeHoldRelease({
@@ -625,7 +594,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             error: error instanceof Error ? error.message : String(error),
             dryrun,
-          })
+          }),
         );
       }
     }
@@ -636,7 +605,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify({
         message: "Orders updated webhook processing error",
         error: error instanceof Error ? error.message : String(error),
-      })
+      }),
     );
 
     return new Response("Internal server error", { status: 500 });

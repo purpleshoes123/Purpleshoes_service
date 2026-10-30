@@ -1,0 +1,17 @@
+**/node_modules/**
+**/build/**
+**/dist/**
+**/.react-router/**
+**/.shopify/**
+output/**
+tmp/**
+temp/**
+docs/provenance/**
+**/package-lock.json
+**/*.svg
+**/*.min.*
+**/*.prisma
+themes/**/*.liquid
+themes/**/config/settings_data.json
+themes/**/locales/**
+apps/bta-proxy/mail-templates/**

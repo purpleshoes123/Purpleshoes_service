@@ -1,9 +1,9 @@
 import type { ActionFunctionArgs } from "react-router";
 import { ZodError } from "zod";
 import { ErrorCode, getErrorMessage } from "~/lib/errors";
-import { toValidationFailResponse } from "~/lib/gkv/adminUiResponses";
-import { uploadUrlRequestSchema } from "~/lib/gkv/adminUiSchemas";
-import { buildAssetUploadUrl } from "~/lib/gkv/uploadUrl.server";
+import { toValidationFailResponse } from "~/domains/guide-viewer/adminUiResponses";
+import { uploadUrlRequestSchema } from "~/domains/guide-viewer/adminUiSchemas";
+import { buildAssetUploadUrl } from "~/domains/guide-viewer/uploadUrl.server.ts";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
@@ -11,7 +11,9 @@ const KIND = "PDF" as const;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   if (request.method !== "POST") {
@@ -20,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       405,
-      correlationId
+      correlationId,
     );
   }
 
@@ -32,7 +34,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, `${KIND} 업로드 URL만 요청할 수 있습니다.`),
         { fieldErrors: { kind: `${KIND} 또는 THUMBNAIL만 허용됩니다.` } },
         422,
-        correlationId
+        correlationId,
       );
     }
 
@@ -49,7 +51,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         s3Key: upload.s3Key,
         mode: upload.mode,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error instanceof ZodError) {
@@ -61,7 +63,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       500,
-      correlationId
+      correlationId,
     );
   }
 };

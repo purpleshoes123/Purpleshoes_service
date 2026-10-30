@@ -9,7 +9,7 @@
 /* ── Price block ── */
 .travel-product__price-block {
   padding: 20px 0 20px;
-  border-bottom: 1px solid rgba(0,0,0,.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
   margin-bottom: 16px;
 }
 
@@ -293,7 +293,9 @@
   background: #fff;
   color: #111111;
   font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .travel-product__text-input {
@@ -331,13 +333,17 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   padding: 0 24px 0 10px;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E") no-repeat right 9px center;
+  background: #fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E")
+    no-repeat right 9px center;
   -webkit-appearance: none;
   appearance: none;
   color: #111;
   font-size: 13px;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .travel-product__phone-dial:focus {
@@ -618,7 +624,7 @@
 }
 
 .travel-product__cta[aria-busy="true"]::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 16px;
   height: 16px;
@@ -993,8 +999,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .travel-product__quote--success {
@@ -1349,7 +1359,9 @@
 .travel-product [data-travel-calendar-container] .flatpickr-day.nextMonthDay,
 .travel-product [data-travel-calendar-container] .flatpickr-day.flatpickr-day--placeholder,
 .travel-product [data-travel-calendar-container] .flatpickr-day.flatpickr-day--placeholder.selected,
-.travel-product [data-travel-calendar-container] .flatpickr-day.flatpickr-day--placeholder.startRange,
+.travel-product
+  [data-travel-calendar-container]
+  .flatpickr-day.flatpickr-day--placeholder.startRange,
 .travel-product [data-travel-calendar-container] .flatpickr-day.flatpickr-day--placeholder.endRange,
 .travel-product [data-travel-calendar-container] .flatpickr-day.flatpickr-day--placeholder.inRange {
   visibility: hidden !important;
@@ -1409,13 +1421,13 @@
   .travel-product [data-travel-calendar-container] .flatpickr-month:last-child {
     margin-bottom: 0;
   }
-  
+
   .travel-product [data-travel-calendar-container] .flatpickr-days {
     display: flex;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .travel-product [data-travel-calendar-container] .flatpickr-days .dayContainer {
     min-width: 280px;
     flex-shrink: 0;
@@ -1599,7 +1611,7 @@
   border-radius: 16px;
   background: #fff;
   overflow: hidden;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 }
 
 .travel-product__booking-summary-heading {
@@ -1638,7 +1650,7 @@
 
 .travel-product__booking-summary-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(220px, .75fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(220px, 0.75fr);
 }
 
 .travel-product__booking-summary-column {
@@ -1798,7 +1810,7 @@
   margin: 4px 0 18px;
   color: #111827;
   font-size: 25px;
-  letter-spacing: -.02em;
+  letter-spacing: -0.02em;
 }
 
 .travel-product__summary-cta,
@@ -1822,7 +1834,7 @@
 }
 
 .travel-product__summary-cta:disabled {
-  opacity: .55;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -1838,11 +1850,11 @@
   padding: 0;
   border: 0;
   border-radius: 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
 }
 
 .travel-product__consent-dialog::backdrop {
-  background: rgba(17, 24, 39, .6);
+  background: rgba(17, 24, 39, 0.6);
 }
 
 .travel-product__consent-dialog-content {

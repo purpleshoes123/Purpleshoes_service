@@ -7,7 +7,9 @@ function normalizeHexSignature(sig: string, expectedLen: number) {
   const s = (sig ?? "").trim().toLowerCase();
 
   // hex가 아니면 즉시 실패
-  if (!/^[0-9a-f]+$/.test(s)) return null;
+  if (!/^[0-9a-f]+$/.test(s)) {
+    return null;
+  }
 
   // Shopify가 드물게 leading 0을 생략한 형태(63 등)로 올 수 있으니 padStart
   return s.padStart(expectedLen, "0");
@@ -23,12 +25,9 @@ function normalizeHexSignature(sig: string, expectedLen: number) {
  * SSOT 4.2: 쿼리 파라미터의 signature 제외 후 정렬/결합, HMAC-SHA256 생성, 상수시간 비교
  * @returns Response를 반환하면 검증 실패, void를 반환하면 검증 성공
  */
-export async function verifyAppProxy(
-  request: Request,
-): Promise<ReturnType<typeof json> | void> {
+export async function verifyAppProxy(request: Request): Promise<ReturnType<typeof json> | void> {
   // SHOPIFY_API_SECRET을 우선 사용, 없으면 SHOPIFY_APP_SECRET 사용 (하위 호환성)
-  const appSecret =
-    process.env.SHOPIFY_API_SECRET || process.env.SHOPIFY_APP_SECRET;
+  const appSecret = process.env.SHOPIFY_API_SECRET || process.env.SHOPIFY_APP_SECRET;
 
   if (!appSecret) {
     const correlationId = respond.getCorrelationId(request);
@@ -58,9 +57,7 @@ export async function verifyAppProxy(
 
   // SSOT 4.2: signature를 제외한 쿼리 파라미터 정렬 및 결합
   // 1) signature 제외하고 key=value(배열은 콤마) 문자열로 구성 (값은 디코딩된 값 사용)
-  const keys = Array.from(new Set(Array.from(params.keys()))).filter(
-    (k) => k !== "signature",
-  );
+  const keys = Array.from(new Set(Array.from(params.keys()))).filter((k) => k !== "signature");
 
   const parts = keys.map((k) => {
     const values = params.getAll(k); // 중복 키 → 배열
@@ -72,19 +69,14 @@ export async function verifyAppProxy(
   const message = parts.join("");
 
   // 3) HMAC-SHA256 hex digest
-  const computed = createHmac("sha256", appSecret)
-    .update(message, "utf8")
-    .digest("hex");
+  const computed = createHmac("sha256", appSecret).update(message, "utf8").digest("hex");
 
   // 4) 비교(상수시간). 길이 차이를 대비해 normalize
   const provided = normalizeHexSignature(providedRaw, computed.length);
 
   const ok =
     provided?.length === computed.length &&
-    timingSafeEqual(
-      Buffer.from(provided, "hex"),
-      Buffer.from(computed, "hex"),
-    );
+    timingSafeEqual(Buffer.from(provided, "hex"), Buffer.from(computed, "hex"));
 
   // 상수시간 비교
   if (!ok) {

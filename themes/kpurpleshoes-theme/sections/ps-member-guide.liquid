@@ -8,22 +8,26 @@
       <div class="kgd__hero-copy"><p class="kgd__eyebrow">{{ 'kit_detail.eyebrow' | t }}</p><h1 id="KitHero-{{ section.id }}">{{ 'kit_detail.hero_title' | t }}</h1><p class="kgd__hero-lead">{{ 'kit_detail.hero_lead' | t }}</p><p>{{ 'kit_detail.hero_copy' | t }}</p></div>
     </section>
     <div data-member-plans>
-      <section id="member-purchase" class="kgd__panel kgd__included" tabindex="-1" aria-labelledby="KitIncluded-{{ section.id }}">
-        <div class="kgd__contents"><h2 id="KitIncluded-{{ section.id }}">{{ 'kit_detail.included' | t }}</h2>
-          <div class="kgd__screens">
-            <figure><figcaption>{{ 'kit_detail.map' | t }}</figcaption><img src="{{ 'signup-preview-map.png' | asset_url }}" alt="{{ 'kit_detail.map_alt' | t }}" width="1912" height="910" loading="lazy" class="kgd__map-image"></figure>
-            <figure><figcaption>{{ 'kit_detail.book' | t }}</figcaption><img src="{{ 'signup-preview-guidebook.png' | asset_url }}" alt="{{ 'kit_detail.book_alt' | t }}" width="1903" height="832" loading="lazy" class="kgd__book-image"></figure>
-            <figure><figcaption>{{ 'kit_detail.video' | t }}</figcaption><img src="{{ 'signup-preview-video.png' | asset_url }}" alt="{{ 'kit_detail.video_alt' | t }}" width="1914" height="909" loading="lazy" class="kgd__video-image"></figure>
-          </div>
-          <p class="kgd__contents-note">{% render 'starter-kit-icon', name: 'book' %}<strong>{{ 'kit_detail.contents' | t }}</strong></p><p class="kgd__contents-note kgd__muted">{% render 'starter-kit-icon', name: 'clipboard' %}{{ 'kit_detail.access' | t }}</p>
-        </div>
-        <aside class="kgd__price-card" data-plan-kind="BUNDLE">
+      <section id="member-purchase" class="kgd__purchase" tabindex="-1" aria-label="{{ 'kit_detail.BUNDLE' | t }}">
+        <div class="kgd__price-card" data-plan-kind="BUNDLE">
           {% if customer %}
           <div data-plan-purchase></div><p data-member-status class="kgd__status" role="status" aria-live="polite">{{ 'kit_detail.loading' | t }}</p><button class="kgd__button kgd__button--outline" data-member-retry type="button" hidden>{{ 'kit_detail.retry' | t }}</button>
           {% else %}
-          <p class="kgd__muted">{{ 'kit_detail.guest_offer' | t }}</p><p class="kgd__amount">USD 75</p><strong class="kgd__condition">{{ 'kit_detail.guest_condition' | t }}</strong><p class="kgd__regular">{{ 'kit_detail.regular_kit' | t }}</p><p class="kgd__validity">{{ 'kit_detail.validity' | t }}</p><a class="kgd__button" href="/customer_authentication/login?return_to={{ guide_return }}">{{ 'kit_detail.signin' | t }}</a><p class="kgd__guest-note">{{ 'kit_detail.guest_note' | t }}</p>
+          <div class="kgd__guest-price"><p class="kgd__offer-badge">{{ 'kit_detail.guest_offer' | t }}</p><p class="kgd__amount">USD 75</p><strong class="kgd__condition">{{ 'kit_detail.guest_condition' | t }}</strong></div>
+          <div class="kgd__guest-terms"><p class="kgd__regular">{{ 'kit_detail.regular_kit_label' | t }} <s>USD 150</s></p><p class="kgd__validity">{{ 'kit_detail.validity' | t }}</p></div>
+          <div class="kgd__guest-action"><a class="kgd__button" href="/customer_authentication/login?return_to={{ guide_return }}">{{ 'kit_detail.signin' | t }}</a><p class="kgd__guest-note">{{ 'kit_detail.guest_note' | t }}</p></div>
           {% endif %}
-        </aside>
+        </div>
+      </section>
+      <section class="kgd__panel kgd__included" aria-labelledby="KitIncluded-{{ section.id }}">
+        <div class="kgd__contents"><h2 id="KitIncluded-{{ section.id }}">{{ 'kit_detail.included' | t }}</h2>
+          <div class="kgd__screens">
+            <figure><h3>{{ 'kit_detail.map' | t }}</h3><img src="{{ 'signup-component-map.png' | asset_url }}" alt="{{ 'kit_detail.map_alt' | t }}" width="583" height="538" loading="lazy"><figcaption>{{ 'kit_detail.map_tagline' | t }}</figcaption></figure>
+            <figure><h3>{{ 'kit_detail.book' | t }}</h3><img src="{{ 'signup-component-guidebook.png' | asset_url }}" alt="{{ 'kit_detail.book_alt' | t }}" width="478" height="538" loading="lazy"><figcaption>{{ 'kit_detail.book_tagline' | t }}</figcaption></figure>
+            <figure><h3>{{ 'kit_detail.video' | t }}</h3><img src="{{ 'signup-component-video.png' | asset_url }}" alt="{{ 'kit_detail.video_alt' | t }}" width="506" height="538" loading="lazy"><figcaption>{{ 'kit_detail.video_tagline' | t }}</figcaption></figure>
+          </div>
+          <p class="kgd__contents-note">{% render 'starter-kit-icon', name: 'book' %}<strong>{{ 'kit_detail.contents' | t }}</strong></p><p class="kgd__contents-note kgd__muted">{% render 'starter-kit-icon', name: 'clipboard' %}<span data-kit-access>{{ 'kit_detail.access' | t }}</span></p>
+        </div>
       </section>
       <section class="kgd__panel kgd__map" aria-labelledby="KitMap-{{ section.id }}">
         <div><h2 id="KitMap-{{ section.id }}">{{ 'kit_detail.map_title' | t }}</h2>
@@ -37,7 +41,7 @@
       <section class="kgd__panel kgd__only" aria-labelledby="KitOnly-{{ section.id }}">
         <div class="kgd__section-head"><h2 id="KitOnly-{{ section.id }}">{{ 'kit_detail.only_title' | t }}</h2><p data-kit-new-only>{{ 'kit_detail.only_note' | t }}</p></div><div class="kgd__only-grid">
         <article class="kgd__only-card" data-plan-kind="PDF"><div class="kgd__only-top"><div class="kgd__only-image"><img src="{{ 'kit-guidebook-cover.png' | asset_url }}" alt="{{ 'kit_detail.cover_alt' | t }}" width="1273" height="1800" loading="lazy" ></div><div><h3>{{ 'kit_detail.PDF' | t }}</h3><p class="kgd__muted" data-kit-only-regular>{{ 'kit_detail.regular' | t }}</p><strong class="kgd__only-price" data-only-price>USD 50</strong><p class="kgd__muted">{{ 'kit_detail.pdf_copy' | t }}</p></div></div><div class="kgd__only-bottom"><p>{% render 'starter-kit-icon', name: 'clipboard' %}<span data-only-access>{{ 'kit_detail.only_access' | t }}</span><br>{% render 'starter-kit-icon', name: 'map' %}{{ 'kit_detail.no_map' | t }}</p>{% if customer %}<div data-plan-purchase></div>{% endif %}</div></article>
-        <article class="kgd__only-card" data-plan-kind="VIDEO"><div class="kgd__only-top"><div class="kgd__only-image"><img src="{{ 'signup-preview-video.png' | asset_url }}" alt="{{ 'kit_detail.video_alt' | t }}" width="1914" height="909" loading="lazy" ><span class="kgd__thumbnail-play" aria-hidden="true">{% render 'starter-kit-icon', name: 'play' %}</span></div><div><h3>{{ 'kit_detail.VIDEO' | t }}</h3><p class="kgd__muted" data-kit-only-regular>{{ 'kit_detail.regular' | t }}</p><strong class="kgd__only-price" data-only-price>USD 100</strong><p class="kgd__muted">{{ 'kit_detail.video_copy' | t }}</p></div></div><div class="kgd__only-bottom"><p>{% render 'starter-kit-icon', name: 'clipboard' %}<span data-only-access>{{ 'kit_detail.only_access' | t }}</span><br>{% render 'starter-kit-icon', name: 'map' %}{{ 'kit_detail.no_map' | t }}</p>{% if customer %}<div data-plan-purchase></div>{% endif %}</div></article>
+        <article class="kgd__only-card" data-plan-kind="VIDEO"><div class="kgd__only-top"><div class="kgd__only-image"><img src="{{ 'signup-component-video.png' | asset_url }}" alt="{{ 'kit_detail.video_alt' | t }}" width="506" height="538" loading="lazy"></div><div><h3>{{ 'kit_detail.VIDEO' | t }}</h3><p class="kgd__muted" data-kit-only-regular>{{ 'kit_detail.regular' | t }}</p><strong class="kgd__only-price" data-only-price>USD 100</strong><p class="kgd__muted">{{ 'kit_detail.video_copy' | t }}</p></div></div><div class="kgd__only-bottom"><p>{% render 'starter-kit-icon', name: 'clipboard' %}<span data-only-access>{{ 'kit_detail.only_access' | t }}</span><br>{% render 'starter-kit-icon', name: 'map' %}{{ 'kit_detail.no_map' | t }}</p>{% if customer %}<div data-plan-purchase></div>{% endif %}</div></article>
       </div></section>
     </div>
     <section class="kgd__panel kgd__steps"><h2 data-kit-steps-heading>{{ 'kit_detail.steps_title' | t }}</h2><div class="kgd__step-grid">
@@ -66,6 +70,7 @@
 "video": {{ 'kit_detail.video' | t | json }},
 "contents": {{ 'kit_detail.contents' | t | json }},
 "access": {{ 'kit_detail.access' | t | json }},
+"kit_devices": {{ 'kit_detail.kit_devices' | t | json }},
 "guest_offer": {{ 'kit_detail.guest_offer' | t | json }},
 "guest_condition": {{ 'kit_detail.guest_condition' | t | json }},
 "regular_kit": {{ 'kit_detail.regular_kit' | t | json }},

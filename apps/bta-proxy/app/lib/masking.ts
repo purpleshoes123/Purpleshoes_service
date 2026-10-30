@@ -22,8 +22,7 @@ export function maskEmail(email: string): string {
 
   // 도메인: 첫 글자만 보이고 나머지는 마스킹
   const [domainName, ...tldParts] = domain.split(".");
-  const maskedDomain =
-    domainName.length > 1 ? `${domainName[0]}***` : domainName;
+  const maskedDomain = domainName.length > 1 ? `${domainName[0]}***` : domainName;
 
   const maskedTld = tldParts.length > 0 ? `.${tldParts.join(".")}` : "";
   return `${maskedLocal}@${maskedDomain}${maskedTld}`;
@@ -95,8 +94,7 @@ export function maskPII(data: unknown): unknown {
 
   const sanitized: Record<string, unknown> = {};
   const record = data as Record<string, unknown>;
-  const propertyName =
-    typeof record.name === "string" ? record.name.toLowerCase() : null;
+  const propertyName = typeof record.name === "string" ? record.name.toLowerCase() : null;
 
   for (const [key, value] of Object.entries(data)) {
     const lowerKey = key.toLowerCase();
@@ -106,11 +104,7 @@ export function maskPII(data: unknown): unknown {
       sanitized[key] = maskEmail(value);
     }
     // Shopify line item property: { name: "reservation_contact_name", value: "..." }
-    else if (
-      lowerKey === "value" &&
-      propertyName &&
-      typeof value === "string"
-    ) {
+    else if (lowerKey === "value" && propertyName && typeof value === "string") {
       if (isReservationContactNameKey(propertyName)) {
         sanitized[key] = maskName(value);
       } else if (isPhoneKey(propertyName)) {
@@ -124,10 +118,7 @@ export function maskPII(data: unknown): unknown {
       sanitized[key] = maskPhone(value);
     }
     // 예약자 이름 필드
-    else if (
-      isReservationContactNameKey(lowerKey) &&
-      typeof value === "string"
-    ) {
+    else if (isReservationContactNameKey(lowerKey) && typeof value === "string") {
       sanitized[key] = maskName(value);
     }
     // 중첩 객체 재귀 처리

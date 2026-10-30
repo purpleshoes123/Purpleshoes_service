@@ -27,10 +27,7 @@
           }
         }
       },
-      "block_order": [
-        "perk1",
-        "perk2"
-      ],
+      "block_order": ["perk1", "perk2"],
       "settings": {
         "hero_style": "yellow_cream",
         "hero_heading": "KOREA DISCOVERY TOUR",
@@ -57,12 +54,30 @@
     "trip_summary": {
       "type": "tour-trip-summary",
       "blocks": {
-        "c1": { "type": "card", "settings": { "icon_text": "📅", "value": "8 Days", "label": "Duration" } },
-        "c2": { "type": "card", "settings": { "icon_text": "📍", "value": "3 Cities", "label": "Destinations" } },
-        "c3": { "type": "card", "settings": { "icon_text": "👤", "value": "1 Person", "label": "Min. group" } },
-        "c4": { "type": "card", "settings": { "icon_text": "🛏", "value": "1 Night", "label": "Accommodation" } },
-        "c5": { "type": "card", "settings": { "icon_text": "🍽", "value": "2 Meals", "label": "Included" } },
-        "c6": { "type": "card", "settings": { "icon_text": "📷", "value": "4 Sightseeing", "label": "Activities" } }
+        "c1": {
+          "type": "card",
+          "settings": { "icon_text": "📅", "value": "8 Days", "label": "Duration" }
+        },
+        "c2": {
+          "type": "card",
+          "settings": { "icon_text": "📍", "value": "3 Cities", "label": "Destinations" }
+        },
+        "c3": {
+          "type": "card",
+          "settings": { "icon_text": "👤", "value": "1 Person", "label": "Min. group" }
+        },
+        "c4": {
+          "type": "card",
+          "settings": { "icon_text": "🛏", "value": "1 Night", "label": "Accommodation" }
+        },
+        "c5": {
+          "type": "card",
+          "settings": { "icon_text": "🍽", "value": "2 Meals", "label": "Included" }
+        },
+        "c6": {
+          "type": "card",
+          "settings": { "icon_text": "📷", "value": "4 Sightseeing", "label": "Activities" }
+        }
       },
       "block_order": ["c1", "c2", "c3", "c4", "c5", "c6"],
       "settings": { "heading": "Trip Summary" }
@@ -99,12 +114,7 @@
           }
         }
       },
-      "block_order": [
-        "i1",
-        "i2",
-        "i3",
-        "i4"
-      ],
+      "block_order": ["i1", "i2", "i3", "i4"],
       "settings": {
         "heading": "What you’ll do",
         "footer_note": "This experience is hosted in English. (Sample copy)",
@@ -154,11 +164,7 @@
           }
         }
       },
-      "block_order": [
-        "s1",
-        "s2",
-        "s3"
-      ]
+      "block_order": ["s1", "s2", "s3"]
     },
     "tour_info_yellow": {
       "type": "tour-info-yellow",
@@ -191,10 +197,7 @@
           }
         }
       },
-      "block_order": [
-        "q1",
-        "q2"
-      ],
+      "block_order": ["q1", "q2"],
       "settings": {
         "heading": "FAQ",
         "bg_style": "orange",

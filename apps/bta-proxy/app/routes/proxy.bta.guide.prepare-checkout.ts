@@ -5,23 +5,27 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { memberRespond as respond } from "~/middleware/verifyMemberAppProxy";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { extractShopFromRequest, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { extractCustomerIdFromProxyRequest } from "~/lib/guideExtension/customerId";
+import { extractCustomerIdFromProxyRequest } from "~/domains/checkout/guideExtension/customerId";
 import { guidePrepareCheckoutSchema } from "~/lib/validation";
 import {
   GuidePrepareCheckoutError,
   prepareGuideCheckout,
-} from "~/lib/guideCheckout/prepareCheckoutService";
-import { resolveCheckoutMode } from "~/lib/checkoutMode.server";
+} from "~/domains/checkout/guideCheckout/prepareCheckoutService";
+import { resolveCheckoutMode } from "~/domains/checkout/checkoutMode.server.ts";
 
 /**
  * POST /proxy/bta/guide/prepare-checkout
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -36,7 +40,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       throw error;
@@ -51,7 +55,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -62,7 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
         undefined,
         getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -75,9 +79,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Guide prepare-checkout admin lookup failed",
           shop,
           correlationId,
-          error:
-            adminError instanceof Error ? adminError.message : String(adminError),
-        })
+          error: adminError instanceof Error ? adminError.message : String(adminError),
+        }),
       );
     }
     if (!admin) {
@@ -86,7 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Guide prepare-checkout admin unavailable",
           shop,
           correlationId,
-        })
+        }),
       );
     }
 
@@ -99,7 +102,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       payload: validated,
     });
 
-    if ("checkoutMode" in result && (result.checkoutMode === "theme_cart" || result.checkoutMode === "private_draft")) {
+    if (
+      "checkoutMode" in result &&
+      (result.checkoutMode === "theme_cart" || result.checkoutMode === "private_draft")
+    ) {
       return respond.ok(result, { correlationId });
     }
 
@@ -110,7 +116,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         appliedCodes: result.appliedCodes,
         warnings: result.warnings,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error instanceof ZodError) {
@@ -120,7 +126,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, message),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -134,7 +140,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         message,
         undefined,
         getErrorStatus(error.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -142,7 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify({
         message: "Guide prepare-checkout failed",
         error: error instanceof Error ? error.message : String(error),
-      })
+      }),
     );
 
     return respond.fail(
@@ -150,7 +156,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

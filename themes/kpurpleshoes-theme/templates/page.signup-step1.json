@@ -15,7 +15,5 @@
       "settings": {}
     }
   },
-  "order": [
-    "signup_step1"
-  ]
+  "order": ["signup_step1"]
 }

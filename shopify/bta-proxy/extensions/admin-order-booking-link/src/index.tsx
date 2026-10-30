@@ -21,7 +21,9 @@ function Extension() {
   const decodeJwtPayload = (token: string) => {
     try {
       const [, payload] = token.split(".");
-      if (!payload) return null;
+      if (!payload) {
+        return null;
+      }
       const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
       const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
       if (typeof atob !== "function") {
@@ -65,8 +67,14 @@ function Extension() {
           method: "POST",
           body: JSON.stringify({ query, variables: { id: orderId } }),
         });
-        const result = await response.json() as {
-          data?: { order?: { name?: string; bookingId?: { value?: string }; travelDate?: { value?: string } } };
+        const result = (await response.json()) as {
+          data?: {
+            order?: {
+              name?: string;
+              bookingId?: { value?: string };
+              travelDate?: { value?: string };
+            };
+          };
           errors?: Array<{ message: string }>;
         };
 
@@ -112,9 +120,7 @@ function Extension() {
           const adminAppBase = storeHandle
             ? `https://admin.shopify.com/store/${storeHandle}/apps/bta-proxy`
             : null;
-          const url = adminAppBase
-            ? `${adminAppBase}/app/bookings/${bookingId}`
-            : null;
+          const url = adminAppBase ? `${adminAppBase}/app/bookings/${bookingId}` : null;
 
           setBookingDetailUrl(url);
         } catch (error) {
@@ -127,16 +133,20 @@ function Extension() {
   return (
     <s-admin-action heading="예약 정보">
       {canLink && bookingDetailUrl ? (
-        <s-button slot="primary-action" href={bookingDetailUrl}>예약 상세 열기</s-button>
+        <s-button slot="primary-action" href={bookingDetailUrl}>
+          예약 상세 열기
+        </s-button>
       ) : (
-        <s-button slot="primary-action" disabled>예약 상세 열기</s-button>
+        <s-button slot="primary-action" disabled>
+          예약 상세 열기
+        </s-button>
       )}
-      <s-button slot="secondary-actions" onClick={() => api.close()}>닫기</s-button>
+      <s-button slot="secondary-actions" onClick={() => api.close()}>
+        닫기
+      </s-button>
       <s-stack direction="block" gap="base">
         <s-text type="strong">예약 정보</s-text>
-        {status === "loading" ? (
-          <s-spinner size="base" />
-        ) : null}
+        {status === "loading" ? <s-spinner size="base" /> : null}
         {status === "error" ? <s-text>{errorMessage}</s-text> : null}
         {status !== "loading" && status !== "error" ? (
           <s-stack direction="block" gap="base">

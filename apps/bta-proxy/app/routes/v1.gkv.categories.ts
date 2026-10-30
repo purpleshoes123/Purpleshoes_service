@@ -35,7 +35,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const roots: CategoryNode[] = [];
   rows.forEach((row) => {
     const node = byId.get(row.id);
-    if (!node) return;
+    if (!node) {
+      return;
+    }
     if (row.parentId) {
       const parent = byId.get(row.parentId);
       if (parent) {

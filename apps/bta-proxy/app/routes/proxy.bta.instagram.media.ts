@@ -5,34 +5,32 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { extractShopFromRequest } from "~/lib/shopifyAdmin";
-import {
-  fetchInstagramMedia,
-  InstagramClientError,
-} from "~/lib/instagram/client";
+import { fetchInstagramMedia, InstagramClientError } from "~/domains/marketing/instagram/client";
 import {
   clearInstagramMediaCacheForShop,
   getInstagramConnection,
   getInstagramMediaCache,
   setInstagramMediaCache,
   setInstagramSyncDebug,
-} from "~/lib/instagram/store";
+} from "~/domains/marketing/instagram/store";
 import {
   buildEmptyInstagramMediaResponse,
   markInstagramConnectionRecovered,
   markInstagramConnectionError,
   normalizeInstagramMediaResponse,
   refreshInstagramConnectionTokenIfNeeded,
-} from "~/lib/instagram/service";
-import { decryptInstagramToken } from "~/lib/instagram/crypto";
-import { getInstagramConfig } from "~/lib/instagram/env";
+} from "~/domains/marketing/instagram/service";
+import { decryptInstagramToken } from "~/domains/marketing/instagram/crypto";
+import { getInstagramConfig } from "~/domains/marketing/instagram/env";
 
 const querySchema = z.object({
-  limit: z
-    .preprocess((value) => {
-      if (value === undefined || value === null || value === "") return undefined;
-      const num = typeof value === "string" ? Number(value) : value;
-      return Number.isFinite(num) ? num : value;
-    }, z.number().int().min(1).max(20).optional().default(8)),
+  limit: z.preprocess((value) => {
+    if (value === undefined || value === null || value === "") {
+      return undefined;
+    }
+    const num = typeof value === "string" ? Number(value) : value;
+    return Number.isFinite(num) ? num : value;
+  }, z.number().int().min(1).max(20).optional().default(8)),
   after: z.string().trim().optional(),
   includeReels: z
     .preprocess((value) => {
@@ -65,10 +63,14 @@ function shouldReturnEmptyOnError(errorCode: ErrorCode): boolean {
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -87,7 +89,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -102,10 +104,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
 
     const connection = await getInstagramConnection(shop);
-    if (
-      !connection ||
-      (connection.status !== "connected" && connection.status !== "error")
-    ) {
+    if (!connection || (connection.status !== "connected" && connection.status !== "error")) {
       return respond.ok(buildEmptyInstagramMediaResponse(), { correlationId });
     }
 
@@ -178,7 +177,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(instagramError.code, instagramError.message),
         instagramError.details,
         instagramError.status || getErrorStatus(instagramError.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -188,11 +187,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((issue) => issue.message).join(", ")
+          zodError.issues.map((issue) => issue.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -201,7 +200,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

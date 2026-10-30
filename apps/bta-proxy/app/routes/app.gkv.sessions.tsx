@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import { useEffect, useMemo, useState } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
@@ -17,13 +17,13 @@ import {
   TextField,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
-import { getEmbeddedSearchEntries } from "~/lib/gkv/embeddedPath";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
+import { getEmbeddedSearchEntries } from "~/domains/guide-viewer/embeddedPath";
 import {
   formatCustomerSearchLabel,
   type CustomerSearchItem,
-} from "~/lib/shopifyCustomerSearch";
-import { searchCustomers } from "~/lib/shopifyCustomerSearch.server";
+} from "~/domains/members/shopifyCustomerSearch";
+import { searchCustomers } from "~/domains/members/shopifyCustomerSearch.server.ts";
 import { authenticate } from "~/shopify.server";
 
 type SessionItem = {
@@ -162,7 +162,9 @@ export default function GkvSessionsPage() {
   }, [customerId]);
 
   useEffect(() => {
-    if (!searchFetcher.data) return;
+    if (!searchFetcher.data) {
+      return;
+    }
     if (searchFetcher.data.ok) {
       setSearchError(null);
       setSearchResults(searchFetcher.data.customers ?? []);
@@ -205,12 +207,18 @@ export default function GkvSessionsPage() {
   };
 
   const searchRows = useMemo(() => {
-    if (!searchResults.length) return [];
+    if (!searchResults.length) {
+      return [];
+    }
     return searchResults.map((customer) => [
       formatCustomerSearchLabel(customer) || "-",
       customer.email || "-",
       customer.id,
-      <Button key={`${customer.id}-select`} size="micro" onClick={() => handlePickCustomer(customer)}>
+      <Button
+        key={`${customer.id}-select`}
+        size="micro"
+        onClick={() => handlePickCustomer(customer)}
+      >
         Select
       </Button>,
     ]);

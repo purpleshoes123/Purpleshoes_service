@@ -5,7 +5,7 @@ import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { logEvent } from "~/lib/logEvent";
 
 function escapeQueryValue(value: string): string {
-  return value.replace(/"/g, "\\\"");
+  return value.replace(/"/g, '\\"');
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -29,17 +29,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           reason: "query_too_short",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
-        getErrorMessage(
-          ErrorCode.REVIEW_INVALID_INPUT,
-          "검색어는 최소 2자 이상이어야 합니다."
-        ),
+        getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, "검색어는 최소 2자 이상이어야 합니다."),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -52,7 +49,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         method: "GET",
         queryLength: trimmed.length,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     const PRODUCTS_QUERY = `
@@ -102,12 +99,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         count: items.length,
         durationMs: Date.now() - startTime,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     return respond.ok({ items }, { correlationId });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) {
+      throw error;
+    }
     const message = error instanceof Error ? error.message : String(error);
     logEvent(
       "review.admin.product_search.fail",
@@ -118,7 +117,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         reason: message,
         durationMs: Date.now() - startTime,
       },
-      { correlationId, severity: "error" }
+      { correlationId, severity: "error" },
     );
 
     return respond.fail(
@@ -126,7 +125,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.REVIEW_SHOPIFY_API_ERROR, message),
       undefined,
       getErrorStatus(ErrorCode.REVIEW_SHOPIFY_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

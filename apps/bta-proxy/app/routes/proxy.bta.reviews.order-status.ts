@@ -5,12 +5,12 @@ import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { extractShopFromRequest } from "~/lib/shopifyAdmin";
 import { logEvent } from "~/lib/logEvent";
-import { extractCustomerIdFromProxyRequest } from "~/lib/guideExtension/customerId";
+import { extractCustomerIdFromProxyRequest } from "~/domains/checkout/guideExtension/customerId";
 import { reviewOrderStatusQuerySchema } from "~/lib/validation";
 import {
   listCustomerReviewStatusByOrders,
   ReviewServiceError,
-} from "~/lib/reviewService";
+} from "~/domains/reviews/reviewService";
 
 function parseOrderIdsFromQuery(url: URL): string[] {
   const repeated = url.searchParams.getAll("orderId");
@@ -28,10 +28,14 @@ function parseOrderIdsFromQuery(url: URL): string[] {
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const startTime = Date.now();
@@ -50,14 +54,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           reason: "missing_shop",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "warn" }
+        { correlationId, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
         getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -72,14 +76,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           reason: "missing_logged_in_customer_id",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.AUTH_LOGIN_REQUIRED,
         getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
         undefined,
         getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -95,7 +99,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         method: "GET",
         orderCount: validatedInput.orderIds.length,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     const result = await listCustomerReviewStatusByOrders({
@@ -114,16 +118,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         reviewedCount: result.items.filter((item) => item.reviewed).length,
         durationMs: Date.now() - startTime,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     return respond.ok({ items: result.items }, { correlationId });
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
 
       logEvent(
         "review.order_status.list.fail",
@@ -134,14 +136,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           reason: errorMessage,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "warn" }
+        { correlationId, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
         getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -155,14 +157,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           reason: error.message,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "error" }
+        { correlationId, severity: "error" },
       );
       return respond.fail(
         error.code,
         getErrorMessage(error.code, error.message),
         error.details,
         getErrorStatus(error.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -175,14 +177,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         reason: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       },
-      { correlationId, severity: "error" }
+      { correlationId, severity: "error" },
     );
     return respond.fail(
       ErrorCode.INTERNAL_ERROR,
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

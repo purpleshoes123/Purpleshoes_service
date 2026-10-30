@@ -2,24 +2,16 @@ import { useMemo, useState } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { useLoaderData, useSubmit } from "react-router";
-import {
-  BlockStack,
-  Button,
-  Card,
-  DataTable,
-  Page,
-  Text,
-  TextField,
-} from "@shopify/polaris";
+import { BlockStack, Button, Card, DataTable, Page, Text, TextField } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "~/shopify.server";
 import {
   getCustomerEntitlements,
   listLedgerEvents,
   type EntitlementType,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 import db from "~/db.server";
-import { listLogs } from "~/lib/guideExtension/logStore";
+import { listLogs } from "~/domains/checkout/guideExtension/logStore";
 
 type LoaderData = {
   customerId: string;

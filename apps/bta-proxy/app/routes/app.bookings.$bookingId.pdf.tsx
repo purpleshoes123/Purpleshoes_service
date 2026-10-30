@@ -1,10 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { authenticate } from "~/shopify.server";
-import {
-  BookingDetailError,
-  getBookingDetailData,
-} from "~/lib/bookingDetailService";
-import { buildBookingPdf } from "~/lib/bookingPdf";
+import { BookingDetailError, getBookingDetailData } from "~/domains/bookings/bookingDetailService";
+import { buildBookingPdf } from "~/domains/bookings/bookingPdf";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const auth = await authenticate.admin(request);
@@ -39,7 +36,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         bookingId: params.bookingId || null,
         shop: auth.session.shop,
         error: errorMessage,
-      })
+      }),
     );
     if (error instanceof BookingDetailError) {
       return new Response(error.message, { status: error.status });

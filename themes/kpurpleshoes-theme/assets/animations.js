@@ -1,7 +1,7 @@
-const SCROLL_ANIMATION_TRIGGER_CLASSNAME = 'scroll-trigger';
-const SCROLL_ANIMATION_OFFSCREEN_CLASSNAME = 'scroll-trigger--offscreen';
-const SCROLL_ZOOM_IN_TRIGGER_CLASSNAME = 'animate--zoom-in';
-const SCROLL_ANIMATION_CANCEL_CLASSNAME = 'scroll-trigger--cancel';
+const SCROLL_ANIMATION_TRIGGER_CLASSNAME = "scroll-trigger";
+const SCROLL_ANIMATION_OFFSCREEN_CLASSNAME = "scroll-trigger--offscreen";
+const SCROLL_ZOOM_IN_TRIGGER_CLASSNAME = "animate--zoom-in";
+const SCROLL_ANIMATION_CANCEL_CLASSNAME = "scroll-trigger--cancel";
 
 // Scroll in animation logic
 function onIntersection(elements, observer) {
@@ -10,8 +10,9 @@ function onIntersection(elements, observer) {
       const elementTarget = element.target;
       if (elementTarget.classList.contains(SCROLL_ANIMATION_OFFSCREEN_CLASSNAME)) {
         elementTarget.classList.remove(SCROLL_ANIMATION_OFFSCREEN_CLASSNAME);
-        if (elementTarget.hasAttribute('data-cascade'))
-          elementTarget.setAttribute('style', `--animation-order: ${index};`);
+        if (elementTarget.hasAttribute("data-cascade")) {
+          elementTarget.setAttribute("style", `--animation-order: ${index};`);
+        }
       }
       observer.unobserve(elementTarget);
     } else {
@@ -22,29 +23,39 @@ function onIntersection(elements, observer) {
 }
 
 function initializeScrollAnimationTrigger(rootEl = document, isDesignModeEvent = false) {
-  const animationTriggerElements = Array.from(rootEl.getElementsByClassName(SCROLL_ANIMATION_TRIGGER_CLASSNAME));
-  if (animationTriggerElements.length === 0) return;
+  const animationTriggerElements = Array.from(
+    rootEl.getElementsByClassName(SCROLL_ANIMATION_TRIGGER_CLASSNAME),
+  );
+  if (animationTriggerElements.length === 0) {
+    return;
+  }
 
   if (isDesignModeEvent) {
     animationTriggerElements.forEach((element) => {
-      element.classList.add('scroll-trigger--design-mode');
+      element.classList.add("scroll-trigger--design-mode");
     });
     return;
   }
 
   const observer = new IntersectionObserver(onIntersection, {
-    rootMargin: '0px 0px -50px 0px',
+    rootMargin: "0px 0px -50px 0px",
   });
   animationTriggerElements.forEach((element) => observer.observe(element));
 }
 
 // Zoom in animation logic
 function initializeScrollZoomAnimationTrigger() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
 
-  const animationTriggerElements = Array.from(document.getElementsByClassName(SCROLL_ZOOM_IN_TRIGGER_CLASSNAME));
+  const animationTriggerElements = Array.from(
+    document.getElementsByClassName(SCROLL_ZOOM_IN_TRIGGER_CLASSNAME),
+  );
 
-  if (animationTriggerElements.length === 0) return;
+  if (animationTriggerElements.length === 0) {
+    return;
+  }
 
   const scaleAmount = 0.2 / 100;
 
@@ -57,16 +68,18 @@ function initializeScrollZoomAnimationTrigger() {
     });
     observer.observe(element);
 
-    element.style.setProperty('--zoom-in-ratio', 1 + scaleAmount * percentageSeen(element));
+    element.style.setProperty("--zoom-in-ratio", 1 + scaleAmount * percentageSeen(element));
 
     window.addEventListener(
-      'scroll',
+      "scroll",
       throttle(() => {
-        if (!elementIsVisible) return;
+        if (!elementIsVisible) {
+          return;
+        }
 
-        element.style.setProperty('--zoom-in-ratio', 1 + scaleAmount * percentageSeen(element));
+        element.style.setProperty("--zoom-in-ratio", 1 + scaleAmount * percentageSeen(element));
       }),
-      { passive: true }
+      { passive: true },
     );
   });
 }
@@ -91,12 +104,16 @@ function percentageSeen(element) {
   return Math.round(percentage);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener("DOMContentLoaded", () => {
   initializeScrollAnimationTrigger();
   initializeScrollZoomAnimationTrigger();
 });
 
 if (Shopify.designMode) {
-  document.addEventListener('shopify:section:load', (event) => initializeScrollAnimationTrigger(event.target, true));
-  document.addEventListener('shopify:section:reorder', () => initializeScrollAnimationTrigger(document, true));
+  document.addEventListener("shopify:section:load", (event) =>
+    initializeScrollAnimationTrigger(event.target, true),
+  );
+  document.addEventListener("shopify:section:reorder", () =>
+    initializeScrollAnimationTrigger(document, true),
+  );
 }

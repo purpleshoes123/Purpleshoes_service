@@ -5,12 +5,12 @@ import { rebuildSchema } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
 import { getEnv } from "~/lib/env";
 import { getAdminApiClient } from "~/lib/shopifyAdmin";
-import { RebuildService } from "~/lib/rebuildService";
-import { getBookingStore } from "~/lib/bookingStore";
+import { RebuildService } from "~/domains/bookings/rebuildService";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
 import { maskPII } from "~/lib/masking";
 import { randomUUID } from "crypto";
 import { logEvent } from "~/lib/logEvent";
-import { setLastRebuildRun } from "~/lib/rebuildMetaStore";
+import { setLastRebuildRun } from "~/domains/bookings/rebuildMetaStore";
 import { authenticate } from "~/shopify.server";
 
 /**
@@ -39,7 +39,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   let adminContext: any = null;
   if (token) {
     const authResponse = await verifyInternal(request);
-    if (authResponse) return authResponse;
+    if (authResponse) {
+      return authResponse;
+    }
   } else {
     try {
       const auth = await authenticate.admin(authRequest);
@@ -52,7 +54,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
           undefined,
           getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-          respond.getCorrelationId(request)
+          respond.getCorrelationId(request),
         );
       }
       throw error;
@@ -73,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID, "허용되지 않은 shop입니다."),
           undefined,
           getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-          correlationId
+          correlationId,
         );
       }
     }
@@ -94,7 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -116,15 +118,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             correlationId,
             message: "Rebuild skipped (Redis store required)",
             storeType: bookingStore.constructor.name,
-          })
-        )
+          }),
+        ),
       );
       return respond.fail(
         ErrorCode.INTERNAL_ERROR,
-        getErrorMessage(ErrorCode.INTERNAL_ERROR, "Rebuild는 Redis Store에서만 사용할 수 있습니다."),
+        getErrorMessage(
+          ErrorCode.INTERNAL_ERROR,
+          "Rebuild는 Redis Store에서만 사용할 수 있습니다.",
+        ),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -139,25 +144,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.REBUILD_IN_PROGRESS),
         undefined,
         getErrorStatus(ErrorCode.REBUILD_IN_PROGRESS),
-        correlationId
+        correlationId,
       );
     }
 
     try {
       logEvent(
         "rebuild.start",
-        { rebuildRunId, shop, ordersFrom: validatedInput.ordersFrom, ordersTo: validatedInput.ordersTo },
-        { correlationId, shop, severity: "info" }
+        {
+          rebuildRunId,
+          shop,
+          ordersFrom: validatedInput.ordersFrom,
+          ordersTo: validatedInput.ordersTo,
+        },
+        { correlationId, shop, severity: "info" },
       );
       // 7. Shopify Admin API 클라이언트 가져오기
       const admin = adminContext || (await getAdminApiClient(shop));
       if (!admin) {
         return respond.fail(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          getErrorMessage(ErrorCode.SHOPIFY_ADMIN_API_ERROR, "Shopify Admin API 세션을 찾을 수 없습니다."),
+          getErrorMessage(
+            ErrorCode.SHOPIFY_ADMIN_API_ERROR,
+            "Shopify Admin API 세션을 찾을 수 없습니다.",
+          ),
           undefined,
           getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -167,7 +180,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         orders = await rebuildService.fetchOrders(
           admin,
           validatedInput.ordersFrom,
-          validatedInput.ordersTo
+          validatedInput.ordersTo,
         );
       } catch (error) {
         if (error instanceof Error && error.message.includes("SHOPIFY_ADMIN_API_TIMEOUT")) {
@@ -176,7 +189,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             getErrorMessage(ErrorCode.SHOPIFY_ADMIN_API_TIMEOUT),
             undefined,
             getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_TIMEOUT),
-            correlationId
+            correlationId,
           );
         }
         return respond.fail(
@@ -184,15 +197,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
           undefined,
           getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
-      await rebuildService.removeCancelledBookings(
-        shop,
-        orders,
-        validatedInput.dryRun
-      );
+      await rebuildService.removeCancelledBookings(shop, orders, validatedInput.dryRun);
 
       // 9. travel_date가 있는 line_items 추출
       const travelLineItems = rebuildService.extractTravelLineItems(orders);
@@ -201,9 +210,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const groups = await rebuildService.groupLineItemsByBooking(travelLineItems, shop);
 
       // 관측된 travel_date 목록 수집 (replace 모드에서 사용)
-      const observedTravelDates = Array.from(
-        new Set(groups.map((g) => g.bookingInfo.travelDate))
-      );
+      const observedTravelDates = Array.from(new Set(groups.map((g) => g.bookingInfo.travelDate)));
 
       // 11. (mode=replace) 기존 원장 삭제
       let deletedBookings = 0;
@@ -213,7 +220,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           observedTravelDates,
           validatedInput.filterTravelFrom,
           validatedInput.filterTravelTo,
-          validatedInput.dryRun
+          validatedInput.dryRun,
         );
       }
 
@@ -223,7 +230,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         groups,
         validatedInput.filterTravelFrom,
         validatedInput.filterTravelTo,
-        validatedInput.dryRun
+        validatedInput.dryRun,
       );
 
       // 13. 위반 탐지
@@ -232,10 +239,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // 14. 결과 반환
       const result = {
         scannedOrders: orders.length,
-        scannedLineItems: orders.reduce(
-          (sum, order) => sum + order.lineItems.edges.length,
-          0
-        ),
+        scannedLineItems: orders.reduce((sum, order) => sum + order.lineItems.edges.length, 0),
         matchedTravelLineItems: travelLineItems.length,
         upsertedBookings,
         deletedBookings,
@@ -271,7 +275,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           upsertedBookings,
           deletedBookings,
         },
-        { correlationId, shop, severity: "info" }
+        { correlationId, shop, severity: "info" },
       );
 
       return respond.ok(result, { correlationId, rebuildRunId });
@@ -283,8 +287,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             message: "Rebuild 처리 중 오류",
             error: error instanceof Error ? error.message : String(error),
             shop: shop.substring(0, 20) + "...",
-          })
-        )
+          }),
+        ),
       );
       logEvent(
         "rebuild.failed",
@@ -292,7 +296,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           rebuildRunId,
           error: error instanceof Error ? error.message : String(error),
         },
-        { correlationId, shop, severity: "error" }
+        { correlationId, shop, severity: "error" },
       );
 
       return respond.fail(
@@ -300,7 +304,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_ERROR),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     } finally {
       // 15. 락 해제
@@ -314,21 +318,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -338,8 +340,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           correlationId,
           message: "Rebuild 엔드포인트 오류",
           error: error instanceof Error ? error.message : String(error),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -347,7 +349,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

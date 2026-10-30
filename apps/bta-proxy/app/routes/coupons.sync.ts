@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
-import { handleCouponsSync } from "~/lib/coupons/syncHandler";
+import { handleCouponsSync } from "~/domains/coupons/syncHandler";
 import { verifyAdminApiKey } from "~/middleware/verifyAdminApiKey";
 
 /**
@@ -9,7 +9,9 @@ import { verifyAdminApiKey } from "~/middleware/verifyAdminApiKey";
 export const action = async ({ request }: ActionFunctionArgs) => {
   if (process.env.ADMIN_API_KEY) {
     const authResponse = verifyAdminApiKey(request);
-    if (authResponse) return authResponse;
+    if (authResponse) {
+      return authResponse;
+    }
   }
 
   return await handleCouponsSync(request);

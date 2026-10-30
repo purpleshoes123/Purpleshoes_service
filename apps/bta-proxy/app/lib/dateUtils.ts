@@ -19,18 +19,14 @@ export function parseKSTDate(dateString: string): Date {
   // KST 기준으로 날짜 파싱
   // YYYY-MM-DD를 KST의 자정(00:00:00)으로 해석
   const [year, month, day] = dateString.split("-").map(Number);
-  
+
   // Date 객체 생성 (로컬 시간대 기준)
   // KST는 UTC+9이므로, UTC로 변환하려면 9시간을 빼야 함
   // 하지만 YYYY-MM-DD를 로컬 날짜로 해석하므로, 그대로 사용
   const date = new Date(year, month - 1, day);
-  
+
   // 유효성 검증
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     throw new Error(`Invalid date: ${dateString}`);
   }
 
@@ -92,8 +88,11 @@ export function compareDates(from: string, to: string): number {
   const fromDate = parseKSTDate(from);
   const toDate = parseKSTDate(to);
 
-  if (fromDate < toDate) return -1;
-  if (fromDate > toDate) return 1;
+  if (fromDate < toDate) {
+    return -1;
+  }
+  if (fromDate > toDate) {
+    return 1;
+  }
   return 0;
 }
-

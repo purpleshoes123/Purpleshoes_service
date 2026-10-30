@@ -39,7 +39,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "id는 필수입니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -49,7 +49,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -69,7 +69,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       if (method === "PATCH") {
         const validatedInput = globalBlackoutUpdateSchema.parse(body);
@@ -85,7 +87,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -106,7 +108,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
             getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
             undefined,
             getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-            correlationId
+            correlationId,
           );
         }
         throw error;
@@ -118,27 +120,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     if (method === "DELETE") {
       await deleteGlobalBlackout({ admin, shop, id: blackoutId });
-      logEvent(
-        "blackout.deleted",
-        { blackoutId },
-        { correlationId, shop, severity: "info" }
-      );
+      logEvent("blackout.deleted", { blackoutId }, { correlationId, shop, severity: "info" });
       return respond.ok(
         {
           action: "deleted",
           id: blackoutId,
         },
-        { correlationId }
+        { correlationId },
       );
     }
 
@@ -153,7 +151,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     logEvent(
       "blackout.updated",
       { blackoutId: updated.id, date: updated.date },
-      { correlationId, shop, severity: "info" }
+      { correlationId, shop, severity: "info" },
     );
 
     return respond.ok(
@@ -161,20 +159,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         action: "updated",
         item: updated,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -183,7 +179,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

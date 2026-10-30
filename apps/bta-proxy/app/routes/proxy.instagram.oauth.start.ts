@@ -3,15 +3,13 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import {
-  buildInstagramAuthorizeUrl,
-} from "~/lib/instagram/client";
+import { buildInstagramAuthorizeUrl } from "~/domains/marketing/instagram/client";
 import {
   ensureInstagramOAuthConfig,
   getInstagramConfig,
   isInstagramShopAllowed,
-} from "~/lib/instagram/env";
-import { saveInstagramOAuthState } from "~/lib/instagram/store";
+} from "~/domains/marketing/instagram/env";
+import { saveInstagramOAuthState } from "~/domains/marketing/instagram/store";
 import { normalizeShopDomain } from "~/lib/shopifySession";
 
 const querySchema = z.object({
@@ -21,17 +19,29 @@ const querySchema = z.object({
 
 function normalizeShop(shopRaw: string): string | null {
   const normalized = normalizeShopDomain(shopRaw);
-  if (!normalized) return null;
-  if (normalized.includes(".")) return normalized;
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.includes(".")) {
+    return normalized;
+  }
   return `${normalized}.myshopify.com`;
 }
 
 function sanitizeReturnTo(returnToRaw?: string): string | null {
-  if (!returnToRaw) return null;
+  if (!returnToRaw) {
+    return null;
+  }
   const returnTo = returnToRaw.trim();
-  if (!returnTo) return null;
-  if (!returnTo.startsWith("/")) return null;
-  if (returnTo.startsWith("//")) return null;
+  if (!returnTo) {
+    return null;
+  }
+  if (!returnTo.startsWith("/")) {
+    return null;
+  }
+  if (returnTo.startsWith("//")) {
+    return null;
+  }
   return returnTo;
 }
 
@@ -55,7 +65,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터 형식이 올바르지 않습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -68,7 +78,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "허용되지 않은 shop입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -82,7 +92,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         returnTo,
         createdAt: new Date().toISOString(),
       },
-      config.stateTtlSec
+      config.stateTtlSec,
     );
 
     const authorizeUrl = buildInstagramAuthorizeUrl(state);
@@ -98,11 +108,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((issue) => issue.message).join(", ")
+          zodError.issues.map((issue) => issue.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -111,7 +121,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

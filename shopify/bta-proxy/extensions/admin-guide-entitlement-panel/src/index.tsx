@@ -37,7 +37,9 @@ function Extension() {
   const decodeJwtPayload = (token: string) => {
     try {
       const [, payload] = token.split(".");
-      if (!payload) return null;
+      if (!payload) {
+        return null;
+      }
       const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
       const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
       if (typeof atob !== "function") {
@@ -75,7 +77,7 @@ function Extension() {
           method: "POST",
           body: JSON.stringify({ query: orderQuery, variables: { id: orderId } }),
         });
-        const orderResult = await orderResponse.json() as {
+        const orderResult = (await orderResponse.json()) as {
           data?: { order?: { customer?: { id?: string } } };
           errors?: Array<{ message: string }>;
         };
@@ -113,12 +115,10 @@ function Extension() {
         }
 
         const apiUrl = `${appBase}/app/api/guide-entitlements/customer/${encodeURIComponent(
-          customerId
+          customerId,
         )}`;
         setDetailUrl(
-          `${appBase}/app/guide-entitlements-admin?customerId=${encodeURIComponent(
-            customerId
-          )}`
+          `${appBase}/app/guide-entitlements-admin?customerId=${encodeURIComponent(customerId)}`,
         );
 
         const response = await fetch(apiUrl, {
@@ -152,16 +152,20 @@ function Extension() {
   return (
     <s-admin-action heading="Guide Extension Status">
       {detailUrl ? (
-        <s-button slot="primary-action" href={detailUrl}>Open detail</s-button>
+        <s-button slot="primary-action" href={detailUrl}>
+          Open detail
+        </s-button>
       ) : (
-        <s-button slot="primary-action" disabled>Open detail</s-button>
+        <s-button slot="primary-action" disabled>
+          Open detail
+        </s-button>
       )}
-      <s-button slot="secondary-actions" onClick={() => api.close()}>Close</s-button>
+      <s-button slot="secondary-actions" onClick={() => api.close()}>
+        Close
+      </s-button>
       <s-stack direction="block" gap="base">
         <s-text type="strong">Guide Extension Status</s-text>
-        {status === "loading" ? (
-          <s-spinner size="base" />
-        ) : null}
+        {status === "loading" ? <s-spinner size="base" /> : null}
         {status === "error" ? <s-text>{errorMessage}</s-text> : null}
         {status === "ready" ? (
           <s-stack direction="block" gap="base">
@@ -177,8 +181,7 @@ function Extension() {
             {logs.length === 0 ? <s-text>No logs.</s-text> : null}
             {logs.map((log) => (
               <s-text key={log.id}>
-                {log.status} | {log.monthsDelta} | {log.newExpiresAt || "-"} |{" "}
-                {log.createdAt}
+                {log.status} | {log.monthsDelta} | {log.newExpiresAt || "-"} | {log.createdAt}
               </s-text>
             ))}
           </s-stack>

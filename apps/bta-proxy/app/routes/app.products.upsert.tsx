@@ -25,32 +25,32 @@ import {
   listPublications,
   publishProductToChannels,
   setProductActive,
-} from "~/lib/adminPublishProduct";
+} from "~/domains/catalog/adminPublishProduct";
 import {
   auditLog,
   generateExternalKey,
   upsertTravelProduct,
-} from "~/lib/adminProductUpsertFlow";
-import type { StepEntry } from "~/lib/adminProductUpsertFlow/stepLog";
-import type { UpsertTravelProductInput } from "~/lib/adminProductUpsertFlow/types";
+} from "~/domains/catalog/adminProductUpsertFlow";
+import type { StepEntry } from "~/domains/catalog/adminProductUpsertFlow/stepLog";
+import type { UpsertTravelProductInput } from "~/domains/catalog/adminProductUpsertFlow/types";
 import {
   loadPricingTableFromVariants,
   loadProductByExternalKey,
   loadProductByProductId,
-} from "~/lib/adminProductLoad";
+} from "~/domains/catalog/adminProductLoad";
 import type {
   BookingMode,
   PriceTable,
   TicketType,
   Weekday,
-} from "~/lib/adminProductUpsert/types";
-import { toTierPriceMatrix, upsertTierVariants } from "~/lib/adminVariantUpsert";
+} from "~/domains/catalog/adminProductUpsert/types";
+import { toTierPriceMatrix, upsertTierVariants } from "~/domains/catalog/adminVariantUpsert";
 import {
   UploadError,
   validateUploadInput,
   type UploadInput,
-} from "~/lib/adminFileUpload";
-import { StepLogger } from "~/lib/adminProductUpsertFlow/stepLog";
+} from "~/domains/catalog/adminFileUpload";
+import { StepLogger } from "~/domains/catalog/adminProductUpsertFlow/stepLog";
 
 type PublicationItem = Awaited<ReturnType<typeof listPublications>>[number];
 
@@ -96,9 +96,13 @@ const WEEKDAYS: Array<{ value: Weekday; label: string }> = [
 const TICKET_TYPES: TicketType[] = ["adult", "child", "infant"];
 
 function parseNumber(value: FormDataEntryValue | null): number {
-  if (value == null) return Number.NaN;
+  if (value == null) {
+    return Number.NaN;
+  }
   const raw = String(value).trim();
-  if (!raw) return Number.NaN;
+  if (!raw) {
+    return Number.NaN;
+  }
   return Number(raw);
 }
 
@@ -151,9 +155,7 @@ async function buildUpsertInput(formData: FormData): Promise<UpsertTravelProduct
   const operatingWeekdays = formData
     .getAll("operatingWeekdays")
     .map((value) => String(value)) as Weekday[];
-  const blackoutDates = formData
-    .getAll("blackoutDates")
-    .map((value) => String(value));
+  const blackoutDates = formData.getAll("blackoutDates").map((value) => String(value));
   const publicationIds = formData
     .getAll("publicationIds")
     .map((value) => String(value))
@@ -168,9 +170,7 @@ async function buildUpsertInput(formData: FormData): Promise<UpsertTravelProduct
   const travelGalleryFiles = galleryFileFields.filter(isFile);
 
   const heroUpload = heroFile ? await toUploadInput(heroFile) : undefined;
-  const categoryUpload = categoryImageFile
-    ? await toUploadInput(categoryImageFile)
-    : undefined;
+  const categoryUpload = categoryImageFile ? await toUploadInput(categoryImageFile) : undefined;
   const galleryUploads =
     travelGalleryFiles.length > 0
       ? await Promise.all(travelGalleryFiles.map(toUploadInput))
@@ -178,7 +178,7 @@ async function buildUpsertInput(formData: FormData): Promise<UpsertTravelProduct
 
   const pricingTable = buildPricingTable(
     Number.isFinite(maxPax) ? Math.trunc(maxPax) : 0,
-    formData
+    formData,
   );
 
   return {
@@ -254,10 +254,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      return json<ActionData>(
-        { ok: false, intent, message },
-        { status: 500 }
-      );
+      return json<ActionData>({ ok: false, intent, message }, { status: 500 });
     }
   }
 
@@ -266,7 +263,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!externalKey) {
       return json<ActionData>(
         { ok: false, intent, message: "externalKey는 필수입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     try {
@@ -274,7 +271,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (!loadResult) {
         return json<ActionData>(
           { ok: false, intent, message: "externalKey를 찾을 수 없습니다." },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -284,7 +281,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const pricingResult = await loadPricingTableFromVariants(
           auth.admin,
           loadResult.productId,
-          loadResult.maxPax
+          loadResult.maxPax,
         );
         pricingTable = pricingResult;
         pricingWarnings = {
@@ -302,10 +299,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      return json<ActionData>(
-        { ok: false, intent, message },
-        { status: 500 }
-      );
+      return json<ActionData>({ ok: false, intent, message }, { status: 500 });
     }
   }
 
@@ -314,7 +308,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!productId) {
       return json<ActionData>(
         { ok: false, intent, message: "productId는 필수입니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     try {
@@ -326,7 +320,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             intent,
             message: "선택한 상품에 external_key metafield가 없습니다.",
           },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -336,7 +330,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const pricingResult = await loadPricingTableFromVariants(
           auth.admin,
           loadResult.productId,
-          loadResult.maxPax
+          loadResult.maxPax,
         );
         pricingTable = pricingResult;
         pricingWarnings = {
@@ -354,10 +348,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      return json<ActionData>(
-        { ok: false, intent, message },
-        { status: 500 }
-      );
+      return json<ActionData>({ ok: false, intent, message }, { status: 500 });
     }
   }
 
@@ -372,19 +363,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!productId) {
       return json<ActionData>(
         { ok: false, intent, message: "productId가 필요합니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!Number.isInteger(maxPax) || maxPax < 1) {
       return json<ActionData>(
         { ok: false, intent, message: "max_pax가 유효하지 않습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (publicationIds.length === 0) {
       return json<ActionData>(
         { ok: false, intent, message: "publicationIds가 필요합니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -401,11 +392,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const activeResult = await setProductActive(auth.admin, productId);
       steps.addOk("setProductActive", { status: activeResult.status });
 
-      const publishResult = await publishProductToChannels(
-        auth.admin,
-        productId,
-        publicationIds
-      );
+      const publishResult = await publishProductToChannels(auth.admin, productId, publicationIds);
       steps.addOk("publishProductToChannels", {
         publishableId: publishResult.publishableId,
       });
@@ -446,7 +433,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           productId,
           steps: steps.toResult(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
   }
@@ -457,13 +444,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!productId) {
       return json<ActionData>(
         { ok: false, intent, message: "productId가 필요합니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!Number.isInteger(maxPax) || maxPax < 1) {
       return json<ActionData>(
         { ok: false, intent, message: "max_pax가 유효하지 않습니다." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -473,7 +460,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       try {
         const pricingTable = buildPricingTable(
           Number.isFinite(maxPax) ? Math.trunc(maxPax) : 0,
-          formData
+          formData,
         );
         matrix = toTierPriceMatrix({
           maxPax,
@@ -533,7 +520,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           productId,
           steps: steps.toResult(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
   }
@@ -549,10 +536,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           : error instanceof Error
             ? error.message
             : "파일 처리 중 오류가 발생했습니다.";
-      return json<ActionData>(
-        { ok: false, intent, message },
-        { status: 400 }
-      );
+      return json<ActionData>({ ok: false, intent, message }, { status: 400 });
     }
 
     try {
@@ -601,14 +585,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           productId,
           steps,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
   }
 
   return json<ActionData>(
     { ok: false, intent, message: "지원하지 않는 요청입니다." },
-    { status: 400 }
+    { status: 400 },
   );
 };
 
@@ -647,9 +631,8 @@ export default function ProductUpsertPage() {
   const [operatingWeekdays, setOperatingWeekdays] = useState<Weekday[]>([]);
   const [blackoutInput, setBlackoutInput] = useState("");
   const [blackoutDates, setBlackoutDates] = useState<string[]>([]);
-  const [selectedPublicationIds, setSelectedPublicationIds] = useState<string[]>(
-    defaultPublicationIds
-  );
+  const [selectedPublicationIds, setSelectedPublicationIds] =
+    useState<string[]>(defaultPublicationIds);
   const [loadedMedia, setLoadedMedia] = useState<{
     heroMediaId?: string;
     categoryImageFileId?: string;
@@ -672,9 +655,7 @@ export default function ProductUpsertPage() {
       const next: PriceRow[] = [];
       for (let tier = 1; tier <= maxPax; tier += 1) {
         const existing = prev.find((row) => row.tier === tier);
-        next.push(
-          existing || { tier, adult: "", child: "", infant: "" }
-        );
+        next.push(existing || { tier, adult: "", child: "", infant: "" });
       }
       return next;
     });
@@ -689,14 +670,15 @@ export default function ProductUpsertPage() {
   useEffect(() => {
     const data = loadFetcher.data;
     const isLoadIntent =
-      data?.intent === "load_by_external_key" ||
-      data?.intent === "load_by_product_id";
+      data?.intent === "load_by_external_key" || data?.intent === "load_by_product_id";
     if (!data?.ok || !isLoadIntent) {
       return;
     }
 
     const loadResult = data.loadResult;
-    if (!loadResult) return;
+    if (!loadResult) {
+      return;
+    }
 
     setProductId(loadResult.productId);
     setStatus(loadResult.status ?? null);
@@ -705,16 +687,12 @@ export default function ProductUpsertPage() {
     setExternalKey(loadResult.externalKey || externalKey);
     setPoolKey(loadResult.poolKey || "");
     setGuideUnitsRequired(
-      loadResult.guideUnitsRequired != null
-        ? String(loadResult.guideUnitsRequired)
-        : ""
+      loadResult.guideUnitsRequired != null ? String(loadResult.guideUnitsRequired) : "",
     );
     setBookingMode(loadResult.bookingMode || "private");
     setStartTimeLabel(loadResult.startTimeLabel || "");
     setBookingWindowDays(
-      loadResult.bookingWindowDays != null
-        ? String(loadResult.bookingWindowDays)
-        : ""
+      loadResult.bookingWindowDays != null ? String(loadResult.bookingWindowDays) : "",
     );
     setOperatingWeekdays(loadResult.operatingWeekdays || []);
     setBlackoutDates(loadResult.blackoutDates || []);
@@ -733,18 +711,14 @@ export default function ProductUpsertPage() {
           adult: row.adult != null ? String(row.adult) : "",
           child: row.child != null ? String(row.child) : "",
           infant: row.infant != null ? String(row.infant) : "",
-        }))
+        })),
       );
       const warnings: string[] = [];
       if (data.pricingWarnings?.missingCells?.length) {
-        warnings.push(
-          `누락 셀: ${data.pricingWarnings.missingCells.slice(0, 10).join(", ")}`
-        );
+        warnings.push(`누락 셀: ${data.pricingWarnings.missingCells.slice(0, 10).join(", ")}`);
       }
       if (data.pricingWarnings?.zeroPriceCells?.length) {
-        warnings.push(
-          `0원 셀: ${data.pricingWarnings.zeroPriceCells.slice(0, 10).join(", ")}`
-        );
+        warnings.push(`0원 셀: ${data.pricingWarnings.zeroPriceCells.slice(0, 10).join(", ")}`);
       }
       setPricingWarnings(warnings);
     } else {
@@ -760,7 +734,9 @@ export default function ProductUpsertPage() {
   }, [upsertFetcher.data]);
 
   const submitUpsert = (intent: "save_draft" | "save_and_publish") => {
-    if (!formRef.current) return;
+    if (!formRef.current) {
+      return;
+    }
     const formData = new FormData(formRef.current);
     formData.set("intent", intent);
     upsertFetcher.submit(formData, {
@@ -770,7 +746,9 @@ export default function ProductUpsertPage() {
   };
 
   const submitAdvanced = (intent: "publish_only" | "variants_only") => {
-    if (!formRef.current) return;
+    if (!formRef.current) {
+      return;
+    }
     const formData = new FormData(formRef.current);
     formData.set("intent", intent);
     advancedFetcher.submit(formData, {
@@ -796,13 +774,11 @@ export default function ProductUpsertPage() {
         action: "select",
         multiple: false,
       });
-      const picked = selection
-        ? Array.isArray(selection)
-          ? selection
-          : selection.selection
-        : [];
+      const picked = selection ? (Array.isArray(selection) ? selection : selection.selection) : [];
       const product = picked[0];
-      if (!product) return;
+      if (!product) {
+        return;
+      }
 
       setProductId(product.id);
       setSelectedProductTitle(product.title || product.id);
@@ -812,9 +788,7 @@ export default function ProductUpsertPage() {
       formData.set("productId", product.id);
       loadFetcher.submit(formData, { method: "post" });
     } catch (error) {
-      setPickerError(
-        error instanceof Error ? error.message : "상품 선택에 실패했습니다."
-      );
+      setPickerError(error instanceof Error ? error.message : "상품 선택에 실패했습니다.");
     } finally {
       setIsPicking(false);
     }
@@ -828,13 +802,9 @@ export default function ProductUpsertPage() {
 
   const upsertResult = upsertFetcher.data;
   const advancedResult = advancedFetcher.data;
-  const loadError =
-    loadFetcher.data && !loadFetcher.data.ok ? loadFetcher.data.message : null;
+  const loadError = loadFetcher.data && !loadFetcher.data.ok ? loadFetcher.data.message : null;
 
-  const canSubmit =
-    externalKey.trim().length > 0 &&
-    title.trim().length > 0 &&
-    maxPaxValid;
+  const canSubmit = externalKey.trim().length > 0 && title.trim().length > 0 && maxPaxValid;
 
   return (
     <Page>
@@ -853,8 +823,7 @@ export default function ProductUpsertPage() {
         {upsertResult && upsertResult.ok ? (
           <Banner tone="success" title="저장 완료">
             <p>
-              {upsertResult.mode} 완료 (productId:{" "}
-              {upsertResult.productId || "-"})
+              {upsertResult.mode} 완료 (productId: {upsertResult.productId || "-"})
             </p>
           </Banner>
         ) : null}
@@ -924,10 +893,7 @@ export default function ProductUpsertPage() {
               >
                 Select Product
               </Button>
-              <Button
-                onClick={generateKey}
-                loading={generateFetcher.state !== "idle"}
-              >
+              <Button onClick={generateKey} loading={generateFetcher.state !== "idle"}>
                 Generate
               </Button>
               <Text as="p" variant="bodySm" tone="subdued">
@@ -996,11 +962,7 @@ export default function ProductUpsertPage() {
                   <Text as="p" variant="bodySm" tone="subdued">
                     categoryImage (tour.images1)
                   </Text>
-                  <input
-                    name="categoryImage"
-                    type="file"
-                    accept="image/jpeg,image/png"
-                  />
+                  <input name="categoryImage" type="file" accept="image/jpeg,image/png" />
                   {loadedMedia.categoryImageFileId ? (
                     <Text as="p" variant="bodySm" tone="subdued">
                       현재 categoryImage: {loadedMedia.categoryImageFileId}
@@ -1011,12 +973,7 @@ export default function ProductUpsertPage() {
                   <Text as="p" variant="bodySm" tone="subdued">
                     travelGallery (최대 10장)
                   </Text>
-                  <input
-                    name="travelGallery"
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    multiple
-                  />
+                  <input name="travelGallery" type="file" accept="image/jpeg,image/png" multiple />
                   {loadedMedia.galleryFileIds?.length ? (
                     <Text as="p" variant="bodySm" tone="subdued">
                       현재 gallery: {loadedMedia.galleryFileIds.join(", ")}
@@ -1113,8 +1070,12 @@ export default function ProductUpsertPage() {
                     <Button
                       onClick={() => {
                         const next = blackoutInput.trim();
-                        if (!next) return;
-                        if (blackoutDates.includes(next)) return;
+                        if (!next) {
+                          return;
+                        }
+                        if (blackoutDates.includes(next)) {
+                          return;
+                        }
                         setBlackoutDates((prev) => [...prev, next]);
                         setBlackoutInput("");
                       }}
@@ -1129,9 +1090,7 @@ export default function ProductUpsertPage() {
                         size="micro"
                         tone="critical"
                         onClick={() =>
-                          setBlackoutDates((prev) =>
-                            prev.filter((value) => value !== date)
-                          )
+                          setBlackoutDates((prev) => prev.filter((value) => value !== date))
                         }
                       >
                         {date}
@@ -1178,10 +1137,8 @@ export default function ProductUpsertPage() {
                         onChange={(value) =>
                           setPricingRows((prev) =>
                             prev.map((item) =>
-                              item.tier === row.tier
-                                ? { ...item, adult: value }
-                                : item
-                            )
+                              item.tier === row.tier ? { ...item, adult: value } : item,
+                            ),
                           )
                         }
                         type="number"
@@ -1196,10 +1153,8 @@ export default function ProductUpsertPage() {
                         onChange={(value) =>
                           setPricingRows((prev) =>
                             prev.map((item) =>
-                              item.tier === row.tier
-                                ? { ...item, child: value }
-                                : item
-                            )
+                              item.tier === row.tier ? { ...item, child: value } : item,
+                            ),
                           )
                         }
                         type="number"
@@ -1214,10 +1169,8 @@ export default function ProductUpsertPage() {
                         onChange={(value) =>
                           setPricingRows((prev) =>
                             prev.map((item) =>
-                              item.tier === row.tier
-                                ? { ...item, infant: value }
-                                : item
-                            )
+                              item.tier === row.tier ? { ...item, infant: value } : item,
+                            ),
                           )
                         }
                         type="number"
@@ -1248,7 +1201,9 @@ export default function ProductUpsertPage() {
                       checked={selectedPublicationIds.includes(pub.id)}
                       onChange={(checked) => {
                         setSelectedPublicationIds((prev) => {
-                          if (checked) return [...prev, pub.id];
+                          if (checked) {
+                            return [...prev, pub.id];
+                          }
                           return prev.filter((id) => id !== pub.id);
                         });
                       }}
@@ -1256,7 +1211,9 @@ export default function ProductUpsertPage() {
                   ))}
                 </InlineStack>
                 {selectedPublicationIds.length === 0 ? (
-                  <Text as="p" tone="critical">게시하려면 판매 채널을 하나 이상 선택해 주세요.</Text>
+                  <Text as="p" tone="critical">
+                    게시하려면 판매 채널을 하나 이상 선택해 주세요.
+                  </Text>
                 ) : null}
               </BlockStack>
             </Card>
@@ -1281,7 +1238,8 @@ export default function ProductUpsertPage() {
                   </Button>
                 </InlineStack>
                 <Text as="p" tone="subdued">
-                  Save Changes는 기존 판매 상태와 게시 채널을 유지합니다. 새 상품은 초안으로 저장됩니다.
+                  Save Changes는 기존 판매 상태와 게시 채널을 유지합니다. 새 상품은 초안으로
+                  저장됩니다.
                 </Text>
               </BlockStack>
             </Card>
@@ -1327,9 +1285,7 @@ export default function ProductUpsertPage() {
                     <Text as="span" variant="bodySm">
                       {step.step}
                     </Text>
-                    <Badge tone={step.ok ? "success" : "critical"}>
-                      {step.ok ? "OK" : "FAIL"}
-                    </Badge>
+                    <Badge tone={step.ok ? "success" : "critical"}>{step.ok ? "OK" : "FAIL"}</Badge>
                   </InlineStack>
                 ))}
               </BlockStack>
@@ -1349,9 +1305,7 @@ export default function ProductUpsertPage() {
                     <Text as="span" variant="bodySm">
                       {step.step}
                     </Text>
-                    <Badge tone={step.ok ? "success" : "critical"}>
-                      {step.ok ? "OK" : "FAIL"}
-                    </Badge>
+                    <Badge tone={step.ok ? "success" : "critical"}>{step.ok ? "OK" : "FAIL"}</Badge>
                   </InlineStack>
                 ))}
               </BlockStack>
@@ -1365,10 +1319,7 @@ export default function ProductUpsertPage() {
               <Text as="h2" variant="headingMd">
                 Troubleshooting
               </Text>
-              <Button
-                onClick={() => setTroubleshootingOpen((prev) => !prev)}
-                variant="plain"
-              >
+              <Button onClick={() => setTroubleshootingOpen((prev) => !prev)} variant="plain">
                 {troubleshootingOpen ? "Hide" : "Show"}
               </Button>
             </InlineStack>

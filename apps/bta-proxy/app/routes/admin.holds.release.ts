@@ -3,7 +3,7 @@ import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { adminHoldReleaseSchema } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
-import { getBookingStore } from "~/lib/bookingStore";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
 import { maskPII } from "~/lib/masking";
 
 /**
@@ -14,7 +14,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
 
   const authResponse = await verifyInternal(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   try {
     const body = await request.json();
@@ -29,7 +31,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           dryRun: true,
           reason: validated.reason || null,
         },
-        { correlationId }
+        { correlationId },
       );
     }
 
@@ -43,7 +45,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           dryRun: false,
           reason: validated.reason || null,
         },
-        { correlationId }
+        { correlationId },
       );
     } catch (releaseError) {
       if (releaseError instanceof Error) {
@@ -60,19 +62,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               dryRun: false,
               reason: "ALREADY_RELEASED",
             },
-            { correlationId }
+            { correlationId },
           );
         }
-        if (
-          releaseError.message.includes("timeout") ||
-          releaseError.name === "TimeoutError"
-        ) {
+        if (releaseError.message.includes("timeout") || releaseError.name === "TimeoutError") {
           return respond.fail(
             ErrorCode.BOOKING_STORE_TIMEOUT,
             getErrorMessage(ErrorCode.BOOKING_STORE_TIMEOUT),
             undefined,
             getErrorStatus(ErrorCode.BOOKING_STORE_TIMEOUT),
-            correlationId
+            correlationId,
           );
         }
 
@@ -81,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.BOOKING_STORE_ERROR),
           undefined,
           getErrorStatus(ErrorCode.BOOKING_STORE_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -94,7 +93,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -106,7 +105,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -116,8 +115,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           correlationId,
           message: "Admin hold release error",
           error: error instanceof Error ? error.message : String(error),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -125,7 +124,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

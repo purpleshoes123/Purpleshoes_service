@@ -8,9 +8,9 @@ import {
   getCustomerEntitlements,
   listLedgerEvents,
   type EntitlementType,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 import db from "~/db.server";
-import { listLogs } from "~/lib/guideExtension/logStore";
+import { listLogs } from "~/domains/checkout/guideExtension/logStore";
 
 function normalizeCustomerId(value: string): string {
   if (value.startsWith("gid://")) {
@@ -26,9 +26,7 @@ function serializeLog(log: any) {
   return {
     ...log,
     baseExpiresAt: log.baseExpiresAt ? log.baseExpiresAt.toISOString() : null,
-    previousExpiresAt: log.previousExpiresAt
-      ? log.previousExpiresAt.toISOString()
-      : null,
+    previousExpiresAt: log.previousExpiresAt ? log.previousExpiresAt.toISOString() : null,
     newExpiresAt: log.newExpiresAt ? log.newExpiresAt.toISOString() : null,
     createdAt: log.createdAt.toISOString(),
   };
@@ -45,7 +43,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       shop = url.searchParams.get("shop");
       if (!shop) {
@@ -54,7 +54,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       if (!shop.includes(".")) {
@@ -72,11 +72,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -87,7 +87,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId는 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -113,7 +113,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         logs: logs.logs.map(serializeLog),
         nextCursor: logs.nextCursor,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     return respond.fail(
@@ -121,7 +121,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

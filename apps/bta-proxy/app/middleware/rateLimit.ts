@@ -1,4 +1,3 @@
-
 import { ErrorCode } from "~/lib/errors";
 import { respond } from "~/lib/respond";
 import { maskPII } from "~/lib/masking";
@@ -43,7 +42,9 @@ export async function checkRateLimit(request: Request): Promise<boolean> {
 
   if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node") {
     const shared = getRedisRateLimitCounterStore();
-    if (!shared) throw new Error("Shared rate limiter unavailable");
+    if (!shared) {
+      throw new Error("Shared rate limiter unavailable");
+    }
     const fingerprint = createHash("sha256").update(ip).digest("hex");
     const result = await shared.increment(`bta:rate-limit:ip:v1:${fingerprint}`, windowMs);
     return result.count > limitPerMin;
@@ -81,9 +82,13 @@ export async function enforceRateLimit(request: Request): Promise<Response | voi
   try {
     exceeded = await checkRateLimit(request);
   } catch {
-    const response = respond.fail(ErrorCode.INTERNAL_ERROR,
+    const response = respond.fail(
+      ErrorCode.INTERNAL_ERROR,
       "Service temporarily unavailable. Please try again shortly.",
-      undefined, 503, respond.getCorrelationId(request));
+      undefined,
+      503,
+      respond.getCorrelationId(request),
+    );
     response.headers.set("Retry-After", "5");
     return respond.withNoStore(response);
   }
@@ -100,7 +105,7 @@ export async function enforceRateLimit(request: Request): Promise<Response | voi
         ip: maskPII(ip),
         limitPerMin,
         path: new URL(request.url).pathname,
-      })
+      }),
     );
 
     const response = respond.fail(
@@ -108,7 +113,7 @@ export async function enforceRateLimit(request: Request): Promise<Response | voi
       "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
       undefined,
       429,
-      correlationId
+      correlationId,
     );
     response.headers.set("Retry-After", "60");
     return respond.withNoStore(response);

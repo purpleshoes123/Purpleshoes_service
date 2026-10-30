@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
 import { authenticate } from "~/shopify.server";
 
 type AdminHealthData = {
@@ -29,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             details: error.details ?? null,
           },
         },
-        { status: error.status, headers: { "Cache-Control": "no-store" } }
+        { status: error.status, headers: { "Cache-Control": "no-store" } },
       );
     }
 
@@ -41,7 +41,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           message: error instanceof Error ? error.message : "요청 처리에 실패했습니다.",
         },
       },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
+      { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }
 };

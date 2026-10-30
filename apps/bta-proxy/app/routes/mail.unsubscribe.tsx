@@ -4,7 +4,7 @@ import {
   isValidMailUnsubscribeSignature,
   suppressMailRecipient,
   syncShopifyEmailMarketingUnsubscribe,
-} from "~/lib/mailer/unsubscribe.server";
+} from "~/domains/mail/unsubscribe.server.ts";
 
 const RESPONSE_HEADERS = {
   "Cache-Control": "no-store, max-age=0",
@@ -28,9 +28,9 @@ function page(params: {
 }) {
   const action = params.form
     ? `<form method="post"><input type="hidden" name="rid" value="${escapeHtml(
-        params.form.sendRequestId
+        params.form.sendRequestId,
       )}"><input type="hidden" name="sig" value="${escapeHtml(
-        params.form.signature
+        params.form.signature,
       )}"><button type="submit">Confirm unsubscribe</button></form>`
     : `<a class="button" href="https://kpurpleshoes.com/">Continue to Purple Shoes</a>`;
 
@@ -50,7 +50,7 @@ function page(params: {
     </style>
   </head>
   <body><main><p class="eyebrow">Purple Shoes</p><h1>${escapeHtml(
-    params.title
+    params.title,
   )}</h1><p class="message">${escapeHtml(params.message)}</p>${action}</main></body>
 </html>`;
 }
@@ -60,7 +60,9 @@ async function getVerifiedSendRequest(params: {
   signature: string | null;
 }) {
   const sendRequestId = params.sendRequestId?.trim() || "";
-  if (!sendRequestId || !params.signature) return null;
+  if (!sendRequestId || !params.signature) {
+    return null;
+  }
 
   const sendRequest = await db.mailSendRequest.findUnique({
     where: { id: sendRequestId },
@@ -98,21 +100,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         title: "This unsubscribe link is invalid",
         message: "Please use the latest unsubscribe link from a Purple Shoes email.",
       }),
-      { status: 400, headers: RESPONSE_HEADERS }
+      { status: 400, headers: RESPONSE_HEADERS },
     );
   }
 
   return new Response(
     page({
       title: "Unsubscribe from Purple Shoes emails?",
-      message:
-        "Confirming this will stop future Purple Shoes marketing emails to this address.",
+      message: "Confirming this will stop future Purple Shoes marketing emails to this address.",
       form: {
         sendRequestId: sendRequest.id,
         signature: url.searchParams.get("sig") || "",
       },
     }),
-    { headers: RESPONSE_HEADERS }
+    { headers: RESPONSE_HEADERS },
   );
 };
 
@@ -129,7 +130,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         title: "This unsubscribe link is invalid",
         message: "Please use the latest unsubscribe link from a Purple Shoes email.",
       }),
-      { status: 400, headers: RESPONSE_HEADERS }
+      { status: 400, headers: RESPONSE_HEADERS },
     );
   }
 
@@ -151,7 +152,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify({
         message: "Shopify marketing consent sync failed after BTA unsubscribe",
         sendRequestId: sendRequest.id,
-      })
+      }),
     );
   }
 
@@ -160,6 +161,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       title: "You’re unsubscribed",
       message: "You will no longer receive Purple Shoes marketing emails.",
     }),
-    { headers: RESPONSE_HEADERS }
+    { headers: RESPONSE_HEADERS },
   );
 };

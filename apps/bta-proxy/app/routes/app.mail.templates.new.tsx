@@ -20,18 +20,15 @@ import db from "~/db.server";
 import {
   parseMailTemplateEditorForm,
   type MailTemplateEditorInput,
-} from "~/lib/mailer/adminForms.server";
+} from "~/domains/mail/adminForms.server.ts";
 import {
   MAILER_ATTACHMENT_MODE_VALUES,
   MAILER_ROUTE_PATHS,
   MAILER_TEMPLATE_VARIABLES,
-} from "~/lib/mailer/contracts";
-import { renderMailTemplate } from "~/lib/mailer/render";
-import {
-  createTemplate,
-  isTemplateSlugTaken,
-} from "~/lib/mailer/templateStore.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+} from "~/domains/mail/contracts";
+import { renderMailTemplate } from "~/domains/mail/render";
+import { createTemplate, isTemplateSlugTaken } from "~/domains/mail/templateStore.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 import { authenticate } from "~/shopify.server";
 
 type ActionData = {
@@ -45,7 +42,8 @@ function extractFieldErrors(error: unknown) {
     return {};
   }
 
-  const issues = (error as { issues: Array<{ path?: Array<string | number>; message: string }> }).issues;
+  const issues = (error as { issues: Array<{ path?: Array<string | number>; message: string }> })
+    .issues;
   const fieldErrors: Record<string, string> = {};
 
   for (const issue of issues) {
@@ -92,12 +90,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
 
     const search = new URL(request.url).search;
-    throw redirect(
-      withEmbeddedSearch(
-        MAILER_ROUTE_PATHS.adminTemplateDetail(created.id),
-        search
-      )
-    );
+    throw redirect(withEmbeddedSearch(MAILER_ROUTE_PATHS.adminTemplateDetail(created.id), search));
   } catch (error) {
     if (error instanceof Response) {
       throw error;
@@ -105,10 +98,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return json<ActionData>({
       ok: false,
-      errorMessage:
-        error instanceof Error
-          ? error.message
-          : "템플릿 생성 중 오류가 발생했습니다.",
+      errorMessage: error instanceof Error ? error.message : "템플릿 생성 중 오류가 발생했습니다.",
       fieldErrors: extractFieldErrors(error),
     });
   }
@@ -149,9 +139,7 @@ export default function MailTemplateNewPage() {
     <Page>
       <TitleBar title="New Mail Template" />
       <BlockStack gap="400">
-        <Button url={toInApp(MAILER_ROUTE_PATHS.adminTemplates)}>
-          Back to Templates
-        </Button>
+        <Button url={toInApp(MAILER_ROUTE_PATHS.adminTemplates)}>Back to Templates</Button>
 
         {actionData && !actionData.ok ? (
           <Banner tone="critical" title="Create failed">

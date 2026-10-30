@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { useFetcher, useLoaderData } from "react-router";
@@ -15,7 +15,7 @@ import {
   TextField,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
 
 type GuideType = "PDF" | "VIDEO" | "BUNDLE";
 
@@ -131,7 +131,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             pdfAssetId: String(formData.get("pdfAssetId") || "") || undefined,
             videoAssetId: String(formData.get("videoAssetId") || "") || undefined,
           }),
-        }
+        },
       );
       return json<ActionData>({ ok: true, message: "가이드 에셋 연결을 저장했습니다." });
     }
@@ -145,7 +145,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           body: JSON.stringify({
             restaurantListId: String(formData.get("restaurantListId") || ""),
           }),
-        }
+        },
       );
       return json<ActionData>({ ok: true, message: "식당 리스트 연결을 저장했습니다." });
     }
@@ -166,15 +166,15 @@ export default function GkvGuidesLegacyPage() {
   const pdfOptions = [{ label: "선택 안 함", value: "" }].concat(
     assets
       .filter((asset) => asset.kind === "PDF")
-      .map((asset) => ({ label: `${asset.title} (${asset.id})`, value: asset.id }))
+      .map((asset) => ({ label: `${asset.title} (${asset.id})`, value: asset.id })),
   );
   const videoOptions = [{ label: "선택 안 함", value: "" }].concat(
     assets
       .filter((asset) => asset.kind === "VIDEO")
-      .map((asset) => ({ label: `${asset.title} (${asset.id})`, value: asset.id }))
+      .map((asset) => ({ label: `${asset.title} (${asset.id})`, value: asset.id })),
   );
   const restaurantListOptions = [{ label: "선택", value: "" }].concat(
-    restaurantLists.map((item) => ({ label: `${item.title} (${item.id})`, value: item.id }))
+    restaurantLists.map((item) => ({ label: `${item.title} (${item.id})`, value: item.id })),
   );
 
   const rows = guides.map((guide) => [

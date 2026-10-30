@@ -2,12 +2,14 @@ import type { ActionFunctionArgs } from "react-router";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { respond } from "~/lib/respond";
-import { categoryUpdateSchema } from "~/lib/gkv/adminSchemas";
+import { categoryUpdateSchema } from "~/domains/guide-viewer/adminSchemas";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
 
@@ -17,7 +19,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "category id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -33,7 +35,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -45,7 +47,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "카테고리를 찾을 수 없습니다."),
         undefined,
         404,
-        correlationId
+        correlationId,
       );
     }
 
@@ -63,7 +65,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
             getErrorMessage(ErrorCode.VALIDATION_ERROR, "상위 카테고리를 찾을 수 없습니다."),
             undefined,
             getErrorStatus(ErrorCode.VALIDATION_ERROR),
-            correlationId
+            correlationId,
           );
         }
         nextDepth = (parent.depth + 1) as 1 | 2 | 3;
@@ -76,7 +78,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "depth는 1~3 범위여야 합니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
     } else if (payload.depth !== undefined) {
@@ -89,7 +91,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 depth입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -99,7 +101,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "depth=1은 parentId를 가질 수 없습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -110,11 +112,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           ErrorCode.VALIDATION_ERROR,
           getErrorMessage(
             ErrorCode.VALIDATION_ERROR,
-            `depth=${nextDepth}는 depth=${nextDepth - 1} parentId가 필요합니다.`
+            `depth=${nextDepth}는 depth=${nextDepth - 1} parentId가 필요합니다.`,
           ),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
     }
@@ -131,7 +133,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "자기 자신을 상위로 지정할 수 없습니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -167,7 +169,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "자손을 상위로 지정할 수 없습니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -180,11 +182,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
               ErrorCode.VALIDATION_ERROR,
               getErrorMessage(
                 ErrorCode.VALIDATION_ERROR,
-                `이동 시 자손 카테고리의 depth가 1~3 범위를 벗어납니다 (예상 depth=${newD}).`
+                `이동 시 자손 카테고리의 depth가 1~3 범위를 벗어납니다 (예상 depth=${newD}).`,
               ),
               undefined,
               getErrorStatus(ErrorCode.VALIDATION_ERROR),
-              correlationId
+              correlationId,
             );
           }
           descendantCascade.push({ id: d.id, nextDepth: newD });
@@ -193,11 +195,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       if (nextSortOrder === undefined) {
         const newSiblings = (childrenByParent.get(nextParentId) ?? []).filter(
-          (s) => s.id !== current.id
+          (s) => s.id !== current.id,
         );
         const maxSibling = newSiblings.reduce(
           (acc, s) => (s.sortOrder > acc ? s.sortOrder : acc),
-          -10
+          -10,
         );
         nextSortOrder = maxSibling + 10;
       }
@@ -213,9 +215,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           ...(payload.parentId !== undefined ? { parentId: payload.parentId } : {}),
           ...(nextSortOrder !== undefined ? { sortOrder: nextSortOrder } : {}),
           ...(payload.isActive !== undefined ? { isActive: payload.isActive } : {}),
-          ...(payload.exposeAsGuide !== undefined
-            ? { exposeAsGuide: payload.exposeAsGuide }
-            : {}),
+          ...(payload.exposeAsGuide !== undefined ? { exposeAsGuide: payload.exposeAsGuide } : {}),
         },
       });
 
@@ -231,9 +231,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       {
         id,
         updated: true,
-        ...(wantsReparent ? { newDepth: nextDepth, cascadedDescendants: descendantCascade.length } : {}),
+        ...(wantsReparent
+          ? { newDepth: nextDepth, cascadedDescendants: descendantCascade.length }
+          : {}),
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
@@ -242,11 +244,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -255,7 +257,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

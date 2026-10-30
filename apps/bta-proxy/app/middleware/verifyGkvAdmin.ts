@@ -1,5 +1,5 @@
 import { respond } from "~/lib/respond";
-import { getGkvEnv } from "~/lib/gkv/env";
+import { getGkvEnv } from "~/domains/guide-viewer/env";
 
 export async function verifyGkvAdmin(request: Request): Promise<Response | null> {
   const correlationId = respond.getCorrelationId(request);
@@ -12,7 +12,7 @@ export async function verifyGkvAdmin(request: Request): Promise<Response | null>
       "GKV_ADMIN_TOKEN이 설정되지 않아 /admin 기능이 비활성화되었습니다.",
       undefined,
       503,
-      correlationId
+      correlationId,
     );
   }
 
@@ -27,7 +27,7 @@ export async function verifyGkvAdmin(request: Request): Promise<Response | null>
       "관리자 인증에 실패했습니다.",
       undefined,
       401,
-      correlationId
+      correlationId,
     );
   }
 

@@ -14,16 +14,20 @@ export const memberRespond = {
  */
 export async function verifyMemberAppProxy(request: Request): Promise<Response | void> {
   const invalidSignature = await verifyAppProxy(request);
-  if (invalidSignature) return respond.withNoStore(invalidSignature);
+  if (invalidSignature) {
+    return respond.withNoStore(invalidSignature);
+  }
 
   const ids = new URL(request.url).searchParams.getAll("logged_in_customer_id");
   if (ids.length !== 1 || !/^[1-9][0-9]*$/.test(ids[0])) {
-    return respond.withNoStore(respond.fail(
-      "AUTH_LOGIN_REQUIRED",
-      "Please sign in to view prices and booking availability.",
-      undefined,
-      401,
-      respond.getCorrelationId(request),
-    ));
+    return respond.withNoStore(
+      respond.fail(
+        "AUTH_LOGIN_REQUIRED",
+        "Please sign in to view prices and booking availability.",
+        undefined,
+        401,
+        respond.getCorrelationId(request),
+      ),
+    );
   }
 }
