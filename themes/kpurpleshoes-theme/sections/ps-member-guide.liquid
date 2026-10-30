@@ -1,145 +1,187 @@
-{{ 'member-guide.css' | asset_url | stylesheet_tag }}
-<section id="member-purchase" class="tg-pricing ps-member-guide" {% if customer %}data-member-guide{% endif %} tabindex="-1">
-  <div class="tg-pricing__inner">
-    <header class="tg-pricing__head">
-      <h2 class="tg-pricing__title">{{ section.settings.heading | escape }}</h2>
-    </header>
-    {% if customer %}<p role="status" aria-live="polite" data-member-status>{{ 'member_catalog.loading' | t }}</p>{% endif %}
-    <div class="tg-pricing__grid" data-member-plans role="list">
-      {% for block in section.blocks %}
-        <article class="tg-pricing-card{% if block.settings.kind == 'BUNDLE' %} tg-pricing-card--featured{% endif %}" data-plan-kind="{{ block.settings.kind | escape }}" {% if customer %}data-plan-cta="{{ block.settings.cta | escape }}"{% endif %} role="listitem" {{ block.shopify_attributes }}>
-          {% if customer %}
-            {% if block.settings.kind == 'BUNDLE' %}<div class="tg-pricing-card__badge-row"><span class="tg-pricing-card__bar">{{ block.settings.badge | escape }}</span></div>{% endif %}
-          {% endif %}
-          <h3 class="tg-pricing-card__plan">{{ block.settings.title | escape }}</h3>
-          {% if customer %}
-            <div data-plan-purchase></div>
-          {% else %}
-            {% assign guide_return = request.path | append: '#member-purchase' | url_encode %}
-            <a class="tg-pricing-card__btn" href="/customer_authentication/login?return_to={{ guide_return }}">{{ 'member_catalog.signin' | t }}</a>
-          {% endif %}
-        </article>
-      {% endfor %}
-    </div>
-    {% if customer %}
-    <dialog class="ps-member-guide__upgrade" data-member-extension aria-labelledby="MemberExtension-{{ section.id }}">
-      <button type="button" class="ps-member-guide__close" data-extension-close aria-label="{{ 'member_catalog.close' | t }}">×</button>
-      <h2 id="MemberExtension-{{ section.id }}">{{ 'member_catalog.extend_title' | t }}</h2>
-      <p>{{ 'member_catalog.extend_description' | t }}</p>
-      <div id="GuideExtensionRoot" data-customer-id="{{ customer.id }}"></div>
-    </dialog>
-    <button type="button" class="button" data-member-retry hidden>{{ 'member_catalog.retry' | t }}</button>
-    <dialog class="ps-member-guide__upgrade" data-member-upgrade aria-labelledby="MemberUpgrade-{{ section.id }}">
-      <button type="button" class="ps-member-guide__close" data-upgrade-close aria-label="{{ 'member_catalog.close' | t }}">×</button>
-      <h2 id="MemberUpgrade-{{ section.id }}">{{ 'member_catalog.upgrade_title' | t }}</h2>
-      <p>{{ 'member_catalog.upgrade_description' | t }}</p>
-      <strong data-upgrade-price></strong>
-      <p data-upgrade-savings></p>
-      <p>{{ 'member_catalog.estimate' | t }}</p>
-      <div data-only-coupon hidden>
-        <label><input type="checkbox" data-only-extra checked><span>{{ 'member_catalog.only_coupon' | t }}</span></label>
-        <p data-only-total></p>
-      </div>
-      <button type="button" class="button" data-upgrade-accept>{{ 'member_catalog.upgrade_accept' | t }}</button>
-      <button type="button" class="button button--secondary" data-upgrade-keep>{{ 'member_catalog.upgrade_keep' | t }}</button>
-    </dialog>
-    <script type="application/json" data-member-copy>{
-      "error": {{ 'member_catalog.error' | t | json }},
-      "loading": {{ 'member_catalog.loading' | t | json }},
-      "checkout": {{ 'member_catalog.checkout' | t | json }},
-      "working": {{ 'member_catalog.working' | t | json }},
-      "extra": {{ 'member_catalog.extra' | t | json }},
-      "estimate": {{ 'member_catalog.estimate' | t | json }},
-      "active": {{ 'member_catalog.active' | t | json }},
-      "active_hint": {{ 'member_catalog.active_hint' | t | json }},
-      "extend": {{ 'member_catalog.extend' | t | json }},
-      "extend_access": {{ 'member_catalog.extend_access' | t | json }},
-      "extend_hint": {{ 'member_catalog.extend_hint' | t | json }},
-      "extend_price": {{ 'member_catalog.extend_price' | t | json }},
-      "only_coupon_hint": {{ 'member_catalog.only_coupon_hint' | t | json }},
-      "only_total": {{ 'member_catalog.only_total' | t: amount: '[amount]' | json }},
-      "kit_percent_extra": {{ 'member_catalog.kit_percent_extra' | t: percent: '[percent]', amount: '[amount]' | json }},
-      "kit_percent": {{ 'member_catalog.kit_percent' | t: percent: '[percent]' | json }},
-      "kit_extra": {{ 'member_catalog.kit_extra' | t: amount: '[amount]' | json }},
-      "pay_once": {{ 'member_catalog.pay_once' | t | json }},
-      "welcome_timer": {{ 'member_catalog.welcome_timer' | t: percent: '[percent]' | json }},
-      "features": {
-        "PDF": [{{ 'member_catalog.pdf' | t | json }}, {{ 'member_catalog.single_access' | t | json }}, {{ 'member_catalog.offline' | t | json }}],
-        "VIDEO": [{{ 'member_catalog.video' | t | json }}, {{ 'member_catalog.single_access' | t | json }}, {{ 'member_catalog.offline' | t | json }}],
-        "BUNDLE": [{{ 'member_catalog.bundle_contents' | t | json }}, {{ 'member_catalog.bundle_access' | t | json }}, {{ 'member_catalog.map' | t | json }}, {{ 'member_catalog.tour_coupon' | t | json }}, {{ 'member_catalog.offline' | t | json }}]
-      },
-      "PDF": {{ 'member_catalog.pdf' | t | json }},
-      "BUNDLE": {{ 'member_catalog.bundle' | t | json }},
-      "VIDEO": {{ 'member_catalog.video' | t | json }}
-    }</script>
-
-    {% endif %}
-      <div class="tg-compare" aria-label="Plan comparison">
-        <div class="tg-compare__grid">
-
-          <div class="tg-compare__col">
-            <div class="tg-compare__col-head">Guidebook ONLY</div>
-            <ul class="tg-compare__list">
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Guidebook</li>
-              <li class="tg-compare__item tg-compare__item--no">Video Guide</li>
-              <li class="tg-compare__item tg-compare__item--no">1,000+ Local Foodie Hidden Gems</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Offline Viewing</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Up to 2 devices</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>90-days access</li>
-              <li class="tg-compare__item tg-compare__item--no">15% Off Experience Tour Coupon</li>
-              <li class="tg-compare__item tg-compare__item--no">Purple Map — 1,500+ handpicked spots</li>
-            </ul>
+{{ 'kit-detail.css' | asset_url | stylesheet_tag }}
+{%- assign kit_hero = section.settings.hero_image | default: images['938207a5477970309a67488f9a0400dc.png'] -%}
+{%- assign guide_return = request.path | append: '#member-purchase' | url_encode -%}
+<div class="kgd" data-kit-detail {% if customer %}data-member-guide data-kit-state="loading"{% else %}data-kit-state="guest"{% endif %}>
+  <div class="kgd__inner">
+    <section class="kgd__hero" aria-labelledby="KitHero-{{ section.id }}">
+      {% if kit_hero != blank %}{{ kit_hero | image_url: width: 1800 | image_tag: class: 'kgd__hero-image', widths: '600, 900, 1200, 1800', sizes: '(min-width: 1280px) 1200px, 100vw', loading: 'eager', fetchpriority: 'high', alt: '' }}{% endif %}
+      <div class="kgd__hero-copy"><p class="kgd__eyebrow">{{ 'kit_detail.eyebrow' | t }}</p><h1 id="KitHero-{{ section.id }}">{{ 'kit_detail.hero_title' | t }}</h1><p class="kgd__hero-lead">{{ 'kit_detail.hero_lead' | t }}</p><p>{{ 'kit_detail.hero_copy' | t }}</p></div>
+    </section>
+    <div data-member-plans>
+      <section id="member-purchase" class="kgd__panel kgd__included" tabindex="-1" aria-labelledby="KitIncluded-{{ section.id }}">
+        <div class="kgd__contents"><h2 id="KitIncluded-{{ section.id }}">{{ 'kit_detail.included' | t }}</h2>
+          <div class="kgd__screens">
+            <figure><figcaption>{{ 'kit_detail.map' | t }}</figcaption><img src="{{ 'signup-preview-map.png' | asset_url }}" alt="{{ 'kit_detail.map_alt' | t }}" width="1912" height="910" loading="lazy" class="kgd__map-image"></figure>
+            <figure><figcaption>{{ 'kit_detail.book' | t }}</figcaption><img src="{{ 'signup-preview-guidebook.png' | asset_url }}" alt="{{ 'kit_detail.book_alt' | t }}" width="1903" height="832" loading="lazy" class="kgd__book-image"></figure>
+            <figure><figcaption>{{ 'kit_detail.video' | t }}</figcaption><img src="{{ 'signup-preview-video.png' | asset_url }}" alt="{{ 'kit_detail.video_alt' | t }}" width="1914" height="909" loading="lazy" class="kgd__video-image"></figure>
           </div>
-
-          <div class="tg-compare__col tg-compare__col--featured">
-            <div class="tg-compare__col-head">Korea Guide Kit</div>
-            <ul class="tg-compare__list">
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Guidebook</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Video Guide</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>1,000+ Local Foodie Hidden Gems</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Offline Viewing</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Up to 3 devices</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>180-days access</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>15% Off Experience Tour Coupon</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Purple Map — 1,500+ handpicked spots</li>
-            </ul>
-          </div>
-
-          <div class="tg-compare__col">
-            <div class="tg-compare__col-head">Video Guide ONLY</div>
-            <ul class="tg-compare__list">
-              <li class="tg-compare__item tg-compare__item--no">Guidebook</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Video Guide</li>
-              <li class="tg-compare__item tg-compare__item--no">1,000+ Local Foodie Hidden Gems</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Offline Viewing</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>Up to 2 devices</li>
-              <li class="tg-compare__item tg-compare__item--yes"><span class="tg-compare__icon" aria-hidden="true">✓</span>90-days access</li>
-              <li class="tg-compare__item tg-compare__item--no">15% Off Experience Tour Coupon</li>
-              <li class="tg-compare__item tg-compare__item--no">Purple Map — 1,500+ handpicked spots</li>
-            </ul>
-          </div>
-
+          <p class="kgd__contents-note">{% render 'starter-kit-icon', name: 'book' %}<strong>{{ 'kit_detail.contents' | t }}</strong></p><p class="kgd__contents-note kgd__muted">{% render 'starter-kit-icon', name: 'clipboard' %}{{ 'kit_detail.access' | t }}</p>
         </div>
-      </div>
-
+        <aside class="kgd__price-card" data-plan-kind="BUNDLE">
+          {% if customer %}
+          <div data-plan-purchase></div><p data-member-status class="kgd__status" role="status" aria-live="polite">{{ 'kit_detail.loading' | t }}</p><button class="kgd__button kgd__button--outline" data-member-retry type="button" hidden>{{ 'kit_detail.retry' | t }}</button>
+          {% else %}
+          <p class="kgd__muted">{{ 'kit_detail.guest_offer' | t }}</p><p class="kgd__amount">USD 75</p><strong class="kgd__condition">{{ 'kit_detail.guest_condition' | t }}</strong><p class="kgd__regular">{{ 'kit_detail.regular_kit' | t }}</p><p class="kgd__validity">{{ 'kit_detail.validity' | t }}</p><a class="kgd__button" href="/customer_authentication/login?return_to={{ guide_return }}">{{ 'kit_detail.signin' | t }}</a><p class="kgd__guest-note">{{ 'kit_detail.guest_note' | t }}</p>
+          {% endif %}
+        </aside>
+      </section>
+      <section class="kgd__panel kgd__map" aria-labelledby="KitMap-{{ section.id }}">
+        <div><h2 id="KitMap-{{ section.id }}">{{ 'kit_detail.map_title' | t }}</h2>
+          <div class="kgd__map-point"><span>{% render 'starter-kit-icon', name: 'navigation' %}</span><div><h3>{{ 'kit_detail.interest' | t }}</h3><p>{{ 'kit_detail.interest_copy' | t }}</p></div></div>
+          <div class="kgd__map-point"><span>{% render 'starter-kit-icon', name: 'pin' %}</span><div><h3>{{ 'kit_detail.beyond' | t }}</h3><p>{{ 'kit_detail.beyond_copy' | t }}</p></div></div>
+          <div class="kgd__map-point"><span>{% render 'starter-kit-icon', name: 'map' %}</span><div><h3>{{ 'kit_detail.directions' | t }}</h3><p>{{ 'kit_detail.directions_copy' | t }}</p></div></div>
+        </div>
+        <figure class="kgd__demo"><div class="kgd__video-frame"><video data-kit-demo controls playsinline preload="none" poster="{{ 'purple-map-demo-poster.jpg' | asset_url }}" aria-label="{{ 'kit_detail.watch' | t }}"><source src="{{ 'purple-map-demo.mp4' | asset_url }}" type="video/mp4"></video><button type="button" class="kgd__play" data-kit-play aria-label="{{ 'kit_detail.play' | t }}">{% render 'starter-kit-icon', name: 'play' %}</button></div><figcaption>{{ 'kit_detail.watch' | t }}</figcaption><p data-kit-video-error class="kgd__muted" role="status" hidden>{{ 'kit_detail.video_error' | t }}</p></figure>
+        <div class="kgd__trust">{% render 'starter-kit-icon', name: 'heart' %}<p><strong>{{ 'kit_detail.trust_title' | t }}</strong><span>{{ 'kit_detail.trust_copy' | t }}</span></p></div>
+      </section>
+      <section class="kgd__panel kgd__only" aria-labelledby="KitOnly-{{ section.id }}">
+        <div class="kgd__section-head"><h2 id="KitOnly-{{ section.id }}">{{ 'kit_detail.only_title' | t }}</h2><p data-kit-new-only>{{ 'kit_detail.only_note' | t }}</p></div><div class="kgd__only-grid">
+        <article class="kgd__only-card" data-plan-kind="PDF"><div class="kgd__only-top"><div class="kgd__only-image"><img src="{{ 'kit-guidebook-cover.png' | asset_url }}" alt="{{ 'kit_detail.cover_alt' | t }}" width="1273" height="1800" loading="lazy" ></div><div><h3>{{ 'kit_detail.PDF' | t }}</h3><p class="kgd__muted" data-kit-only-regular>{{ 'kit_detail.regular' | t }}</p><strong class="kgd__only-price" data-only-price>USD 50</strong><p class="kgd__muted">{{ 'kit_detail.pdf_copy' | t }}</p></div></div><div class="kgd__only-bottom"><p>{% render 'starter-kit-icon', name: 'clipboard' %}<span data-only-access>{{ 'kit_detail.only_access' | t }}</span><br>{% render 'starter-kit-icon', name: 'map' %}{{ 'kit_detail.no_map' | t }}</p>{% if customer %}<div data-plan-purchase></div>{% endif %}</div></article>
+        <article class="kgd__only-card" data-plan-kind="VIDEO"><div class="kgd__only-top"><div class="kgd__only-image"><img src="{{ 'signup-preview-video.png' | asset_url }}" alt="{{ 'kit_detail.video_alt' | t }}" width="1914" height="909" loading="lazy" ><span class="kgd__thumbnail-play" aria-hidden="true">{% render 'starter-kit-icon', name: 'play' %}</span></div><div><h3>{{ 'kit_detail.VIDEO' | t }}</h3><p class="kgd__muted" data-kit-only-regular>{{ 'kit_detail.regular' | t }}</p><strong class="kgd__only-price" data-only-price>USD 100</strong><p class="kgd__muted">{{ 'kit_detail.video_copy' | t }}</p></div></div><div class="kgd__only-bottom"><p>{% render 'starter-kit-icon', name: 'clipboard' %}<span data-only-access>{{ 'kit_detail.only_access' | t }}</span><br>{% render 'starter-kit-icon', name: 'map' %}{{ 'kit_detail.no_map' | t }}</p>{% if customer %}<div data-plan-purchase></div>{% endif %}</div></article>
+      </div></section>
+    </div>
+    <section class="kgd__panel kgd__steps"><h2 data-kit-steps-heading>{{ 'kit_detail.steps_title' | t }}</h2><div class="kgd__step-grid">
+      <div class="kgd__step"><b>1</b><div><h3 data-kit-step1>{% if customer %}{{ 'kit_detail.member_step' | t }}{% else %}{{ 'kit_detail.guest_step' | t }}{% endif %}</h3><p data-kit-step1-copy>{% if customer %}{{ 'kit_detail.member_step_copy' | t }}{% else %}{{ 'kit_detail.guest_step_copy' | t }}{% endif %}</p></div>{% render 'starter-kit-icon', name: 'chevron' %}</div>
+      <div class="kgd__step"><b>2</b><div><h3 data-kit-step2>{{ 'kit_detail.purchase_step' | t }}</h3><p data-kit-step2-copy>{{ 'kit_detail.purchase_step_copy' | t }}</p></div>{% render 'starter-kit-icon', name: 'chevron' %}</div>
+      <div class="kgd__step"><b>3</b><div><h3 data-kit-step3>{{ 'kit_detail.open_step' | t }}</h3><p data-kit-step3-copy>{{ 'kit_detail.open_step_copy' | t }}</p></div></div>
+    </div></section>
   </div>
-</section>
-{% if customer %}
-  {{ 'guide-extension.css' | asset_url | stylesheet_tag }}
-  <script src="{{ 'guide-extension.js' | asset_url }}" defer></script>
-  <script src="{{ 'member-guide.js' | asset_url }}" defer></script>
-{% endif %}
+  {% if customer %}
+  <dialog class="kgd__modal" data-member-upgrade aria-labelledby="MemberUpgrade-{{ section.id }}"><button class="kgd__close" type="button" data-upgrade-close aria-label="{{ 'kit_detail.close' | t }}">×</button><p class="kgd__eyebrow">{{ 'kit_detail.eyebrow' | t }}</p><h2 id="MemberUpgrade-{{ section.id }}" data-upgrade-title></h2><p class="kgd__modal-lead">{{ 'kit_detail.upgrade_copy' | t }}</p>
+    <div class="kgd__modal-benefit">{% render 'starter-kit-icon', name: 'clipboard' %}<p data-upgrade-benefit></p></div><div class="kgd__modal-benefit">{% render 'starter-kit-icon', name: 'pin' %}<p>{{ 'kit_detail.map_benefit' | t }}</p></div>
+    <div class="kgd__compare"><div class="kgd__compare-card"><span class="kgd__pill">{{ 'kit_detail.selection' | t }}</span><h3 data-only-name></h3><strong class="kgd__compare-price" data-only-total></strong><p data-only-summary></p><p>{{ 'kit_detail.only_access' | t }}</p><p>{{ 'kit_detail.no_map' | t }}</p></div><div class="kgd__compare-card kgd__compare-card--kit"><span class="kgd__pill">{{ 'kit_detail.complete' | t }}</span><h3>{{ 'kit_detail.BUNDLE' | t }}</h3><strong class="kgd__compare-price" data-upgrade-price></strong><p data-upgrade-savings></p><hr><p>{{ 'kit_detail.kit_features' | t }}</p><p>{{ 'kit_detail.kit_access' | t }}</p></div></div>
+    <p class="kgd__difference" data-upgrade-difference></p><div class="kgd__coupon" data-only-coupon hidden><label><input type="checkbox" data-only-extra checked><span data-only-extra-label></span></label><p>{{ 'kit_detail.coupon_hint' | t }}</p></div>
+    <button type="button" class="kgd__button" data-upgrade-accept>{{ 'kit_detail.upgrade_accept' | t }}</button><button type="button" class="kgd__button kgd__button--outline" data-upgrade-keep></button><p class="kgd__modal-note">{{ 'kit_detail.review_total' | t }}</p>
+  </dialog>
+  <dialog class="kgd__modal kgd__extension" data-member-extension aria-labelledby="MemberExtension-{{ section.id }}"><button class="kgd__close" type="button" data-extension-close aria-label="{{ 'kit_detail.close' | t }}">×</button><h2 id="MemberExtension-{{ section.id }}">{{ 'member_catalog.extend_title' | t }}</h2><p>{{ 'member_catalog.extend_description' | t }}</p><div id="GuideExtensionRoot" data-customer-id="{{ customer.id }}"></div></dialog>
+  <dialog class="kgd__modal kgd__share-modal" data-kit-share-dialog aria-labelledby="KitShare-{{ section.id }}"><button class="kgd__close" type="button" data-kit-share-close aria-label="{{ 'kit_detail.share_close' | t }}">×</button><h2 id="KitShare-{{ section.id }}">{{ 'kit_detail.referral_share' | t }}</h2><p>{{ 'kit_detail.share_ready' | t }}</p><a href="https://kpurpleshoes.com/pages/freeguideoptin">https://kpurpleshoes.com/pages/freeguideoptin</a><button class="kgd__button" type="button" data-kit-copy-link>{{ 'kit_detail.copy_link' | t }}</button><p data-kit-copy-status role="status"></p></dialog>
+  {% endif %}
+  <script type="application/json" data-kit-copy>{"eyebrow": {{ 'kit_detail.eyebrow' | t | json }},
+"hero_title": {{ 'kit_detail.hero_title' | t | json }},
+"hero_lead": {{ 'kit_detail.hero_lead' | t | json }},
+"hero_copy": {{ 'kit_detail.hero_copy' | t | json }},
+"included": {{ 'kit_detail.included' | t | json }},
+"map": {{ 'kit_detail.map' | t | json }},
+"book": {{ 'kit_detail.book' | t | json }},
+"video": {{ 'kit_detail.video' | t | json }},
+"contents": {{ 'kit_detail.contents' | t | json }},
+"access": {{ 'kit_detail.access' | t | json }},
+"guest_offer": {{ 'kit_detail.guest_offer' | t | json }},
+"guest_condition": {{ 'kit_detail.guest_condition' | t | json }},
+"regular_kit": {{ 'kit_detail.regular_kit' | t | json }},
+"validity": {{ 'kit_detail.validity' | t | json }},
+"signin": {{ 'kit_detail.signin' | t | json }},
+"guest_note": {{ 'kit_detail.guest_note' | t | json }},
+"current_offer": {{ 'kit_detail.current_offer' | t | json }},
+"welcome_offer": {{ 'kit_detail.welcome_offer' | t | json }},
+"regular": {{ 'kit_detail.regular' | t | json }},
+"regular_line": {{ 'kit_detail.regular_line' | t | json }},
+"welcome_line": {{ 'kit_detail.welcome_line' | t | json }},
+"extra_line": {{ 'kit_detail.extra_line' | t | json }},
+"total": {{ 'kit_detail.total' | t | json }},
+"expired": {{ 'kit_detail.expired' | t | json }},
+"applied": {{ 'kit_detail.applied' | t | json }},
+"timer": {{ 'kit_detail.timer' | t | json }},
+"get_kit": {{ 'kit_detail.get_kit' | t | json }},
+"confirm": {{ 'kit_detail.confirm' | t | json }},
+"referral_title": {{ 'kit_detail.referral_title' | t | json }},
+"referral_copy": {{ 'kit_detail.referral_copy' | t | json }},
+"referral_get": {{ 'kit_detail.referral_get' | t | json }},
+"referral_share": {{ 'kit_detail.referral_share' | t | json }},
+"referral_busy": {{ 'kit_detail.referral_busy' | t | json }},
+"referral_error": {{ 'kit_detail.referral_error' | t | json }},
+"share_ready": {{ 'kit_detail.share_ready' | t | json }},
+"share_copied": {{ 'kit_detail.share_copied' | t | json }},
+"copy_link": {{ 'kit_detail.copy_link' | t | json }},
+"share_close": {{ 'kit_detail.share_close' | t | json }},
+"extend_badge": {{ 'kit_detail.extend_badge' | t | json }},
+"extend_copy": {{ 'kit_detail.extend_copy' | t | json }},
+"extension_price": {{ 'kit_detail.extension_price' | t | json }},
+"extend": {{ 'kit_detail.extend' | t | json }},
+"pay_once": {{ 'kit_detail.pay_once' | t | json }},
+"extend_contents": {{ 'kit_detail.extend_contents' | t | json }},
+"not_owned": {{ 'kit_detail.not_owned' | t | json }},
+"choose_extension": {{ 'kit_detail.choose_extension' | t | json }},
+"map_title": {{ 'kit_detail.map_title' | t | json }},
+"interest": {{ 'kit_detail.interest' | t | json }},
+"interest_copy": {{ 'kit_detail.interest_copy' | t | json }},
+"beyond": {{ 'kit_detail.beyond' | t | json }},
+"beyond_copy": {{ 'kit_detail.beyond_copy' | t | json }},
+"directions": {{ 'kit_detail.directions' | t | json }},
+"directions_copy": {{ 'kit_detail.directions_copy' | t | json }},
+"watch": {{ 'kit_detail.watch' | t | json }},
+"play": {{ 'kit_detail.play' | t | json }},
+"video_error": {{ 'kit_detail.video_error' | t | json }},
+"trust_title": {{ 'kit_detail.trust_title' | t | json }},
+"trust_copy": {{ 'kit_detail.trust_copy' | t | json }},
+"only_title": {{ 'kit_detail.only_title' | t | json }},
+"only_note": {{ 'kit_detail.only_note' | t | json }},
+"PDF": {{ 'kit_detail.PDF' | t | json }},
+"VIDEO": {{ 'kit_detail.VIDEO' | t | json }},
+"BUNDLE": {{ 'kit_detail.BUNDLE' | t | json }},
+"pdf_copy": {{ 'kit_detail.pdf_copy' | t | json }},
+"video_copy": {{ 'kit_detail.video_copy' | t | json }},
+"only_access": {{ 'kit_detail.only_access' | t | json }},
+"only_devices": {{ 'kit_detail.only_devices' | t | json }},
+"no_map": {{ 'kit_detail.no_map' | t | json }},
+"pdf_cta": {{ 'kit_detail.pdf_cta' | t | json }},
+"video_cta": {{ 'kit_detail.video_cta' | t | json }},
+"steps_title": {{ 'kit_detail.steps_title' | t | json }},
+"guest_step": {{ 'kit_detail.guest_step' | t | json }},
+"guest_step_copy": {{ 'kit_detail.guest_step_copy' | t | json }},
+"member_step": {{ 'kit_detail.member_step' | t | json }},
+"member_step_copy": {{ 'kit_detail.member_step_copy' | t | json }},
+"purchase_step": {{ 'kit_detail.purchase_step' | t | json }},
+"purchase_step_copy": {{ 'kit_detail.purchase_step_copy' | t | json }},
+"open_step": {{ 'kit_detail.open_step' | t | json }},
+"open_step_copy": {{ 'kit_detail.open_step_copy' | t | json }},
+"extend_steps_title": {{ 'kit_detail.extend_steps_title' | t | json }},
+"extend_step1": {{ 'kit_detail.extend_step1' | t | json }},
+"extend_step1_copy": {{ 'kit_detail.extend_step1_copy' | t | json }},
+"extend_step2": {{ 'kit_detail.extend_step2' | t | json }},
+"extend_step2_copy": {{ 'kit_detail.extend_step2_copy' | t | json }},
+"extend_step3": {{ 'kit_detail.extend_step3' | t | json }},
+"extend_step3_copy": {{ 'kit_detail.extend_step3_copy' | t | json }},
+"closing_title": {{ 'kit_detail.closing_title' | t | json }},
+"closing_copy": {{ 'kit_detail.closing_copy' | t | json }},
+"extend_closing_title": {{ 'kit_detail.extend_closing_title' | t | json }},
+"extend_closing_copy": {{ 'kit_detail.extend_closing_copy' | t | json }},
+"pdf_upgrade": {{ 'kit_detail.pdf_upgrade' | t | json }},
+"video_upgrade": {{ 'kit_detail.video_upgrade' | t | json }},
+"upgrade_copy": {{ 'kit_detail.upgrade_copy' | t | json }},
+"pdf_benefit": {{ 'kit_detail.pdf_benefit' | t | json }},
+"video_benefit": {{ 'kit_detail.video_benefit' | t | json }},
+"map_benefit": {{ 'kit_detail.map_benefit' | t | json }},
+"selection": {{ 'kit_detail.selection' | t | json }},
+"complete": {{ 'kit_detail.complete' | t | json }},
+"kit_features": {{ 'kit_detail.kit_features' | t | json }},
+"kit_access": {{ 'kit_detail.kit_access' | t | json }},
+"only_coupon": {{ 'kit_detail.only_coupon' | t | json }},
+"coupon_hint": {{ 'kit_detail.coupon_hint' | t | json }},
+"upgrade_accept": {{ 'kit_detail.upgrade_accept' | t | json }},
+"upgrade_keep": {{ 'kit_detail.upgrade_keep' | t | json }},
+"review_total": {{ 'kit_detail.review_total' | t | json }},
+"regular_popup": {{ 'kit_detail.regular_popup' | t | json }},
+"popup_extra": {{ 'kit_detail.popup_extra' | t | json }},
+"popup_welcome": {{ 'kit_detail.popup_welcome' | t | json }},
+"more_pdf": {{ 'kit_detail.more_pdf' | t | json }},
+"more_video": {{ 'kit_detail.more_video' | t | json }},
+"less": {{ 'kit_detail.less' | t | json }},
+"same": {{ 'kit_detail.same' | t | json }},
+"close": {{ 'kit_detail.close' | t | json }},
+"reviews": {{ 'kit_detail.reviews' | t | json }},
+"faq": {{ 'kit_detail.faq' | t | json }},
+"map_alt": {{ 'kit_detail.map_alt' | t | json }},
+"book_alt": {{ 'kit_detail.book_alt' | t | json }},
+"video_alt": {{ 'kit_detail.video_alt' | t | json }},
+"cover_alt": {{ 'kit_detail.cover_alt' | t | json }},
+"loading": {{ 'kit_detail.loading' | t | json }},
+"error": {{ 'kit_detail.error' | t | json }},
+"retry": {{ 'kit_detail.retry' | t | json }},
+"working": {{ 'kit_detail.working' | t | json }}}</script>
+</div>
+{% if customer %}{{ 'guide-extension.css' | asset_url | stylesheet_tag }}<script src="{{ 'guide-extension.js' | asset_url }}" defer></script><script src="{{ 'member-guide.js' | asset_url }}" defer></script>{% endif %}
+<script src="{{ 'kit-detail-ui.js' | asset_url }}" defer></script>
 {% schema %}
-{
-  "name":"Member guide plans",
-  "settings":[{"type":"text","id":"heading","label":"Heading","default":"Choose Your Korea Guide"}],
-  "blocks":[{"type":"plan","name":"Guide plan","limit":3,"settings":[
-    {"type":"select","id":"kind","label":"Plan","options":[{"value":"PDF","label":"Guidebook"},{"value":"BUNDLE","label":"Korea Guide Kit"},{"value":"VIDEO","label":"Video guide"}],"default":"PDF"},
-    {"type":"text","id":"title","label":"Title"},
-    {"type":"textarea","id":"description","label":"Description"},
-    {"type":"text","id":"badge","label":"Badge"},
-    {"type":"text","id":"cta","label":"Purchase button"}
-  ]}],
-  "presets":[{"name":"Member guide plans"}]
-}
+{"name":"Korea Guide Kit detail","settings":[{"type":"text","id":"heading","label":"Legacy plan heading","default":"Choose Your Korea Guide"},{"type":"image_picker","id":"hero_image","label":"Hero image"}],"blocks":[{"type":"plan","name":"Guide plan","limit":3,"settings":[{"type":"select","id":"kind","label":"Plan","options":[{"value":"PDF","label":"Guidebook"},{"value":"BUNDLE","label":"Korea Guide Kit"},{"value":"VIDEO","label":"Video guide"}],"default":"PDF"},{"type":"text","id":"title","label":"Title"},{"type":"textarea","id":"description","label":"Description"},{"type":"text","id":"badge","label":"Badge"},{"type":"text","id":"cta","label":"Purchase button"}]}],"presets":[{"name":"Korea Guide Kit detail"}]}
 {% endschema %}

@@ -18,6 +18,7 @@
   endif
 -%}
 
+{% if section.settings.kit_collapsible %}<details class="kgd-disclosure"><summary class="kgd-disclosure__summary">{% render 'starter-kit-icon', name: 'clipboard' %}<span>{{ section.settings.heading | escape }}</span><span class="kgd-disclosure__chevron" aria-hidden="true"></span></summary><div class="kgd-disclosure__body">{% endif %}
 <section
   class="travel-reviews section-{{ section.id }}-padding"
   data-travel-reviews
@@ -66,6 +67,8 @@
     </div>
   </div>
 </section>
+
+{% if section.settings.kit_collapsible %}</div></details>{% endif %}
 
 <style>
 .travel-reviews {
@@ -861,6 +864,7 @@
 {
   "name": "Travel Reviews (List)",
   "settings": [
+    {"type":"checkbox","id":"kit_collapsible","label":"Kit page collapsible display","default":false},
     {"type":"text","id":"review_product_id","label":"Product ID for page reviews","info":"Use the existing product ID when this section appears on an introduction page."},
     {
       "type": "text",

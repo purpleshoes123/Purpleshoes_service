@@ -31,7 +31,8 @@
         "title_bg_radius": 16,
         "title_pad_x": 6,
         "title_pad_y": 4
-      }
+      },
+      "disabled": true
     },
     "member_plans": {
       "type": "ps-member-guide",
@@ -73,7 +74,8 @@
         "plan_video"
       ],
       "settings": {
-        "heading": "Choose Your Korea Guide"
+        "heading": "Choose Your Korea Guide",
+        "hero_image": "shopify://shop_images/938207a5477970309a67488f9a0400dc.png"
       }
     },
     "guidekit_banner_tour_plans": {
@@ -82,7 +84,8 @@
         "heading": "Stop Searching.\nStart Seeing.",
         "subheading": "Get Exclusive Knowledge\nfrom Korean Insiders.",
         "image": "shopify://shop_images/purple-map-naver-banner-20260911.png"
-      }
+      },
+      "disabled": true
     },
     "toc_grid_jeV4aL": {
       "type": "toc-grid",
@@ -193,7 +196,8 @@
         "text_color": "#222222",
         "muted_color": "#333333",
         "line_color": "#2f5fa7"
-      }
+      },
+      "disabled": true
     },
     "what_youll_do_WAqFqi": {
       "type": "what-youll-do",
@@ -230,7 +234,8 @@
         "thumb_bg": "#f3f4f6",
         "padding_top": 28,
         "padding_bottom": 28
-      }
+      },
+      "disabled": true
     },
     "travel_reviews_VWfUaW": {
       "type": "travel-reviews",
@@ -258,7 +263,8 @@
         "proxy_prefix": "bta-booking",
         "empty_text": "No reviews yet.",
         "padding_top": 40,
-        "padding_bottom": 40
+        "padding_bottom": 40,
+        "kit_collapsible": true
       }
     },
     "tour_faq": {
@@ -334,8 +340,13 @@
       "settings": {
         "heading": "FAQ",
         "subheading": "We want you to have the best experience with Purpleshoes.\n\nHowever, since we offer different types of services,\nthe policy varies slightly. Here is everything you need to know:",
-        "bg_color": "#f2f3f5"
+        "bg_color": "#f2f3f5",
+        "kit_collapsible": true
       }
+    },
+    "kit_closing": {
+      "type": "kit-detail-closing",
+      "settings": {}
     }
   },
   "order": [
@@ -345,6 +356,7 @@
     "toc_grid_jeV4aL",
     "what_youll_do_WAqFqi",
     "travel_reviews_VWfUaW",
-    "tour_faq"
+    "tour_faq",
+    "kit_closing"
   ]
 }

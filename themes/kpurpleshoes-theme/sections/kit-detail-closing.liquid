@@ -1,0 +1,4 @@
+{{ 'kit-detail.css' | asset_url | stylesheet_tag }}
+{%- assign guide_return = request.path | append: '#member-purchase' | url_encode -%}
+<section class="kgd kgd--closing"><div class="kgd__inner"><div class="kgd__closing"><div><h2 data-kit-closing-title>{{ 'kit_detail.closing_title' | t }}</h2><p data-kit-closing-copy>{{ 'kit_detail.closing_copy' | t }}</p></div>{% if customer %}<button class="kgd__button" type="button" data-kit-bottom disabled>{{ 'kit_detail.get_kit' | t }}</button>{% else %}<a class="kgd__button" href="/customer_authentication/login?return_to={{ guide_return }}">{{ 'kit_detail.signin' | t }}</a>{% endif %}</div></div></section>
+{% schema %}{"name":"Kit detail closing","settings":[],"presets":[{"name":"Kit detail closing"}]}{% endschema %}

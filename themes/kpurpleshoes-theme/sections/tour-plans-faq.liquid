@@ -1,3 +1,4 @@
+{% if section.settings.kit_collapsible %}<details class="kgd-disclosure"><summary class="kgd-disclosure__summary">{% render 'starter-kit-icon', name: 'book' %}<span>{{ section.settings.heading | escape }}</span><span class="kgd-disclosure__chevron" aria-hidden="true"></span></summary><div class="kgd-disclosure__body">{% endif %}
 <section class="tg-container tg-main tg-faq-wrap tg-faq-wrap--yellow" style="--tg-faq-bg: {{ section.settings.bg_color | default: '#ffd400' }};">
   <section id="tg-faq" class="tg-section tg-faq-section" aria-label="FAQ">
     <header class="tg-section__head">
@@ -22,6 +23,8 @@
     </div>
   </section>
 </section>
+
+{% if section.settings.kit_collapsible %}</div></details>{% endif %}
 
 <style>
   .tg-faq-wrap.tg-container{
@@ -142,6 +145,7 @@
 {
   "name": "Tour Plans - FAQ",
   "settings": [
+    {"type":"checkbox","id":"kit_collapsible","label":"Kit page collapsible display","default":false},
     { "type": "text", "id": "heading", "label": "Heading", "default": "FAQ" },
     { "type": "text", "id": "subheading", "label": "Subheading", "default": "Frequently asked questions. Click to expand each answer." },
     { "type": "color", "id": "bg_color", "label": "Background color", "default": "#ffd400" }
