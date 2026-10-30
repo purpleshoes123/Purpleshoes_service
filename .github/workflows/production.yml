@@ -1,0 +1,136 @@
+name: Production
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Do not interrupt a running rollout when another person pushes main.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      OPT_OUT_INSTRUMENTATION: 'true'
+      SHOPIFY_CLI_NO_ANALYTICS: '1'
+      AWS_EC2_METADATA_DISABLED: 'true'
+      DATABASE_URL: postgresql://build_only:build_only@127.0.0.1:1/build_only
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+          cache: npm
+          cache-dependency-path: |
+            apps/bta-proxy/package-lock.json
+            shopify/bta-proxy/package-lock.json
+      - name: Validate deployment safeguards
+        run: |
+          python3 -m unittest discover -s scripts/cicd -p 'test_*.py' -v
+          node --test scripts/cicd/*.test.mjs
+          node scripts/cicd/verify-source.mjs
+      - name: Scan tracked source for credentials
+        run: python3 scripts/cicd/scan-secrets.py
+      - name: Install backend dependencies from lockfile
+        working-directory: apps/bta-proxy
+        run: npm ci --workspaces=false --ignore-scripts --no-fund
+      - name: Generate Prisma client and run regression tests
+        working-directory: apps/bta-proxy
+        run: |
+          node node_modules/prisma/build/index.js generate
+          npm run test:run
+          node --test scripts/*.test.mjs
+      - name: Check production dependency advisories
+        working-directory: apps/bta-proxy
+        run: npm audit --omit=dev --audit-level=critical
+      - name: Build and package Linux runtime
+        run: bash scripts/cicd/package-runtime.sh
+      - name: Validate Shopify theme
+        run: |
+          npm install --global @shopify/cli@5.0.0 --ignore-scripts --no-fund
+          node scripts/cicd/check-theme.mjs
+      - name: Build Shopify app extensions
+        working-directory: shopify/bta-proxy
+        run: |
+          npm ci --ignore-scripts --no-fund
+          node ../../scripts/cicd/build-extensions.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          name: runtime-${{ github.sha }}
+          path: |
+            output/cicd/runtime.tgz
+            output/cicd/runtime.json
+          retention-days: 7
+          if-no-files-found: error
+
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      CI: 'true'
+      OPT_OUT_INSTRUMENTATION: 'true'
+      SHOPIFY_CLI_NO_ANALYTICS: '1'
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      RELEASE_BUCKET: ${{ secrets.RELEASE_BUCKET }}
+      ASG_NAME: ${{ secrets.ASG_NAME }}
+      LAUNCH_TEMPLATE_ID: ${{ secrets.LAUNCH_TEMPLATE_ID }}
+      SHOPIFY_FLAG_STORE: ${{ secrets.SHOPIFY_STORE }}
+      SHOPIFY_THEME_ID: ${{ secrets.SHOPIFY_THEME_ID }}
+      SHOPIFY_CLI_THEME_TOKEN: ${{ secrets.SHOPIFY_CLI_THEME_TOKEN }}
+      SHOPIFY_SERVICE_ACCOUNT_TOKEN: ${{ secrets.SHOPIFY_SERVICE_ACCOUNT_TOKEN }}
+      PUBLIC_HEALTH_URL: ${{ secrets.PUBLIC_HEALTH_URL }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - name: Check required configuration
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: python3 scripts/cicd/deploy.py preflight
+      - uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ secrets.AWS_ACCOUNT_ID }}
+          role-session-name: github-${{ github.run_id }}
+          role-duration-seconds: 7200
+          mask-aws-account-id: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: runtime-${{ github.sha }}
+          path: output/cicd
+      - name: Install deployment tools
+        run: |
+          python3 -m venv /tmp/ps-deploy
+          /tmp/ps-deploy/bin/pip install 'boto3==1.40.59'
+          npm install --global @shopify/cli@5.0.0 --ignore-scripts --no-fund
+      - name: Deploy changed components and verify
+        run: /tmp/ps-deploy/bin/python scripts/cicd/deploy.py deploy
+      - name: Deployment result
+        if: always()
+        run: |
+          if test -f output/cicd/summary.md; then cat output/cicd/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
