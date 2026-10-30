@@ -1,0 +1,18 @@
+{
+  "name": "purpleshoes-service-maintenance",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "format": "node scripts/maintenance/format.mjs",
+    "format:check": "node scripts/maintenance/format.mjs --check",
+    "format:python": "python -m black scripts/cicd",
+    "format:python:check": "python -m black --check scripts/cicd",
+    "test:maintenance": "node --test scripts/maintenance/*.test.mjs"
+  },
+  "devDependencies": {
+    "prettier": "3.7.4",
+    "typescript": "5.9.3"
+  }
+}

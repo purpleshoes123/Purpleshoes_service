@@ -1,10 +1,10 @@
-if (!customElements.get('quick-add-bulk')) {
+if (!customElements.get("quick-add-bulk")) {
   customElements.define(
-    'quick-add-bulk',
+    "quick-add-bulk",
     class QuickAddBulk extends BulkAdd {
       constructor() {
         super();
-        this.quantity = this.querySelector('quantity-input');
+        this.quantity = this.querySelector("quantity-input");
 
         const debouncedOnChange = debounce((event) => {
           if (parseInt(event.target.value) === 0) {
@@ -14,7 +14,7 @@ if (!customElements.get('quick-add-bulk')) {
           }
         }, ON_CHANGE_DEBOUNCE_TIMER);
 
-        this.addEventListener('change', debouncedOnChange.bind(this));
+        this.addEventListener("change", debouncedOnChange.bind(this));
         this.listenForActiveInput();
         this.listenForKeydown();
         this.lastActiveInputId = null;
@@ -23,9 +23,11 @@ if (!customElements.get('quick-add-bulk')) {
       connectedCallback() {
         this.cartUpdateUnsubscriber = subscribe(PUB_SUB_EVENTS.cartUpdate, (event) => {
           if (
-            event.source === 'quick-add' ||
-            (event.cartData.items && !event.cartData.items.some((item) => item.id === parseInt(this.dataset.index))) ||
-            (event.cartData.variant_id && !(event.cartData.variant_id === parseInt(this.dataset.index)))
+            event.source === "quick-add" ||
+            (event.cartData.items &&
+              !event.cartData.items.some((item) => item.id === parseInt(this.dataset.index))) ||
+            (event.cartData.variant_id &&
+              !(event.cartData.variant_id === parseInt(this.dataset.index)))
           ) {
             return;
           }
@@ -44,23 +46,23 @@ if (!customElements.get('quick-add-bulk')) {
       }
 
       get input() {
-        return this.querySelector('quantity-input input');
+        return this.querySelector("quantity-input input");
       }
 
       selectProgressBar() {
-        return this.querySelector('.progress-bar-container');
+        return this.querySelector(".progress-bar-container");
       }
 
       listenForActiveInput() {
-        if (!this.classList.contains('hidden')) {
-          this.input?.addEventListener('focusin', (event) => event.target.select());
+        if (!this.classList.contains("hidden")) {
+          this.input?.addEventListener("focusin", (event) => event.target.select());
         }
         this.isEnterPressed = false;
       }
 
       listenForKeydown() {
-        this.input?.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
+        this.input?.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
             this.input?.blur();
             this.isEnterPressed = true;
           }
@@ -69,17 +71,17 @@ if (!customElements.get('quick-add-bulk')) {
 
       cleanErrorMessageOnType(event) {
         event.target.addEventListener(
-          'keypress',
+          "keypress",
           () => {
-            event.target.setCustomValidity('');
+            event.target.setCustomValidity("");
           },
-          { once: true }
+          { once: true },
         );
       }
 
       get sectionId() {
         if (!this._sectionId) {
-          this._sectionId = this.closest('.collection-quick-add-bulk').dataset.id;
+          this._sectionId = this.closest(".collection-quick-add-bulk").dataset.id;
         }
 
         return this._sectionId;
@@ -90,8 +92,10 @@ if (!customElements.get('quick-add-bulk')) {
           fetch(`${this.getSectionsUrl()}?section_id=${this.sectionId}`)
             .then((response) => response.text())
             .then((responseText) => {
-              const html = new DOMParser().parseFromString(responseText, 'text/html');
-              const sourceQty = html.querySelector(`#quick-add-bulk-${this.dataset.index}-${this.sectionId}`);
+              const html = new DOMParser().parseFromString(responseText, "text/html");
+              const sourceQty = html.querySelector(
+                `#quick-add-bulk-${this.dataset.index}-${this.sectionId}`,
+              );
               if (sourceQty) {
                 this.innerHTML = sourceQty.innerHTML;
               }
@@ -106,13 +110,13 @@ if (!customElements.get('quick-add-bulk')) {
 
       getSectionsUrl() {
         const pageParams = new URLSearchParams(window.location.search);
-        const pageNumber = decodeURIComponent(pageParams.get('page') || '');
+        const pageNumber = decodeURIComponent(pageParams.get("page") || "");
 
-        return `${window.location.pathname}${pageNumber ? `?page=${pageNumber}` : ''}`;
+        return `${window.location.pathname}${pageNumber ? `?page=${pageNumber}` : ""}`;
       }
 
       updateMultipleQty(items) {
-        this.selectProgressBar().classList.remove('hidden');
+        this.selectProgressBar().classList.remove("hidden");
 
         const ids = Object.keys(items);
         const body = JSON.stringify({
@@ -128,7 +132,7 @@ if (!customElements.get('quick-add-bulk')) {
           .then((state) => {
             const parsedState = JSON.parse(state);
             this.renderSections(parsedState, ids);
-            publish(PUB_SUB_EVENTS.cartUpdate, { source: 'quick-add', cartData: parsedState });
+            publish(PUB_SUB_EVENTS.cartUpdate, { source: "quick-add", cartData: parsedState });
           })
           .catch(() => {
             // Commented out for now and will be fixed when BE issue is done https://github.com/Shopify/shopify/issues/440605
@@ -140,7 +144,7 @@ if (!customElements.get('quick-add-bulk')) {
             // this.cleanErrorMessageOnType(e);
           })
           .finally(() => {
-            this.selectProgressBar().classList.add('hidden');
+            this.selectProgressBar().classList.add("hidden");
             this.setRequestStarted(false);
           });
       }
@@ -153,25 +157,29 @@ if (!customElements.get('quick-add-bulk')) {
             selector: `#quick-add-bulk-${this.dataset.index}-${this.sectionId}`,
           },
           {
-            id: 'cart-icon-bubble',
-            section: 'cart-icon-bubble',
-            selector: '.shopify-section',
+            id: "cart-icon-bubble",
+            section: "cart-icon-bubble",
+            selector: ".shopify-section",
           },
           {
-            id: 'CartDrawer',
-            selector: '.drawer__inner',
-            section: 'cart-drawer',
+            id: "CartDrawer",
+            selector: ".drawer__inner",
+            section: "cart-drawer",
           },
         ];
       }
 
       renderSections(parsedState, ids) {
         const intersection = this.queue.filter((element) => ids.includes(element.id));
-        if (intersection.length !== 0) return;
+        if (intersection.length !== 0) {
+          return;
+        }
         this.getSectionsToRender().forEach((section) => {
           const sectionElement = document.getElementById(section.id);
-          if (section.section === 'cart-drawer') {
-            sectionElement.closest('cart-drawer')?.classList.toggle('is-empty', parsedState.items.length.length === 0);
+          if (section.section === "cart-drawer") {
+            sectionElement
+              .closest("cart-drawer")
+              ?.classList.toggle("is-empty", parsedState.items.length.length === 0);
           }
           const elementToReplace =
             sectionElement && sectionElement.querySelector(section.selector)
@@ -180,7 +188,7 @@ if (!customElements.get('quick-add-bulk')) {
           if (elementToReplace) {
             elementToReplace.innerHTML = this.getSectionInnerHTML(
               parsedState.sections[section.section],
-              section.selector
+              section.selector,
             );
           }
         });
@@ -192,6 +200,6 @@ if (!customElements.get('quick-add-bulk')) {
         this.listenForActiveInput();
         this.listenForKeydown();
       }
-    }
+    },
   );
 }

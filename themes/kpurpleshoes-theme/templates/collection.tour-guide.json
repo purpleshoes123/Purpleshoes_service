@@ -44,10 +44,7 @@
           }
         }
       },
-      "block_order": [
-        "exp1",
-        "exp2"
-      ],
+      "block_order": ["exp1", "exp2"],
       "settings": {
         "show_hero": true,
         "hero_image": "shopify://shop_images/4bda8907d9c7235be77c08639c36fbe5.png",
@@ -95,9 +92,7 @@
           }
         }
       },
-      "block_order": [
-        "heading_KA8876"
-      ],
+      "block_order": ["heading_KA8876"],
       "disabled": true,
       "name": "t:sections.image-with-text.presets.name",
       "settings": {
@@ -117,8 +112,5 @@
       }
     }
   },
-  "order": [
-    "tour_experiences",
-    "image_with_text_wzGKpN"
-  ]
+  "order": ["tour_experiences", "image_with_text_wzGKpN"]
 }

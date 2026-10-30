@@ -7,10 +7,7 @@ import shopify from "~/shopify.server";
 import type { AdminApiContext } from "@shopify/shopify-app-react-router/server";
 import { loadOfflineSession, normalizeShopDomain } from "~/lib/shopifySession";
 
-function createAdminGraphqlClient(
-  shop: string,
-  accessToken: string
-): AdminApiContext {
+function createAdminGraphqlClient(shop: string, accessToken: string): AdminApiContext {
   // shopify.server.ts에서 사용하는 API 버전 사용
   // ApiVersion.January25는 "2025-01"에 해당
   const apiVersionString = "2025-01";
@@ -18,10 +15,12 @@ function createAdminGraphqlClient(
   return {
     graphql: async (
       query: string,
-      options?: { variables?: Record<string, unknown>; apiVersion?: string }
+      options?: { variables?: Record<string, unknown>; apiVersion?: string },
     ) => {
       const version = options?.apiVersion || apiVersionString;
-      if (!/^202\d-(01|04|07|10)$/.test(version)) throw new Error("Invalid Admin API version");
+      if (!/^202\d-(01|04|07|10)$/.test(version)) {
+        throw new Error("Invalid Admin API version");
+      }
       const graphqlUrl = `https://${shop}/admin/api/${version}/graphql.json`;
       return fetch(graphqlUrl, {
         method: "POST",
@@ -70,9 +69,7 @@ export function extractShopFromRequest(request: Request): string | null {
  * @param shop shop 도메인 (예: "test-shop.myshopify.com")
  * @returns AdminApiContext 또는 null (세션 없음)
  */
-export async function getAdminApiClient(
-  shop: string
-): Promise<AdminApiContext | null> {
+export async function getAdminApiClient(shop: string): Promise<AdminApiContext | null> {
   try {
     const normalizedShop = normalizeShopDomain(shop);
     // 세션 스토리지에서 세션 조회 (refresh 포함)
@@ -84,22 +81,16 @@ export async function getAdminApiClient(
     }
 
     const adminShopDomain = session.shop || normalizedShop;
-    const fallbackAdmin = createAdminGraphqlClient(
-      adminShopDomain,
-      session.accessToken
-    );
+    const fallbackAdmin = createAdminGraphqlClient(adminShopDomain, session.accessToken);
 
     // 가짜 Request 객체 생성 (authenticate.admin이 필요로 함)
     // 실제로는 세션만 있으면 되지만, authenticate.admin의 타입 요구사항을 만족시키기 위함
-    const fakeRequest = new Request(
-      `https://${adminShopDomain}/admin/api/graphql.json`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const fakeRequest = new Request(`https://${adminShopDomain}/admin/api/graphql.json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     // 세션을 Request에 첨부하기 위해 authenticate.admin 사용
     // 하지만 실제로는 세션만 있으면 GraphQL 클라이언트를 생성할 수 있음
@@ -117,17 +108,14 @@ export async function getAdminApiClient(
         return null;
       }
 
-      return createAdminGraphqlClient(
-        session.shop || normalizedShop,
-        session.accessToken
-      );
+      return createAdminGraphqlClient(session.shop || normalizedShop, session.accessToken);
     } catch (innerError) {
       console.error(
         JSON.stringify({
           message: "Failed to get Admin API client",
           shop: shop.substring(0, 20) + "...",
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
       return null;
     }
@@ -140,7 +128,7 @@ export async function getAdminApiClient(
  * @returns AdminApiContext 또는 null
  */
 export async function getAdminApiClientFromRequest(
-  request: Request
+  request: Request,
 ): Promise<AdminApiContext | null> {
   const shop = extractShopFromRequest(request);
   if (!shop) {
@@ -245,7 +233,7 @@ export interface ShopifyOrderRefundInfo {
  */
 export async function fetchOrderLineItemsGraphQL(
   admin: AdminApiContext,
-  orderId: string
+  orderId: string,
 ): Promise<
   Array<{
     id: string;
@@ -256,9 +244,7 @@ export async function fetchOrderLineItemsGraphQL(
     properties?: Array<{ name: string; value: string }>;
   }>
 > {
-  const orderGid = orderId.startsWith("gid://")
-    ? orderId
-    : `gid://shopify/Order/${orderId}`;
+  const orderGid = orderId.startsWith("gid://") ? orderId : `gid://shopify/Order/${orderId}`;
 
   const GET_ORDER_QUERY = `
     query getOrder($id: ID!) {
@@ -289,9 +275,7 @@ export async function fetchOrderLineItemsGraphQL(
 
   const responseJson = await response.json();
   if (responseJson.errors) {
-    const errorMessages = responseJson.errors
-      .map((e: any) => e.message)
-      .join(", ");
+    const errorMessages = responseJson.errors.map((e: any) => e.message).join(", ");
     throw new Error(`GraphQL error: ${errorMessages}`);
   }
 
@@ -329,11 +313,9 @@ export async function fetchOrderLineItemsGraphQL(
  */
 export async function fetchOrderSummaryGraphQL(
   admin: AdminApiContext,
-  orderId: string
+  orderId: string,
 ): Promise<ShopifyOrderSummary | null> {
-  const orderGid = orderId.startsWith("gid://")
-    ? orderId
-    : `gid://shopify/Order/${orderId}`;
+  const orderGid = orderId.startsWith("gid://") ? orderId : `gid://shopify/Order/${orderId}`;
 
   const GET_ORDER_SUMMARY_QUERY = `
     query getOrderSummary($id: ID!) {
@@ -381,9 +363,7 @@ export async function fetchOrderSummaryGraphQL(
   if (response && typeof (response as any).json === "function") {
     const fetchResponse = response as Response;
     if (!fetchResponse.ok) {
-      throw new Error(
-        `Shopify Admin API request failed with status ${fetchResponse.status}`
-      );
+      throw new Error(`Shopify Admin API request failed with status ${fetchResponse.status}`);
     }
     responseJson = await fetchResponse.json();
   } else {
@@ -391,11 +371,8 @@ export async function fetchOrderSummaryGraphQL(
   }
 
   const gqlErrors =
-    responseJson?.errors ||
-    responseJson?.graphQLErrors ||
-    responseJson?.body?.errors;
-  const order =
-    responseJson?.data?.order || responseJson?.body?.data?.order || null;
+    responseJson?.errors || responseJson?.graphQLErrors || responseJson?.body?.errors;
+  const order = responseJson?.data?.order || responseJson?.body?.data?.order || null;
   if (!order) {
     if (gqlErrors) {
       const errorMessages = gqlErrors
@@ -433,7 +410,7 @@ export async function fetchOrderSummaryGraphQL(
  */
 export async function fetchOrderSummaryByQuery(
   admin: AdminApiContext,
-  query: string
+  query: string,
 ): Promise<ShopifyOrderSummary | null> {
   const GET_ORDER_BY_QUERY = `
     query getOrderSummaryByQuery($first: Int!, $query: String!) {
@@ -485,9 +462,7 @@ export async function fetchOrderSummaryByQuery(
   if (response && typeof (response as any).json === "function") {
     const fetchResponse = response as Response;
     if (!fetchResponse.ok) {
-      throw new Error(
-        `Shopify Admin API request failed with status ${fetchResponse.status}`
-      );
+      throw new Error(`Shopify Admin API request failed with status ${fetchResponse.status}`);
     }
     responseJson = await fetchResponse.json();
   } else {
@@ -495,9 +470,7 @@ export async function fetchOrderSummaryByQuery(
   }
 
   const gqlErrors =
-    responseJson?.errors ||
-    responseJson?.graphQLErrors ||
-    responseJson?.body?.errors;
+    responseJson?.errors || responseJson?.graphQLErrors || responseJson?.body?.errors;
 
   const order =
     responseJson?.data?.orders?.edges?.[0]?.node ||
@@ -535,11 +508,9 @@ export async function fetchOrderSummaryByQuery(
 
 export async function fetchOrderRefundInfoGraphQL(
   admin: AdminApiContext,
-  orderId: string
+  orderId: string,
 ): Promise<ShopifyOrderRefundInfo | null> {
-  const orderGid = orderId.startsWith("gid://")
-    ? orderId
-    : `gid://shopify/Order/${orderId}`;
+  const orderGid = orderId.startsWith("gid://") ? orderId : `gid://shopify/Order/${orderId}`;
 
   const GET_ORDER_REFUND_QUERY = `
     query getOrderRefundInfo($id: ID!) {
@@ -568,9 +539,7 @@ export async function fetchOrderRefundInfoGraphQL(
   if (response && typeof (response as any).json === "function") {
     const fetchResponse = response as Response;
     if (!fetchResponse.ok) {
-      throw new Error(
-        `Shopify Admin API request failed with status ${fetchResponse.status}`
-      );
+      throw new Error(`Shopify Admin API request failed with status ${fetchResponse.status}`);
     }
     responseJson = await fetchResponse.json();
   } else {
@@ -578,11 +547,8 @@ export async function fetchOrderRefundInfoGraphQL(
   }
 
   const gqlErrors =
-    responseJson?.errors ||
-    responseJson?.graphQLErrors ||
-    responseJson?.body?.errors;
-  const order =
-    responseJson?.data?.order || responseJson?.body?.data?.order || null;
+    responseJson?.errors || responseJson?.graphQLErrors || responseJson?.body?.errors;
+  const order = responseJson?.data?.order || responseJson?.body?.data?.order || null;
   if (!order) {
     if (gqlErrors) {
       const errorMessages = gqlErrors
@@ -600,17 +566,18 @@ export async function fetchOrderRefundInfoGraphQL(
     id: order.id,
     legacyResourceId: order.legacyResourceId,
     name: order.name ?? null,
-    lineItems: order.lineItems?.edges?.map((edge: any) => ({
-      id: edge.node.id,
-      title: edge.node.title,
-      quantity: edge.node.quantity,
-    })) ?? [],
+    lineItems:
+      order.lineItems?.edges?.map((edge: any) => ({
+        id: edge.node.id,
+        title: edge.node.title,
+        quantity: edge.node.quantity,
+      })) ?? [],
   };
 }
 
 export async function fetchOrderRefundInfoByQuery(
   admin: AdminApiContext,
-  query: string
+  query: string,
 ): Promise<ShopifyOrderRefundInfo | null> {
   const GET_ORDER_BY_QUERY = `
     query getOrderRefundInfoByQuery($first: Int!, $query: String!) {
@@ -643,9 +610,7 @@ export async function fetchOrderRefundInfoByQuery(
   if (response && typeof (response as any).json === "function") {
     const fetchResponse = response as Response;
     if (!fetchResponse.ok) {
-      throw new Error(
-        `Shopify Admin API request failed with status ${fetchResponse.status}`
-      );
+      throw new Error(`Shopify Admin API request failed with status ${fetchResponse.status}`);
     }
     responseJson = await fetchResponse.json();
   } else {
@@ -653,9 +618,7 @@ export async function fetchOrderRefundInfoByQuery(
   }
 
   const gqlErrors =
-    responseJson?.errors ||
-    responseJson?.graphQLErrors ||
-    responseJson?.body?.errors;
+    responseJson?.errors || responseJson?.graphQLErrors || responseJson?.body?.errors;
   const order =
     responseJson?.data?.orders?.edges?.[0]?.node ||
     responseJson?.body?.data?.orders?.edges?.[0]?.node ||
@@ -677,11 +640,12 @@ export async function fetchOrderRefundInfoByQuery(
     id: order.id,
     legacyResourceId: order.legacyResourceId,
     name: order.name ?? null,
-    lineItems: order.lineItems?.edges?.map((edge: any) => ({
-      id: edge.node.id,
-      title: edge.node.title,
-      quantity: edge.node.quantity,
-    })) ?? [],
+    lineItems:
+      order.lineItems?.edges?.map((edge: any) => ({
+        id: edge.node.id,
+        title: edge.node.title,
+        quantity: edge.node.quantity,
+      })) ?? [],
   };
 }
 
@@ -692,7 +656,7 @@ export async function createRefundGraphQL(
     refundLineItems: Array<{ lineItemId: string; quantity: number }>;
     note?: string;
     notify?: boolean;
-  }
+  },
 ): Promise<{ refundId: string | null; userErrors: string[] }> {
   const REFUND_CREATE_MUTATION = `
     mutation refundCreate($input: RefundCreateInput!) {
@@ -720,9 +684,7 @@ export async function createRefundGraphQL(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Shopify Admin API request failed with status ${response.status}`
-    );
+    throw new Error(`Shopify Admin API request failed with status ${response.status}`);
   }
 
   const payload = (await response.json()) as {
@@ -736,9 +698,7 @@ export async function createRefundGraphQL(
   };
 
   if (payload.errors && payload.errors.length > 0) {
-    throw new Error(
-      `GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`
-    );
+    throw new Error(`GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`);
   }
 
   const userErrors = payload.data?.refundCreate?.userErrors || [];
@@ -759,7 +719,7 @@ export async function createRefundGraphQL(
 export async function fetchOrdersGraphQL(
   admin: any,
   ordersFrom: string,
-  ordersTo: string
+  ordersTo: string,
 ): Promise<ShopifyOrder[]> {
   const allOrders: ShopifyOrder[] = [];
   let cursor: string | null = null;
@@ -871,9 +831,7 @@ export async function fetchOrdersGraphQL(
           cursor,
           errors: data.errors.map((e) => e.message),
         });
-        throw new Error(
-          `GraphQL errors: ${data.errors.map((e) => e.message).join(", ")}`
-        );
+        throw new Error(`GraphQL errors: ${data.errors.map((e) => e.message).join(", ")}`);
       }
 
       if (!data.data || !data.data.orders) {
@@ -890,7 +848,7 @@ export async function fetchOrdersGraphQL(
         throw new Error("SHOPIFY_ADMIN_API_TIMEOUT");
       }
       throw new Error(
-        `Failed to fetch orders: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to fetch orders: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -927,7 +885,7 @@ async function resolveAdminContext(params: {
 
 async function fetchMetaobjects(
   admin: AdminApiContext,
-  query?: string
+  query?: string,
 ): Promise<Array<{ id: string; fields: Array<{ key: string; value: string }> }>> {
   const GET_METAOBJECTS_QUERY = `
     query getGlobalBlackouts($type: String!, $first: Int!, $after: String, $query: String) {
@@ -961,9 +919,7 @@ async function fetchMetaobjects(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Shopify Admin API request failed with status ${response.status}`
-      );
+      throw new Error(`Shopify Admin API request failed with status ${response.status}`);
     }
 
     const payload = (await response.json()) as {
@@ -977,9 +933,7 @@ async function fetchMetaobjects(
     };
 
     if (payload.errors && payload.errors.length > 0) {
-      throw new Error(
-        `GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`
-      );
+      throw new Error(`GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`);
     }
 
     const edges = payload.data?.metaobjects?.edges || [];
@@ -996,7 +950,7 @@ async function fetchMetaobjects(
 
 async function fetchMetaobjectsWithFallback(
   admin: AdminApiContext,
-  query?: string
+  query?: string,
 ): Promise<Array<{ id: string; fields: Array<{ key: string; value: string }> }>> {
   try {
     return await fetchMetaobjects(admin, query);
@@ -1008,9 +962,10 @@ async function fetchMetaobjectsWithFallback(
   }
 }
 
-function parseGlobalBlackout(
-  node: { id: string; fields: Array<{ key: string; value: string }> }
-): GlobalBlackoutItem | null {
+function parseGlobalBlackout(node: {
+  id: string;
+  fields: Array<{ key: string; value: string }>;
+}): GlobalBlackoutItem | null {
   if (!node?.id || !node.fields) {
     return null;
   }
@@ -1159,9 +1114,7 @@ export async function createGlobalBlackout(params: {
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Shopify Admin API request failed with status ${response.status}`
-    );
+    throw new Error(`Shopify Admin API request failed with status ${response.status}`);
   }
 
   const payload = (await response.json()) as {
@@ -1175,9 +1128,7 @@ export async function createGlobalBlackout(params: {
   };
 
   if (payload.errors && payload.errors.length > 0) {
-    throw new Error(
-      `GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`
-    );
+    throw new Error(`GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`);
   }
 
   const userErrors = payload.data?.metaobjectCreate?.userErrors || [];
@@ -1227,9 +1178,7 @@ export async function updateGlobalBlackoutNote(params: {
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Shopify Admin API request failed with status ${response.status}`
-    );
+    throw new Error(`Shopify Admin API request failed with status ${response.status}`);
   }
 
   const payload = (await response.json()) as {
@@ -1243,9 +1192,7 @@ export async function updateGlobalBlackoutNote(params: {
   };
 
   if (payload.errors && payload.errors.length > 0) {
-    throw new Error(
-      `GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`
-    );
+    throw new Error(`GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`);
   }
 
   const userErrors = payload.data?.metaobjectUpdate?.userErrors || [];
@@ -1286,9 +1233,7 @@ export async function deleteGlobalBlackout(params: {
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Shopify Admin API request failed with status ${response.status}`
-    );
+    throw new Error(`Shopify Admin API request failed with status ${response.status}`);
   }
 
   const payload = (await response.json()) as {
@@ -1302,9 +1247,7 @@ export async function deleteGlobalBlackout(params: {
   };
 
   if (payload.errors && payload.errors.length > 0) {
-    throw new Error(
-      `GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`
-    );
+    throw new Error(`GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`);
   }
 
   const userErrors = payload.data?.metaobjectDelete?.userErrors || [];

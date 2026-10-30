@@ -4,14 +4,20 @@ import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 function mask(value: string | undefined): string | null {
-  if (!value || value.length === 0) return null;
-  if (value.length <= 4) return "****";
+  if (!value || value.length === 0) {
+    return null;
+  }
+  if (value.length <= 4) {
+    return "****";
+  }
   return `${value.slice(0, 2)}****${value.slice(-2)}`;
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -44,6 +50,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         v1: "/v1/health",
       },
     },
-    { correlationId }
+    { correlationId },
   );
 };

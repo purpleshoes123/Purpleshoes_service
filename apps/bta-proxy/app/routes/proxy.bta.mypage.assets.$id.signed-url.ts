@@ -1,8 +1,8 @@
 import type { ActionFunctionArgs } from "react-router";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { issueStorefrontAssetSignedUrl } from "~/lib/gkv/storefrontViewer.server";
+import { issueStorefrontAssetSignedUrl } from "~/domains/guide-viewer/storefrontViewer.server.ts";
 import { respond } from "~/lib/respond";
-import { requireStorefrontCustomerProxyContext } from "~/lib/storefront/customerProxy.server";
+import { requireStorefrontCustomerProxyContext } from "~/domains/storefront/customerProxy.server.ts";
 
 /**
  * POST /proxy/bta/mypage/assets/:id/signed-url
@@ -12,7 +12,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     rateLimitPolicy: "customer",
     rateLimitBucket: "signed-url",
   });
-  if (context instanceof Response) return context;
+  if (context instanceof Response) {
+    return context;
+  }
 
   const assetId = params.id;
   if (!assetId) {
@@ -25,11 +27,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     );
   }
 
-  const result = await issueStorefrontAssetSignedUrl(
-    request,
-    context.customerId,
-    assetId,
-  );
+  const result = await issueStorefrontAssetSignedUrl(request, context.customerId, assetId);
   if (!result.ok) {
     if (result.reason === "not_found") {
       return respond.fail(

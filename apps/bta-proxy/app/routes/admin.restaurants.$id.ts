@@ -5,15 +5,17 @@ import {
   deactivateRestaurant,
   getRestaurant,
   upsertRestaurant,
-} from "~/lib/gkv/adminRestaurant.server";
-import { toValidationFailResponse } from "~/lib/gkv/adminUiResponses";
-import { restaurantUpsertSchema } from "~/lib/gkv/adminUiSchemas";
+} from "~/domains/guide-viewer/adminRestaurant.server.ts";
+import { toValidationFailResponse } from "~/domains/guide-viewer/adminUiResponses";
+import { restaurantUpsertSchema } from "~/domains/guide-viewer/adminUiSchemas";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
@@ -23,7 +25,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "restaurant id가 필요합니다."),
       undefined,
       400,
-      correlationId
+      correlationId,
     );
   }
 
@@ -34,7 +36,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "맛집을 찾을 수 없습니다."),
       undefined,
       404,
-      correlationId
+      correlationId,
     );
   }
 
@@ -43,7 +45,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
 
@@ -53,7 +57,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "restaurant id가 필요합니다."),
       undefined,
       400,
-      correlationId
+      correlationId,
     );
   }
 
@@ -69,7 +73,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
         undefined,
         405,
-        correlationId
+        correlationId,
       );
     }
 
@@ -93,7 +97,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         isActive: payload.isActive,
         photo: payload.photo,
       },
-      id
+      id,
     );
     return respond.ok(data, { correlationId });
   } catch (error) {
@@ -107,7 +111,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, error.message),
         { fieldErrors: { form: error.message } },
         422,
-        correlationId
+        correlationId,
       );
     }
 
@@ -116,7 +120,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       500,
-      correlationId
+      correlationId,
     );
   }
 };

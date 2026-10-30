@@ -1,32 +1,32 @@
 // create a container and set the full-size image as its background
 function createOverlay(image) {
-  const overlayImage = document.createElement('img');
-  overlayImage.setAttribute('src', `${image.src}`);
-  overlay = document.createElement('div');
+  const overlayImage = document.createElement("img");
+  overlayImage.setAttribute("src", `${image.src}`);
+  overlay = document.createElement("div");
   prepareOverlay(overlay, overlayImage);
 
-  image.style.opacity = '50%';
+  image.style.opacity = "50%";
   toggleLoadingSpinner(image);
 
   overlayImage.onload = () => {
     toggleLoadingSpinner(image);
     image.parentElement.insertBefore(overlay, image);
-    image.style.opacity = '100%';
+    image.style.opacity = "100%";
   };
 
   return overlay;
 }
 
 function prepareOverlay(container, image) {
-  container.setAttribute('class', 'image-magnify-full-size');
-  container.setAttribute('aria-hidden', 'true');
+  container.setAttribute("class", "image-magnify-full-size");
+  container.setAttribute("aria-hidden", "true");
   container.style.backgroundImage = `url('${image.src}')`;
-  container.style.backgroundColor = 'var(--gradient-background)';
+  container.style.backgroundColor = "var(--gradient-background)";
 }
 
 function toggleLoadingSpinner(image) {
   const loadingSpinner = image.parentElement.parentElement.querySelector(`.loading__spinner`);
-  loadingSpinner.classList.toggle('hidden');
+  loadingSpinner.classList.toggle("hidden");
 }
 
 function moveWithHover(image, event, zoomRatio) {
@@ -51,7 +51,7 @@ function magnify(image, zoomRatio) {
 }
 
 function enableZoomOnHover(zoomRatio) {
-  const images = document.querySelectorAll('.image-magnify-hover');
+  const images = document.querySelectorAll(".image-magnify-hover");
   images.forEach((image) => {
     image.onclick = (event) => {
       magnify(image, zoomRatio);

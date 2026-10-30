@@ -21,12 +21,9 @@ import {
   MAILER_ROUTE_PATHS,
   MAILER_SEND_STATUS_VALUES,
   type MailSendStatus,
-} from "~/lib/mailer/contracts";
-import {
-  getEmbeddedSearchEntries,
-  withEmbeddedSearch,
-} from "~/lib/gkv/embeddedPath";
-import { listSendRequests } from "~/lib/mailer/sendRequestStore.server";
+} from "~/domains/mail/contracts";
+import { getEmbeddedSearchEntries, withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
+import { listSendRequests } from "~/domains/mail/sendRequestStore.server.ts";
 import { authenticate } from "~/shopify.server";
 
 const SAMPLE_LOG_ID = "sample-log";
@@ -44,17 +41,19 @@ function isSendStatus(value: string): value is MailSendStatus {
 }
 
 function getStatusTone(status: MailSendStatus) {
-  if (status === "SENT") return "success" as const;
-  if (status === "FAILED") return "critical" as const;
-  if (status === "BLOCKED") return "warning" as const;
+  if (status === "SENT") {
+    return "success" as const;
+  }
+  if (status === "FAILED") {
+    return "critical" as const;
+  }
+  if (status === "BLOCKED") {
+    return "warning" as const;
+  }
   return "attention" as const;
 }
 
-function formatTemplateLabel(template: {
-  name: string;
-  slug: string;
-  deletedAt: string | null;
-}) {
+function formatTemplateLabel(template: { name: string; slug: string; deletedAt: string | null }) {
   return `${template.name} (${template.slug})${template.deletedAt ? " - 삭제됨" : ""}`;
 }
 
@@ -62,9 +61,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await authenticate.admin(request);
   const url = new URL(request.url);
   const templateId = (url.searchParams.get("templateId") || "").trim();
-  const statusParam = (url.searchParams.get("status") || "")
-    .trim()
-    .toUpperCase();
+  const statusParam = (url.searchParams.get("status") || "").trim().toUpperCase();
   const status = isSendStatus(statusParam) ? statusParam : "";
   const recipientEmail = (url.searchParams.get("recipientEmail") || "").trim();
 
@@ -112,13 +109,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             id: item.templateId,
             name: templateById.get(item.templateId)?.name || "",
             slug: templateById.get(item.templateId)?.slug || "",
-            deletedAt:
-              templateById.get(item.templateId)?.deletedAt?.toISOString() || null,
+            deletedAt: templateById.get(item.templateId)?.deletedAt?.toISOString() || null,
           }
         : null,
       recipientEmail: item.maskedRecipientEmail,
-      recaptchaScore:
-        item.recaptchaScore === null ? "-" : String(item.recaptchaScore),
+      recaptchaScore: item.recaptchaScore === null ? "-" : String(item.recaptchaScore),
       pagePath: item.pagePath || "-",
       createdAt: item.createdAt.toISOString(),
     })),
@@ -132,15 +127,13 @@ export default function MailLogsIndexPage() {
   const sampleId = data.logs[0]?.id || SAMPLE_LOG_ID;
   const embeddedEntries = getEmbeddedSearchEntries(location.search);
   const embeddedSearch = new URLSearchParams(
-    embeddedEntries.map((entry) => [entry.name, entry.value])
+    embeddedEntries.map((entry) => [entry.name, entry.value]),
   ).toString();
   const toEmbeddedOnly = (path: string) =>
     withEmbeddedSearch(path, embeddedSearch ? `?${embeddedSearch}` : "");
   const [templateId, setTemplateId] = useState(data.filters.templateId);
   const [status, setStatus] = useState(data.filters.status);
-  const [recipientEmail, setRecipientEmail] = useState(
-    data.filters.recipientEmail
-  );
+  const [recipientEmail, setRecipientEmail] = useState(data.filters.recipientEmail);
 
   useEffect(() => {
     setTemplateId(data.filters.templateId);
@@ -176,9 +169,7 @@ export default function MailLogsIndexPage() {
           <Text as="h1" variant="headingLg">
             메일 발송 로그
           </Text>
-          <Button url={toEmbeddedOnly(MAILER_ROUTE_PATHS.adminRoot)}>
-            메일 개요
-          </Button>
+          <Button url={toEmbeddedOnly(MAILER_ROUTE_PATHS.adminRoot)}>메일 개요</Button>
         </InlineStack>
 
         <Card>
@@ -188,12 +179,7 @@ export default function MailLogsIndexPage() {
             </Text>
             <Form method="get" action={MAILER_ROUTE_PATHS.adminLogs}>
               {embeddedEntries.map((entry) => (
-                <input
-                  key={entry.name}
-                  type="hidden"
-                  name={entry.name}
-                  value={entry.value}
-                />
+                <input key={entry.name} type="hidden" name={entry.name} value={entry.value} />
               ))}
               <FormLayout>
                 <FormLayout.Group>
@@ -224,9 +210,7 @@ export default function MailLogsIndexPage() {
                   <Button submit variant="primary">
                     적용
                   </Button>
-                  <Button url={toEmbeddedOnly(MAILER_ROUTE_PATHS.adminLogs)}>
-                    초기화
-                  </Button>
+                  <Button url={toEmbeddedOnly(MAILER_ROUTE_PATHS.adminLogs)}>초기화</Button>
                 </InlineStack>
               </FormLayout>
             </Form>
@@ -248,22 +232,8 @@ export default function MailLogsIndexPage() {
             </InlineStack>
             {data.logs.length > 0 ? (
               <DataTable
-                columnContentTypes={[
-                  "text",
-                  "text",
-                  "text",
-                  "text",
-                  "text",
-                  "text",
-                ]}
-                headings={[
-                  "상태",
-                  "템플릿",
-                  "수신자",
-                  "점수",
-                  "페이지",
-                  "생성일",
-                ]}
+                columnContentTypes={["text", "text", "text", "text", "text", "text"]}
+                headings={["상태", "템플릿", "수신자", "점수", "페이지", "생성일"]}
                 rows={data.logs.map((item) => [
                   <Button
                     key={`${item.id}-open`}
@@ -278,9 +248,7 @@ export default function MailLogsIndexPage() {
                     <Button
                       key={`${item.id}-template`}
                       variant="plain"
-                      url={toInApp(
-                        MAILER_ROUTE_PATHS.adminTemplateDetail(item.template.id)
-                      )}
+                      url={toInApp(MAILER_ROUTE_PATHS.adminTemplateDetail(item.template.id))}
                     >
                       {formatTemplateLabel(item.template)}
                     </Button>

@@ -24,7 +24,9 @@ export default function extension() {
 function CheckoutTourBookingSummary() {
   const bookingDetails = findTourBookingDetails(shopify.lines.value);
 
-  if (bookingDetails.length === 0) return null;
+  if (bookingDetails.length === 0) {
+    return null;
+  }
 
   return (
     <s-stack gap="small" direction="block">
@@ -47,7 +49,11 @@ function CheckoutTourBookingSummary() {
 }
 
 function Detail({ label, value }: { label: string; value: string }) {
-  return <s-text>{label}: {value}</s-text>;
+  return (
+    <s-text>
+      {label}: {value}
+    </s-text>
+  );
 }
 
 function findTourBookingDetails(
@@ -58,22 +64,28 @@ function findTourBookingDetails(
 
   for (const line of lines) {
     const attributes = new Map(line.attributes.map(({ key, value }) => [key, value]));
-    const date = firstAttribute(attributes, ["travel_date", "booking_date", "Booking Date", "Date"]);
+    const date = firstAttribute(attributes, [
+      "travel_date",
+      "booking_date",
+      "Booking Date",
+      "Date",
+    ]);
     const travelers = firstAttribute(attributes, ["traveler_summary"]);
     const pickup = firstAttribute(attributes, ["pickup_location"]);
     const dietary = firstAttribute(attributes, ["dietary_restrictions"]);
 
     // Only tour lines carry booking metadata. Grouped adult/teen/infant lines
     // share this metadata, so render their booking once in the order summary.
-    if (!date && !travelers && !pickup && !dietary) continue;
+    if (!date && !travelers && !pickup && !dietary) {
+      continue;
+    }
 
-    const group = firstAttribute(attributes, ["booking_group_id"]) || [
-      line.merchandise.title,
-      date || "",
-      travelers || "",
-      pickup || "",
-    ].join("|");
-    if (seen.has(group)) continue;
+    const group =
+      firstAttribute(attributes, ["booking_group_id"]) ||
+      [line.merchandise.title, date || "", travelers || "", pickup || ""].join("|");
+    if (seen.has(group)) {
+      continue;
+    }
     seen.add(group);
 
     const contactName = firstAttribute(attributes, ["reservation_contact_name"]);
@@ -96,7 +108,9 @@ function findTourBookingDetails(
 function firstAttribute(attributes: Map<string, string>, keys: string[]): string | undefined {
   for (const key of keys) {
     const value = attributes.get(key)?.trim();
-    if (value) return value;
+    if (value) {
+      return value;
+    }
   }
   return undefined;
 }

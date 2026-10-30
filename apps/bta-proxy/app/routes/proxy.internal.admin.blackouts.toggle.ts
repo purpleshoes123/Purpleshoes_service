@@ -10,7 +10,7 @@ import {
   listGlobalBlackoutRecordsByDate,
   getAdminApiClient,
 } from "~/lib/shopifyAdmin";
-import { getBookingStore } from "~/lib/bookingStore";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
 import { randomUUID } from "crypto";
 
 const LOCK_TTL_MS = 3000;
@@ -78,7 +78,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       shop = validatedInput.shop || null;
       if (!shop) {
@@ -87,7 +89,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -108,7 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
             undefined,
             getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-            correlationId
+            correlationId,
           );
         }
         throw error;
@@ -120,11 +122,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -135,7 +137,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_CONFLICT),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_CONFLICT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -148,16 +150,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       if (existingRecords.length > 0) {
         await Promise.all(
-          existingRecords.map((record) =>
-            deleteGlobalBlackout({ admin, shop, id: record.id })
-          )
+          existingRecords.map((record) => deleteGlobalBlackout({ admin, shop, id: record.id })),
         );
         return respond.ok(
           {
             action: "deleted",
             date: validatedInput.date,
           },
-          { correlationId }
+          { correlationId },
         );
       }
 
@@ -176,9 +176,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const duplicates = afterCreate.filter((item) => item.id !== created.id);
       if (duplicates.length > 0) {
         await Promise.all(
-          duplicates.map((record) =>
-            deleteGlobalBlackout({ admin, shop, id: record.id })
-          )
+          duplicates.map((record) => deleteGlobalBlackout({ admin, shop, id: record.id })),
         );
       }
 
@@ -188,7 +186,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           date: validatedInput.date,
           item: created,
         },
-        { correlationId }
+        { correlationId },
       );
     } finally {
       await lock.release();
@@ -196,15 +194,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -213,7 +209,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

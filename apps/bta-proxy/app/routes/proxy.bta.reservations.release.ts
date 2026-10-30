@@ -4,7 +4,7 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { memberRespond as respond } from "~/middleware/verifyMemberAppProxy";
 import { releaseHoldSchema } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
-import { getBookingStore } from "~/lib/bookingStore";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
 import { maskPII } from "~/lib/masking";
 
 /**
@@ -15,11 +15,15 @@ import { maskPII } from "~/lib/masking";
 export const action = async ({ request }: ActionFunctionArgs) => {
   // 1. 레이트 리밋 검증
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   // 2. App Proxy 서명 검증
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   // 3. correlationId 추출/생성
   const correlationId = respond.getCorrelationId(request);
@@ -35,23 +39,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // 6. Hold 해제 (멱등성 보장: hold가 없어도 ok:true 반환)
     try {
       await store.releaseHold(validatedInput.holdId);
-      
+
       // 7. 성공 응답 반환
       return respond.ok({ released: true }, { correlationId });
     } catch (releaseError) {
       // Redis 오류 등 내부 에러 처리
       if (releaseError instanceof Error) {
         // 타임아웃 에러
-        if (
-          releaseError.message.includes("timeout") ||
-          releaseError.name === "TimeoutError"
-        ) {
+        if (releaseError.message.includes("timeout") || releaseError.name === "TimeoutError") {
           return respond.fail(
             ErrorCode.BOOKING_STORE_TIMEOUT,
             getErrorMessage(ErrorCode.BOOKING_STORE_TIMEOUT),
             undefined,
             getErrorStatus(ErrorCode.BOOKING_STORE_TIMEOUT),
-            correlationId
+            correlationId,
           );
         }
 
@@ -61,7 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.BOOKING_STORE_ERROR),
           undefined,
           getErrorStatus(ErrorCode.BOOKING_STORE_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -76,22 +77,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     // Zod 검증 에러
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -103,8 +102,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Hold release 엔드포인트 오류",
           error: error instanceof Error ? error.message : String(error),
           ...(error instanceof Error && error.cause && { cause: error.cause }),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -112,8 +111,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };
-

@@ -27,10 +27,7 @@
           }
         }
       },
-      "block_order": [
-        "perk_y9nrbF",
-        "perk_WQhDRy"
-      ],
+      "block_order": ["perk_y9nrbF", "perk_WQhDRy"],
       "disabled": true,
       "name": "Tour product hero + booking (UI)",
       "settings": {
@@ -84,12 +81,7 @@
           }
         }
       },
-      "block_order": [
-        "item_NecWqL",
-        "item_dTGQ6c",
-        "item_7YyYmB",
-        "item_34c39g"
-      ],
+      "block_order": ["item_NecWqL", "item_dTGQ6c", "item_7YyYmB", "item_34c39g"],
       "disabled": true,
       "name": "What you'll do",
       "settings": {
@@ -132,11 +124,7 @@
           }
         }
       },
-      "block_order": [
-        "step_M7BLyY",
-        "step_AHRfPm",
-        "step_WnCbCe"
-      ],
+      "block_order": ["step_M7BLyY", "step_AHRfPm", "step_WnCbCe"],
       "disabled": true,
       "name": "Itinerary + Map",
       "settings": {

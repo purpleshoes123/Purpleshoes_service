@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { verifyGkvSignedUrl } from "~/lib/gkv/signedUrl";
+import { verifyGkvSignedUrl } from "~/domains/guide-viewer/signedUrl";
 import { respond } from "~/lib/respond";
 
 function getS3Client(): S3Client {
@@ -22,9 +22,13 @@ function getS3Client(): S3Client {
 function extractS3Key(requestUrl: URL): string | null {
   const prefix = "/gkv/";
   const idx = requestUrl.pathname.indexOf(prefix);
-  if (idx < 0) return null;
+  if (idx < 0) {
+    return null;
+  }
   const encoded = requestUrl.pathname.slice(idx + prefix.length);
-  if (!encoded) return null;
+  if (!encoded) {
+    return null;
+  }
   try {
     return decodeURIComponent(encoded);
   } catch {
@@ -92,7 +96,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
       undefined,
       getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-      correlationId
+      correlationId,
     );
   }
 
@@ -103,7 +107,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
       undefined,
       getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-      correlationId
+      correlationId,
     );
   }
 
@@ -120,7 +124,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
       undefined,
       getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-      correlationId
+      correlationId,
     );
   }
 
@@ -131,7 +135,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "파일을 찾을 수 없거나 READY 상태가 아닙니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -149,8 +153,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       | null
       | undefined;
     const stream =
-      body && typeof (body as { transformToWebStream?: () => ReadableStream<Uint8Array> }).transformToWebStream === "function"
-        ? (body as { transformToWebStream: () => ReadableStream<Uint8Array> }).transformToWebStream()
+      body &&
+      typeof (body as { transformToWebStream?: () => ReadableStream<Uint8Array> })
+        .transformToWebStream === "function"
+        ? (
+            body as { transformToWebStream: () => ReadableStream<Uint8Array> }
+          ).transformToWebStream()
         : (body as ReadableStream<Uint8Array> | null | undefined);
 
     if (!stream) {
@@ -159,7 +167,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_ERROR),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -167,9 +175,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     headers.set("Cache-Control", "private, max-age=60");
     headers.set("Accept-Ranges", "bytes");
     headers.set("Content-Type", object.ContentType || resource.mimeType);
-    if (object.ContentLength !== undefined) headers.set("Content-Length", String(object.ContentLength));
-    if (object.ETag) headers.set("ETag", object.ETag);
-    if (object.ContentRange) headers.set("Content-Range", object.ContentRange);
+    if (object.ContentLength !== undefined) {
+      headers.set("Content-Length", String(object.ContentLength));
+    }
+    if (object.ETag) {
+      headers.set("ETag", object.ETag);
+    }
+    if (object.ContentRange) {
+      headers.set("Content-Range", object.ContentRange);
+    }
 
     return new Response(stream, {
       status: object.ContentRange ? 206 : 200,
@@ -181,7 +195,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

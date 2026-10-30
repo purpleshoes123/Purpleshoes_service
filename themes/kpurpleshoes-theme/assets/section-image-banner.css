@@ -385,7 +385,7 @@
 
 .banner::after,
 .banner__media::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   background: #000000;

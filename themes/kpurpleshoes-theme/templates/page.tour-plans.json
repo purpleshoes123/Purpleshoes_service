@@ -77,11 +77,7 @@
           }
         }
       },
-      "block_order": [
-        "plan_XAEWec",
-        "plan_TBjEkR",
-        "plan_G4UYQw"
-      ],
+      "block_order": ["plan_XAEWec", "plan_TBjEkR", "plan_G4UYQw"],
       "name": "Tour Plans - Plans Grid",
       "settings": {
         "heading": "Get your guide plan",
@@ -273,11 +269,7 @@
           }
         }
       },
-      "block_order": [
-        "heading_EVbFnV",
-        "text_qfQMzd",
-        "buttons_mnyxjq"
-      ],
+      "block_order": ["heading_EVbFnV", "text_qfQMzd", "buttons_mnyxjq"],
       "name": "t:sections.image-banner.presets.name",
       "settings": {
         "image_overlay_opacity": 0,

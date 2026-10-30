@@ -3,12 +3,9 @@ import { z } from "zod";
 import { authenticate } from "~/shopify.server";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import {
-  recomputeEntitlement,
-  type RecomputeOutcome,
-} from "~/lib/guideExtension";
+import { recomputeEntitlement, type RecomputeOutcome } from "~/domains/checkout/guideExtension";
 import db from "~/db.server";
-import { createLog } from "~/lib/guideExtension/logStore";
+import { createLog } from "~/domains/checkout/guideExtension/logStore";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 3;
@@ -18,9 +15,7 @@ const recomputeSchema = z.object({
   customerId: z
     .string()
     .regex(/^gid:\/\/shopify\/Customer\/\d+$/, "customerId는 GID 형식이어야 합니다."),
-  types: z
-    .array(z.enum(["PDF", "VIDEO", "BUNDLE"]))
-    .min(1, "types는 최소 1개 이상이어야 합니다."),
+  types: z.array(z.enum(["PDF", "VIDEO", "BUNDLE"])).min(1, "types는 최소 1개 이상이어야 합니다."),
   reason: z.string().max(200, "reason은 200자 이하여야 합니다.").optional(),
 });
 
@@ -48,7 +43,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -66,7 +61,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       throw error;
@@ -81,7 +76,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.RATE_LIMITED),
         rate.retryAfter ? { retryAfterSec: rate.retryAfter } : undefined,
         getErrorStatus(ErrorCode.RATE_LIMITED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -153,15 +148,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -170,7 +163,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

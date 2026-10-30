@@ -17,31 +17,31 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "~/shopify.server";
-import { getState, listRevoked } from "~/lib/coupons";
-import { normalizeCode, normalizeCustomerId } from "~/lib/coupons/normalize";
-import { assertAdminCustomerExists, parseAdminCustomerId } from "~/lib/coupons/adminCustomerValidation";
-import { issueExtra10, issueGuide50, revokeCode } from "~/lib/coupons/issuer";
-import { reconcileCustomerCoupons } from "~/lib/coupons/reconcile";
+import { getState, listRevoked } from "~/domains/coupons";
+import { normalizeCode, normalizeCustomerId } from "~/domains/coupons/normalize";
+import {
+  assertAdminCustomerExists,
+  parseAdminCustomerId,
+} from "~/domains/coupons/adminCustomerValidation";
+import { issueExtra10, issueGuide50, revokeCode } from "~/domains/coupons/issuer";
+import { reconcileCustomerCoupons } from "~/domains/coupons/reconcile";
 import {
   runAdminEligibilityControl,
   type AdminEligibilityAction,
-} from "~/lib/coupons/adminEligibilityControls";
-import { isMediaConsentAdminOverride } from "~/lib/coupons/effectiveEligibility";
-import { resolveActiveExtra10 } from "~/lib/coupons/extra10Availability";
-import { acquireLock, releaseLock } from "~/lib/coupons/lock";
-import { fetchCustomerTourCreditBalance } from "~/lib/tourCredits/metafields";
-import { getTourPending } from "~/lib/tourCheckout/pending";
-import {
-  resolveAdminCouponStatus,
-  type AdminCouponStatus,
-} from "~/lib/coupons/adminStatus";
+} from "~/domains/coupons/adminEligibilityControls";
+import { isMediaConsentAdminOverride } from "~/domains/coupons/effectiveEligibility";
+import { resolveActiveExtra10 } from "~/domains/coupons/extra10Availability";
+import { acquireLock, releaseLock } from "~/domains/coupons/lock";
+import { fetchCustomerTourCreditBalance } from "~/domains/checkout/tourCredits/metafields";
+import { getTourPending } from "~/domains/checkout/tourCheckout/pending";
+import { resolveAdminCouponStatus, type AdminCouponStatus } from "~/domains/coupons/adminStatus";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import {
   formatCustomerSearchLabel,
   type CustomerSearchItem,
-} from "~/lib/shopifyCustomerSearch";
-import { searchCustomers } from "~/lib/shopifyCustomerSearch.server";
+} from "~/domains/members/shopifyCustomerSearch";
+import { searchCustomers } from "~/domains/members/shopifyCustomerSearch.server.ts";
 
 const COUPON_KINDS = ["GUIDE50", "EXTRA10"] as const;
 const ADMIN_ELIGIBILITY_ACTIONS = [
@@ -96,37 +96,61 @@ type LoaderData = {
 };
 
 function normalizeEpochSeconds(value: number | null): number | null {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   return value > 1_000_000_000_000 ? Math.floor(value / 1000) : value;
 }
 
 function formatEpoch(value: number | null): string | null {
   const seconds = normalizeEpochSeconds(value);
-  if (!seconds) return null;
+  if (!seconds) {
+    return null;
+  }
   return new Date(seconds * 1000).toISOString();
 }
 
 function resolveStatusTone(
   status: CouponItem["status"],
 ): "success" | "warning" | "critical" | "attention" {
-  if (status === "ACTIVE") return "success";
-  if (status === "USED") return "success";
-  if (status === "EXPIRED") return "warning";
-  if (status === "REVOKED") return "critical";
+  if (status === "ACTIVE") {
+    return "success";
+  }
+  if (status === "USED") {
+    return "success";
+  }
+  if (status === "EXPIRED") {
+    return "warning";
+  }
+  if (status === "REVOKED") {
+    return "critical";
+  }
   return "attention";
 }
 
 export function formatCouponStatusLabel(status: AdminCouponStatus): string {
-  if (status === "ACTIVE") return "사용 가능";
-  if (status === "USED") return "사용 완료";
-  if (status === "EXPIRED") return "만료";
-  if (status === "REVOKED") return "회수됨";
+  if (status === "ACTIVE") {
+    return "사용 가능";
+  }
+  if (status === "USED") {
+    return "사용 완료";
+  }
+  if (status === "EXPIRED") {
+    return "만료";
+  }
+  if (status === "REVOKED") {
+    return "회수됨";
+  }
   return "없음";
 }
 
 function formatCouponKindLabel(kind: CouponKind): string {
-  if (kind === "GUIDE50") return "가이드킷 50%";
-  if (kind === "EXTRA10") return "공유 $10";
+  if (kind === "GUIDE50") {
+    return "가이드킷 50%";
+  }
+  if (kind === "EXTRA10") {
+    return "공유 $10";
+  }
   return kind;
 }
 
@@ -135,9 +159,13 @@ function formatRawBoolean(value: boolean): string {
 }
 
 function formatDateTimeLabel(value: string | null): string {
-  if (!value) return "-";
+  if (!value) {
+    return "-";
+  }
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
   return new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
     year: "numeric",
@@ -182,10 +210,8 @@ export function resolveTour15DisplayState(
   }
 
   const rawCreditBalance = eligibility.rawTour15CreditBalance;
-  const hasCredit =
-    typeof rawCreditBalance === "number" && rawCreditBalance > 0;
-  const effectiveAvailable =
-    !flags.tour15AdminBlocked && (flags.entitledTour15 || hasCredit);
+  const hasCredit = typeof rawCreditBalance === "number" && rawCreditBalance > 0;
+  const effectiveAvailable = !flags.tour15AdminBlocked && (flags.entitledTour15 || hasCredit);
   const sourceParts: string[] = [];
   if (flags.tour15GuideBundleOrderIds.length) {
     sourceParts.push("가이드킷 번들");
@@ -206,11 +232,7 @@ export function resolveTour15DisplayState(
       : effectiveAvailable
         ? "사용 가능"
         : "사용 불가",
-    tone: flags.tour15AdminBlocked
-      ? "critical"
-      : effectiveAvailable
-        ? "success"
-        : "attention",
+    tone: flags.tour15AdminBlocked ? "critical" : effectiveAvailable ? "success" : "attention",
     effectiveAvailable,
     rawEntitledLabel: flags.entitledTour15 ? "있음" : "없음",
     rawCreditBalanceLabel:
@@ -249,21 +271,12 @@ export function resolveMediaConsentDisplayState(
     };
   }
   const override = flags.mediaConsentAdminOverride;
-  const effective =
-    override === "ALLOW"
-      ? true
-      : override === "DENY"
-        ? false
-        : flags.mediaConsent;
+  const effective = override === "ALLOW" ? true : override === "DENY" ? false : flags.mediaConsent;
 
   return {
     rawLabel: flags.mediaConsent ? "동의함" : "동의 안 함",
     overrideLabel:
-      override === "ALLOW"
-        ? "사용 가능 강제"
-        : override === "DENY"
-          ? "사용 불가 강제"
-          : "없음",
+      override === "ALLOW" ? "사용 가능 강제" : override === "DENY" ? "사용 불가 강제" : "없음",
     effectiveLabel: effective ? "사용 가능" : "사용 불가",
     tone: effective ? "success" : "attention",
   };
@@ -313,13 +326,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   let rawTour15CreditBalance: number | null = null;
   let tour15CreditBalanceError: string | null = null;
   try {
-    rawTour15CreditBalance = await fetchCustomerTourCreditBalance(
-      auth.admin,
-      customerId,
-    );
+    rawTour15CreditBalance = await fetchCustomerTourCreditBalance(auth.admin, customerId);
   } catch (error) {
-    tour15CreditBalanceError =
-      error instanceof Error ? error.message : String(error);
+    tour15CreditBalanceError = error instanceof Error ? error.message : String(error);
   }
   const revokedSet = new Set(
     Array.from(revokedList)
@@ -334,9 +343,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     state.guide50ConsumedCode &&
     normalizeCode(guide50Code) === normalizeCode(state.guide50ConsumedCode),
   );
-  const guide50IssuedAt = state.guide50Code
-    ? state.guide50IssuedAt
-    : state.guide50ConsumedIssuedAt;
+  const guide50IssuedAt = state.guide50Code ? state.guide50IssuedAt : state.guide50ConsumedIssuedAt;
   const guide50ExpiresAt = state.guide50Code
     ? state.guide50ExpiresAt
     : state.guide50ConsumedExpiresAt;
@@ -344,9 +351,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     ? state.guide50DiscountId
     : state.guide50ConsumedDiscountId;
   const guide50ExpiresAtSec = normalizeEpochSeconds(guide50ExpiresAt);
-  const extra10Code = extra10Availability.available
-    ? extra10Availability.code
-    : null;
+  const extra10Code = extra10Availability.available ? extra10Availability.code : null;
   const extra10ExpiresAtSec = null;
 
   const items: CouponItem[] = [
@@ -356,9 +361,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       issuedAt: formatEpoch(guide50IssuedAt),
       expiresAt: formatEpoch(guide50ExpiresAt),
       discountId: guide50DiscountId,
-      revoked: guide50Code
-        ? revokedSet.has(normalizeCode(guide50Code) || guide50Code)
-        : false,
+      revoked: guide50Code ? revokedSet.has(normalizeCode(guide50Code) || guide50Code) : false,
       status: "NONE",
     },
     {
@@ -370,9 +373,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       revoked:
         extra10Availability.reason === "REVOKED" ||
         extra10Availability.reason === "SHOPIFY_INVALID" ||
-        (extra10Code
-          ? revokedSet.has(normalizeCode(extra10Code) || extra10Code)
-          : false),
+        (extra10Code ? revokedSet.has(normalizeCode(extra10Code) || extra10Code) : false),
       status: "NONE",
     },
   ];
@@ -422,20 +423,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 function ensureCouponKind(value: string): CouponKind | null {
   const normalized = value.toUpperCase();
-  return COUPON_KINDS.includes(normalized as CouponKind)
-    ? (normalized as CouponKind)
-    : null;
+  return COUPON_KINDS.includes(normalized as CouponKind) ? (normalized as CouponKind) : null;
 }
 
-function isAdminEligibilityIntent(
-  value: string,
-): value is AdminEligibilityIntent {
+function isAdminEligibilityIntent(value: string): value is AdminEligibilityIntent {
   return ADMIN_ELIGIBILITY_ACTIONS.includes(value as AdminEligibilityIntent);
 }
 
-function resolveAdminActor(
-  auth: Awaited<ReturnType<typeof authenticate.admin>>,
-): string | null {
+function resolveAdminActor(auth: Awaited<ReturnType<typeof authenticate.admin>>): string | null {
   const session = auth.session as any;
   return (
     session?.onlineAccessInfo?.associated_user?.email ||
@@ -515,22 +510,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     try {
       await assertAdminCustomerExists(auth.admin, customerId);
     } catch (error) {
-      return respond.fail(ErrorCode.VALIDATION_ERROR,
+      return respond.fail(
+        ErrorCode.VALIDATION_ERROR,
         error instanceof Error ? error.message : "고객을 확인하지 못했습니다.",
-        undefined, 400, correlationId);
+        undefined,
+        400,
+        correlationId,
+      );
     }
 
     if (isAdminEligibilityIntent(intent)) {
       const reason = String(formData.get("reason") || "").trim();
       const force = String(formData.get("force") || "") === "true";
-      const rawOverride = String(
-        formData.get("mediaConsentOverride") || "",
-      ).trim();
+      const rawOverride = String(formData.get("mediaConsentOverride") || "").trim();
 
-      if (
-        intent === "set_media_consent_override" &&
-        !isMediaConsentAdminOverride(rawOverride)
-      ) {
+      if (intent === "set_media_consent_override" && !isMediaConsentAdminOverride(rawOverride)) {
         return respond.fail(
           ErrorCode.VALIDATION_ERROR,
           getErrorMessage(
@@ -552,9 +546,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason,
           force,
           actor: resolveAdminActor(auth),
-          mediaConsentOverride: isMediaConsentAdminOverride(rawOverride)
-            ? rawOverride
-            : null,
+          mediaConsentOverride: isMediaConsentAdminOverride(rawOverride) ? rawOverride : null,
           correlationId,
         });
         return respond.ok(
@@ -570,8 +562,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const knownMessages: Record<string, string> = {
           ADMIN_ELIGIBILITY_REASON_REQUIRED: "변경 사유가 필요합니다.",
           ADMIN_ELIGIBILITY_CUSTOMER_ID_REQUIRED: "customerId is required.",
-          ADMIN_ELIGIBILITY_MEDIA_OVERRIDE_REQUIRED:
-            "mediaConsentOverride must be ALLOW or DENY.",
+          ADMIN_ELIGIBILITY_MEDIA_OVERRIDE_REQUIRED: "mediaConsentOverride must be ALLOW or DENY.",
           ADMIN_ELIGIBILITY_ACTIVE_SOURCE_PRESENT:
             "활성 TOUR15 source가 있어 기본 회수를 중단했습니다. 정말 제거해야 하면 force 옵션을 사용하세요.",
           ADMIN_ELIGIBILITY_LOCKED:
@@ -622,10 +613,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!kind) {
           return respond.fail(
             ErrorCode.VALIDATION_ERROR,
-            getErrorMessage(
-              ErrorCode.VALIDATION_ERROR,
-              "couponKind is required.",
-            ),
+            getErrorMessage(ErrorCode.VALIDATION_ERROR, "couponKind is required."),
             undefined,
             getErrorStatus(ErrorCode.VALIDATION_ERROR),
             correlationId,
@@ -668,10 +656,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!kind) {
           return respond.fail(
             ErrorCode.VALIDATION_ERROR,
-            getErrorMessage(
-              ErrorCode.VALIDATION_ERROR,
-              "couponKind is required.",
-            ),
+            getErrorMessage(ErrorCode.VALIDATION_ERROR, "couponKind is required."),
             undefined,
             getErrorStatus(ErrorCode.VALIDATION_ERROR),
             correlationId,
@@ -725,10 +710,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!kind) {
           return respond.fail(
             ErrorCode.VALIDATION_ERROR,
-            getErrorMessage(
-              ErrorCode.VALIDATION_ERROR,
-              "couponKind is required.",
-            ),
+            getErrorMessage(ErrorCode.VALIDATION_ERROR, "couponKind is required."),
             undefined,
             getErrorStatus(ErrorCode.VALIDATION_ERROR),
             correlationId,
@@ -748,10 +730,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (!code) {
           return respond.fail(
             ErrorCode.VALIDATION_ERROR,
-            getErrorMessage(
-              ErrorCode.VALIDATION_ERROR,
-              "revoke code not found.",
-            ),
+            getErrorMessage(ErrorCode.VALIDATION_ERROR, "revoke code not found."),
             undefined,
             getErrorStatus(ErrorCode.VALIDATION_ERROR),
             correlationId,
@@ -782,11 +761,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       if (intent === "reconcile") {
         const dryRun = String(formData.get("dryRun") || "true") === "true";
-        const report = await reconcileCustomerCoupons(
-          auth.admin,
-          customerId,
-          dryRun,
-        );
+        const report = await reconcileCustomerCoupons(auth.admin, customerId, dryRun);
 
         console.log(
           JSON.stringify({
@@ -832,10 +807,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify({
         message: "Coupons admin action failed",
         error: message,
-        intent:
-          typeof (request as any)?.formData === "function"
-            ? undefined
-            : undefined,
+        intent: typeof (request as any)?.formData === "function" ? undefined : undefined,
       }),
     );
     return respond.fail(
@@ -858,9 +830,7 @@ export default function CouponsAdminPage() {
   const [dryRun, setDryRun] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [pickedCustomerLabel, setPickedCustomerLabel] = useState<string | null>(
-    null,
-  );
+  const [pickedCustomerLabel, setPickedCustomerLabel] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<CustomerSearchItem[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -869,9 +839,7 @@ export default function CouponsAdminPage() {
   const [forceTour15Revoke, setForceTour15Revoke] = useState(false);
   const normalizedInput = normalizeCustomerId(input.trim());
   const inputMatches =
-    Boolean(normalizedInput) &&
-    Boolean(data.customerId) &&
-    normalizedInput === data.customerId;
+    Boolean(normalizedInput) && Boolean(data.customerId) && normalizedInput === data.customerId;
   const actionCustomerId = data.customerId || normalizedInput || input.trim();
   const actionUrl = buildCouponsActionUrl({
     shop: data.shop,
@@ -881,12 +849,14 @@ export default function CouponsAdminPage() {
 
   const lastActionRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!actionFetcher.data || actionFetcher.state !== "idle") return;
+    if (!actionFetcher.data || actionFetcher.state !== "idle") {
+      return;
+    }
     const payload = actionFetcher.data as any;
-    const fingerprint = JSON.stringify(
-      payload?.data ?? payload?.error ?? payload,
-    );
-    if (lastActionRef.current === fingerprint) return;
+    const fingerprint = JSON.stringify(payload?.data ?? payload?.error ?? payload);
+    if (lastActionRef.current === fingerprint) {
+      return;
+    }
     lastActionRef.current = fingerprint;
     if (payload.ok) {
       setErrorMessage(null);
@@ -902,16 +872,12 @@ export default function CouponsAdminPage() {
       setSuccessMessage(null);
       setErrorMessage(payload.error.message);
     }
-  }, [
-    actionFetcher.data,
-    actionFetcher.state,
-    actionCustomerId,
-    actionUrl,
-    submit,
-  ]);
+  }, [actionFetcher.data, actionFetcher.state, actionCustomerId, actionUrl, submit]);
 
   useEffect(() => {
-    if (!searchFetcher.data) return;
+    if (!searchFetcher.data) {
+      return;
+    }
     const payload = searchFetcher.data as any;
     if (payload.ok) {
       setSearchError(null);
@@ -945,7 +911,9 @@ export default function CouponsAdminPage() {
   };
 
   const searchRows = useMemo(() => {
-    if (!searchResults.length) return [];
+    if (!searchResults.length) {
+      return [];
+    }
     return searchResults.map((customer) => {
       return [
         formatCustomerSearchLabel(customer) || "-",
@@ -968,7 +936,9 @@ export default function CouponsAdminPage() {
       : null;
 
   const reconcileRows = useMemo(() => {
-    if (!reconcileReport) return [];
+    if (!reconcileReport) {
+      return [];
+    }
     return reconcileReport.invalidDetected.map((item: any) => [
       item.code,
       item.status || "-",
@@ -977,17 +947,14 @@ export default function CouponsAdminPage() {
   }, [reconcileReport]);
 
   const tour15Display = useMemo(() => resolveTour15DisplayState(data), [data]);
-  const mediaConsentDisplay = useMemo(
-    () => resolveMediaConsentDisplayState(data),
-    [data],
-  );
-  const guide50Status =
-    data.items.find((item) => item.kind === "GUIDE50")?.status || "NONE";
-  const extra10Status =
-    data.items.find((item) => item.kind === "EXTRA10")?.status || "NONE";
+  const mediaConsentDisplay = useMemo(() => resolveMediaConsentDisplayState(data), [data]);
+  const guide50Status = data.items.find((item) => item.kind === "GUIDE50")?.status || "NONE";
+  const extra10Status = data.items.find((item) => item.kind === "EXTRA10")?.status || "NONE";
 
   const summaryRows = useMemo(() => {
-    if (!data.customerId) return [];
+    if (!data.customerId) {
+      return [];
+    }
     return [
       ["고객 ID", data.customerId],
       [
@@ -1026,7 +993,9 @@ export default function CouponsAdminPage() {
   ]);
 
   const tour15Rows = useMemo(() => {
-    if (!data.flags || !data.eligibility) return [];
+    if (!data.flags || !data.eligibility) {
+      return [];
+    }
     return [
       [
         "현재 상태",
@@ -1034,10 +1003,7 @@ export default function CouponsAdminPage() {
           {tour15Display.label}
         </Badge>,
       ],
-      [
-        "실제 적용",
-        tour15Display.effectiveAvailable ? "사용 가능" : "사용 불가",
-      ],
+      ["실제 적용", tour15Display.effectiveAvailable ? "사용 가능" : "사용 불가"],
       ["원본 권한", tour15Display.rawEntitledLabel],
       ["보유 크레딧", tour15Display.rawCreditBalanceLabel],
       ["관리자 차단", tour15Display.blockedLabel],
@@ -1047,7 +1013,9 @@ export default function CouponsAdminPage() {
   }, [data.eligibility, data.flags, tour15Display]);
 
   const mediaConsentRows = useMemo(() => {
-    if (!data.flags) return [];
+    if (!data.flags) {
+      return [];
+    }
     return [
       ["원본 미디어 동의", mediaConsentDisplay.rawLabel],
       ["관리자 강제 설정", mediaConsentDisplay.overrideLabel],
@@ -1061,40 +1029,27 @@ export default function CouponsAdminPage() {
   }, [data.flags, mediaConsentDisplay]);
 
   const detailRows = useMemo(() => {
-    if (!data.flags || !data.eligibility) return [];
+    if (!data.flags || !data.eligibility) {
+      return [];
+    }
     return [
       ["entitledTour15", formatRawBoolean(data.flags.entitledTour15)],
       ["mediaConsent", formatRawBoolean(data.flags.mediaConsent)],
       ["tourCompletedAt", data.flags.tourCompletedAt || "-"],
       ["reviewCompletedAt", data.flags.reviewCompletedAt || "-"],
-      [
-        "rawTour15CreditBalance",
-        data.eligibility.rawTour15CreditBalance ?? "-",
-      ],
-      [
-        "tour15CreditBalanceError",
-        data.eligibility.tour15CreditBalanceError || "-",
-      ],
+      ["rawTour15CreditBalance", data.eligibility.rawTour15CreditBalance ?? "-"],
+      ["tour15CreditBalanceError", data.eligibility.tour15CreditBalanceError || "-"],
       [
         "tour15GuideBundleOrderIds",
         data.flags.tour15GuideBundleOrderIds.length
           ? data.flags.tour15GuideBundleOrderIds.join(", ")
           : "-",
       ],
-      [
-        "tour15TourReviewActive",
-        data.flags.tour15TourReviewActive ? "true" : "false",
-      ],
+      ["tour15TourReviewActive", data.flags.tour15TourReviewActive ? "true" : "false"],
       ["tour15AdminBlocked", data.flags.tour15AdminBlocked ? "true" : "false"],
       ["tour15AdminBlockedReason", data.flags.tour15AdminBlockedReason || "-"],
-      [
-        "mediaConsentAdminOverride",
-        data.flags.mediaConsentAdminOverride || "-",
-      ],
-      [
-        "mediaConsentAdminOverrideReason",
-        data.flags.mediaConsentAdminOverrideReason || "-",
-      ],
+      ["mediaConsentAdminOverride", data.flags.mediaConsentAdminOverride || "-"],
+      ["mediaConsentAdminOverrideReason", data.flags.mediaConsentAdminOverrideReason || "-"],
       [
         "pendingTourDiscount",
         data.eligibility.pendingTourCode
@@ -1107,9 +1062,7 @@ export default function CouponsAdminPage() {
   }, [data.eligibility, data.flags]);
 
   const eligibilityActionDisabled =
-    actionFetcher.state !== "idle" ||
-    !inputMatches ||
-    !eligibilityReason.trim();
+    actionFetcher.state !== "idle" || !inputMatches || !eligibilityReason.trim();
 
   return (
     <Page title="쿠폰 관리자">
@@ -1137,9 +1090,7 @@ export default function CouponsAdminPage() {
                   검색
                 </Button>
               </InlineStack>
-              {searchError ? (
-                <Banner tone="critical">{searchError}</Banner>
-              ) : null}
+              {searchError ? <Banner tone="critical">{searchError}</Banner> : null}
               {searchRows.length ? (
                 <DataTable
                   columnContentTypes={["text", "text", "text", "text"]}
@@ -1224,8 +1175,7 @@ export default function CouponsAdminPage() {
               </InlineStack>
               <BlockStack gap="400">
                 {data.items.map((item) => {
-                  const disabled =
-                    actionFetcher.state !== "idle" || !inputMatches;
+                  const disabled = actionFetcher.state !== "idle" || !inputMatches;
                   return (
                     <div
                       key={item.kind}
@@ -1247,8 +1197,7 @@ export default function CouponsAdminPage() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns:
-                              "minmax(112px, 168px) minmax(0, 1fr)",
+                            gridTemplateColumns: "minmax(112px, 168px) minmax(0, 1fr)",
                             columnGap: "16px",
                             rowGap: "10px",
                           }}
@@ -1371,8 +1320,8 @@ export default function CouponsAdminPage() {
               </Text>
               <BlockStack gap="200">
                 <Text variant="bodySm" as="p" tone="subdued">
-                  아래 TOUR15 권한 관리와 미디어 동의 할인 관리 작업에 공통으로
-                  기록될 변경 사유를 입력하세요.
+                  아래 TOUR15 권한 관리와 미디어 동의 할인 관리 작업에 공통으로 기록될 변경 사유를
+                  입력하세요.
                 </Text>
                 <Text variant="bodySm" as="p" tone="subdued">
                   변경 사유를 입력해야 아래 관리 버튼을 실행할 수 있습니다.
@@ -1393,8 +1342,7 @@ export default function CouponsAdminPage() {
                     여행상품 15% 쿠폰 권한 관리
                   </Text>
                   <Text variant="bodySm" as="p" tone="subdued">
-                    회수/차단 작업은 고객의 여행상품 쿠폰 사용 가능 여부에 즉시
-                    반영됩니다.
+                    회수/차단 작업은 고객의 여행상품 쿠폰 사용 가능 여부에 즉시 반영됩니다.
                   </Text>
                   <DataTable
                     columnContentTypes={["text", "text"]}
@@ -1479,8 +1427,7 @@ export default function CouponsAdminPage() {
                   미디어 동의 할인 관리
                 </Text>
                 <Text variant="bodySm" as="p" tone="subdued">
-                  관리자 설정이 있으면 고객의 원본 미디어 동의 값보다 우선
-                  적용됩니다.
+                  관리자 설정이 있으면 고객의 원본 미디어 동의 값보다 우선 적용됩니다.
                 </Text>
                 <DataTable
                   columnContentTypes={["text", "text"]}
@@ -1549,8 +1496,7 @@ export default function CouponsAdminPage() {
                 상세 상태
               </Text>
               <Text variant="bodySm" as="p" tone="subdued">
-                운영 확인용 원시 상태입니다. 일반 조치는 위 권한 관리 영역에서
-                실행하세요.
+                운영 확인용 원시 상태입니다. 일반 조치는 위 권한 관리 영역에서 실행하세요.
               </Text>
               <DataTable
                 columnContentTypes={["text", "text"]}
@@ -1584,8 +1530,8 @@ export default function CouponsAdminPage() {
                 Shopify 정합성 점검
               </Text>
               <Text variant="bodySm" as="p" tone="subdued">
-                Shopify에서 이미 무효화되었거나 사용할 수 없는 쿠폰을 확인하고
-                내부 상태를 정리합니다. 기본값은 실제 변경 없는 점검입니다.
+                Shopify에서 이미 무효화되었거나 사용할 수 없는 쿠폰을 확인하고 내부 상태를
+                정리합니다. 기본값은 실제 변경 없는 점검입니다.
               </Text>
               <Checkbox
                 label="점검만 수행"
@@ -1621,9 +1567,7 @@ export default function CouponsAdminPage() {
                     rows={reconcileRows}
                   />
                   {reconcileReport.warnings?.length ? (
-                    <Banner tone="warning">
-                      {reconcileReport.warnings.join(" | ")}
-                    </Banner>
+                    <Banner tone="warning">{reconcileReport.warnings.join(" | ")}</Banner>
                   ) : null}
                 </BlockStack>
               ) : null}
@@ -1649,10 +1593,7 @@ type SubmitActionParams = {
   mediaConsentOverride?: "ALLOW" | "DENY";
 };
 
-function submitAction(
-  fetcher: ReturnType<typeof useFetcher>,
-  params: SubmitActionParams,
-) {
+function submitAction(fetcher: ReturnType<typeof useFetcher>, params: SubmitActionParams) {
   const formData = new FormData();
   formData.set("intent", params.intent);
   formData.set("customerId", params.customerId);
@@ -1688,15 +1629,23 @@ function buildCouponsActionUrl(params: {
   embedded?: string | null;
 }): string {
   const query = new URLSearchParams();
-  if (params.shop) query.set("shop", params.shop);
-  if (params.host) query.set("host", params.host);
-  if (params.embedded) query.set("embedded", params.embedded);
+  if (params.shop) {
+    query.set("shop", params.shop);
+  }
+  if (params.host) {
+    query.set("host", params.host);
+  }
+  if (params.embedded) {
+    query.set("embedded", params.embedded);
+  }
   const qs = query.toString();
   return qs ? `/app/coupons?${qs}` : "/app/coupons";
 }
 
 function buildSuccessMessage(data: any): string {
-  if (!data || typeof data !== "object") return "작업이 완료되었습니다.";
+  if (!data || typeof data !== "object") {
+    return "작업이 완료되었습니다.";
+  }
   if (data.action === "issue") {
     const suffix = data.issued ? "발급 완료" : data.reason || "처리 생략";
     return `${data.couponKind} ${suffix}. 코드: ${data.code || "-"}`;

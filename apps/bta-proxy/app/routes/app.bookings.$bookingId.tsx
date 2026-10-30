@@ -1,11 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
-import {
-  Form,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-} from "react-router";
+import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
 import { useState } from "react";
 import {
   BlockStack,
@@ -22,20 +17,20 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
-import { completeBookingTour, getBookingCompletion } from "~/lib/bookingCompletionService";
+import {
+  completeBookingTour,
+  getBookingCompletion,
+} from "~/domains/bookings/bookingCompletionService";
 import {
   getBookingDetailData,
   BookingDetailError,
   type BookingDetailData,
-} from "~/lib/bookingDetailService";
+} from "~/domains/bookings/bookingDetailService";
 import {
   rescheduleBookingTravelDate,
   type RescheduleResult,
-} from "~/lib/bookingRescheduleService";
-import {
-  getBookingStatusDisplay,
-  normalizeBookingStatus,
-} from "~/lib/bookingStatus";
+} from "~/domains/bookings/bookingRescheduleService";
+import { getBookingStatusDisplay, normalizeBookingStatus } from "~/domains/bookings/bookingStatus";
 
 type LoaderData = {
   booking?: BookingDetailData["booking"];
@@ -58,11 +53,7 @@ type ActionData =
       fieldErrors?: { newTravelDate?: string };
     };
 
-function formatTravelers(travelers?: {
-  adult: number;
-  child: number;
-  infant: number;
-}): string {
+function formatTravelers(travelers?: { adult: number; child: number; infant: number }): string {
   if (!travelers) {
     return "Adult x -, Children x -, Infant x -";
   }
@@ -108,15 +99,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     });
   } catch (error) {
     if (error instanceof BookingDetailError) {
-      return json<LoaderData>(
-        { error: error.message },
-        { status: error.status },
-      );
+      return json<LoaderData>({ error: error.message }, { status: error.status });
     }
-    return json<LoaderData>(
-      { error: "예약 정보를 불러오지 못했습니다." },
-      { status: 500 },
-    );
+    return json<LoaderData>({ error: "예약 정보를 불러오지 못했습니다." }, { status: 500 });
   }
 };
 
@@ -127,11 +112,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (intent === "complete_tour") {
     try {
-      const detail = await getBookingDetailData({ shop: auth.session.shop, admin: auth.admin, bookingId: params.bookingId });
+      const detail = await getBookingDetailData({
+        shop: auth.session.shop,
+        admin: auth.admin,
+        bookingId: params.bookingId,
+      });
       await completeBookingTour(auth.admin, detail.booking);
-      return json<ActionData>({ ok: true, successMessage: "투어 완료 처리되었습니다. 고객의 예약 상태가 TOUR COMPLETED로 변경되고 리뷰 작성이 열립니다." });
+      return json<ActionData>({
+        ok: true,
+        successMessage:
+          "투어 완료 처리되었습니다. 고객의 예약 상태가 TOUR COMPLETED로 변경되고 리뷰 작성이 열립니다.",
+      });
     } catch (error) {
-      return json<ActionData>({ ok: false, errorMessage: error instanceof Error ? error.message : "투어 완료 처리에 실패했습니다." }, { status: 400 });
+      return json<ActionData>(
+        {
+          ok: false,
+          errorMessage: error instanceof Error ? error.message : "투어 완료 처리에 실패했습니다.",
+        },
+        { status: 400 },
+      );
     }
   }
 
@@ -166,12 +165,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     });
     bookingTravelDate = detail.booking.travelDate;
     const completion = await getBookingCompletion(auth.admin, detail.booking);
-    if (completion.completed) return json<ActionData>({ ok: false, errorMessage: "완료된 투어의 일정은 변경할 수 없습니다." }, { status: 409 });
+    if (completion.completed) {
+      return json<ActionData>(
+        { ok: false, errorMessage: "완료된 투어의 일정은 변경할 수 없습니다." },
+        { status: 409 },
+      );
+    }
   } catch (error) {
     const message =
-      error instanceof BookingDetailError
-        ? error.message
-        : "예약 정보를 불러오지 못했습니다.";
+      error instanceof BookingDetailError ? error.message : "예약 정보를 불러오지 못했습니다.";
     return json<ActionData>({
       ok: false,
       errorMessage: message,
@@ -228,10 +230,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       ok: false,
       errorMessage,
       errorCode: result.code,
-      fieldErrors:
-        result.field === "newTravelDate"
-          ? { newTravelDate: result.message }
-          : undefined,
+      fieldErrors: result.field === "newTravelDate" ? { newTravelDate: result.message } : undefined,
     });
   }
 
@@ -270,16 +269,16 @@ export default function BookingDetailPage() {
 
   const booking = data.booking;
   const order = data.order;
-  const statusDisplay = getBookingStatusDisplay(
-    normalizeBookingStatus(booking.status),
-  );
+  const statusDisplay = getBookingStatusDisplay(normalizeBookingStatus(booking.status));
 
   const orderLink = data.orderUrl;
   const pdfLink = `/app/bookings/${booking.bookingId}/pdf`;
   const extras = data.bookingExtras;
 
   const handleOpenOrder = () => {
-    if (!orderLink) return;
+    if (!orderLink) {
+      return;
+    }
     window.open(orderLink, "_blank", "noopener,noreferrer");
   };
 
@@ -308,8 +307,7 @@ export default function BookingDetailPage() {
   const dietaryRestrictions = extras?.dietaryRestrictions || "-";
   const reservationContactName = extras?.reservationContactName || "-";
   const reservationContactPhone = extras?.reservationContactPhone || "-";
-  const productLabel =
-    booking.productTitle || order?.title || booking.productId;
+  const productLabel = booking.productTitle || order?.title || booking.productId;
 
   return (
     <Page>
@@ -334,7 +332,9 @@ export default function BookingDetailPage() {
                   <Text as="span" variant="bodySm" tone="subdued">
                     상태
                   </Text>
-                  <Badge tone={data.tourCompleted ? "success" : statusDisplay.tone}>{data.tourCompleted ? "투어 완료 · TOUR COMPLETED" : statusDisplay.label}</Badge>
+                  <Badge tone={data.tourCompleted ? "success" : statusDisplay.tone}>
+                    {data.tourCompleted ? "투어 완료 · TOUR COMPLETED" : statusDisplay.label}
+                  </Badge>
                 </InlineStack>
               </BlockStack>
               <InlineStack gap="200">
@@ -351,9 +351,17 @@ export default function BookingDetailPage() {
 
         <Card>
           <BlockStack gap="300">
-            <Text as="h2" variant="headingMd">투어 완료</Text>
-            <Text as="p">실제 투어가 끝난 뒤 완료 처리해 주세요. 완료 전에는 고객이 리뷰를 작성할 수 없습니다.</Text>
-            {data.completionError ? <Banner tone="warning"><p>{data.completionError}</p></Banner> : null}
+            <Text as="h2" variant="headingMd">
+              투어 완료
+            </Text>
+            <Text as="p">
+              실제 투어가 끝난 뒤 완료 처리해 주세요. 완료 전에는 고객이 리뷰를 작성할 수 없습니다.
+            </Text>
+            {data.completionError ? (
+              <Banner tone="warning">
+                <p>{data.completionError}</p>
+              </Banner>
+            ) : null}
             <Form method="post">
               <input type="hidden" name="intent" value="complete_tour" />
               <Button submit variant="primary" disabled={isLoading || !data.canCompleteTour}>
@@ -430,11 +438,7 @@ export default function BookingDetailPage() {
               </Banner>
             ) : null}
             <Form method="post">
-              <input
-                type="hidden"
-                name="intent"
-                value="reschedule_travel_date"
-              />
+              <input type="hidden" name="intent" value="reschedule_travel_date" />
               <FormLayout>
                 <TextField
                   name="newTravelDate"
@@ -445,9 +449,7 @@ export default function BookingDetailPage() {
                     setNewTravelDate(value);
                   }}
                   error={
-                    actionData?.ok === false
-                      ? actionData.fieldErrors?.newTravelDate
-                      : undefined
+                    actionData?.ok === false ? actionData.fieldErrors?.newTravelDate : undefined
                   }
                   disabled={!rescheduleEnabled}
                   autoComplete="off"

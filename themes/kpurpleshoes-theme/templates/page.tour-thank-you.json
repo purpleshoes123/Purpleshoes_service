@@ -47,7 +47,5 @@
       }
     }
   },
-  "order": [
-    "tour_thank_you"
-  ]
+  "order": ["tour_thank_you"]
 }

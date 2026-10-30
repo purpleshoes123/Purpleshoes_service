@@ -80,13 +80,7 @@
           }
         }
       },
-      "block_order": [
-        "private_service",
-        "spa",
-        "hanjeongsik",
-        "bbq",
-        "hangang"
-      ],
+      "block_order": ["private_service", "spa", "hanjeongsik", "bbq", "hangang"],
       "settings": {
         "heading": "Experience Highlights",
         "note": "This experience is hosted in English.",
@@ -114,9 +108,7 @@
           }
         }
       },
-      "block_order": [
-        "review_K6MYxw"
-      ],
+      "block_order": ["review_K6MYxw"],
       "name": "Reviews",
       "settings": {
         "heading": "Reviews",
@@ -206,10 +198,5 @@
       }
     }
   },
-  "order": [
-    "main",
-    "what_youll_do",
-    "travel_reviews_list",
-    "tour_faq_m6UiNr"
-  ]
+  "order": ["main", "what_youll_do", "travel_reviews_list", "tour_faq_m6UiNr"]
 }

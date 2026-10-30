@@ -10,8 +10,7 @@ function serializeAssetForResponse(asset: {
   return {
     ...asset,
     sizeBytes: asset.sizeBytes === null ? null : Number(asset.sizeBytes),
-    thumbnailSizeBytes:
-      asset.thumbnailSizeBytes === null ? null : Number(asset.thumbnailSizeBytes),
+    thumbnailSizeBytes: asset.thumbnailSizeBytes === null ? null : Number(asset.thumbnailSizeBytes),
   };
 }
 
@@ -25,8 +24,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const where: Record<string, unknown> = {
     status: "READY",
   };
-  if (kind) where.kind = kind;
-  if (q) where.title = { contains: q };
+  if (kind) {
+    where.kind = kind;
+  }
+  if (q) {
+    where.title = { contains: q };
+  }
 
   const assets = await prisma.gkvAsset.findMany({
     where,

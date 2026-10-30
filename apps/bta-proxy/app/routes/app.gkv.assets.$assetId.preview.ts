@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
 import { authenticate } from "~/shopify.server";
 
 type PreviewUrlResponse = {
@@ -23,7 +23,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   try {
     const data = await callGkvAdminApi<PreviewUrlResponse>(
       request,
-      `/admin/gkv/assets/${encodeURIComponent(assetId)}/preview-url`
+      `/admin/gkv/assets/${encodeURIComponent(assetId)}/preview-url`,
     );
     return redirect(data.previewUrl);
   } catch (error) {

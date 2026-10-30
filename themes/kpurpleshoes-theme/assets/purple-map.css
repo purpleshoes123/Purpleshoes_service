@@ -83,7 +83,9 @@
   border-radius: 999px;
   border: 1px solid rgba(91, 43, 216, 0.25);
   background: #fff;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .tm-topbar__link:hover {
@@ -111,7 +113,9 @@
   overflow: hidden;
   background: #fff;
   border-right: 1px solid var(--tm-border);
-  transition: opacity 0.25s ease, visibility 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease;
 }
 
 .tm-wrap.tm-sidebar-collapsed .tm-sidebar {
@@ -140,7 +144,10 @@
   align-items: center;
   justify-content: center;
   box-shadow: 2px 0 12px rgba(15, 23, 42, 0.08);
-  transition: background 0.2s, color 0.2s, left 0.32s ease;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    left 0.32s ease;
 }
 
 .tm-sidebar-toggle--edge:hover {
@@ -155,7 +162,9 @@
   border-bottom: 2px solid currentColor;
   transform: rotate(45deg);
   margin-left: 2px;
-  transition: transform 0.25s ease, margin 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    margin 0.25s ease;
 }
 
 .tm-wrap.tm-sidebar-collapsed .tm-sidebar-toggle--edge {
@@ -242,7 +251,10 @@
   color: var(--tm-text);
   background-color: #f8fafc;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s;
   appearance: auto;
 }
 
@@ -322,7 +334,10 @@
   border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .tm-chip:hover {
@@ -395,7 +410,10 @@
   font-size: 12px;
   font-weight: 900;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .tm-favorite-toggle__button:hover {
@@ -432,7 +450,9 @@
   margin-bottom: 12px;
   background: #fff;
   cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
 }
 
 .tm-card:hover {
@@ -443,11 +463,14 @@
 .tm-card.is-selected {
   border-color: #5b2bd8;
   background: #f0e9ff;
-  box-shadow: inset 5px 0 0 #5b2bd8, inset 0 0 0 1px #5b2bd8, 0 6px 18px rgba(91, 43, 216, 0.16);
+  box-shadow:
+    inset 5px 0 0 #5b2bd8,
+    inset 0 0 0 1px #5b2bd8,
+    0 6px 18px rgba(91, 43, 216, 0.16);
 }
 
 .tm-card.is-selected .tm-card__name::before {
-  content: '\2713';
+  content: "\2713";
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -462,7 +485,10 @@
   vertical-align: middle;
 }
 
-.tm-card:focus-visible { outline: 3px solid #5b2bd8; outline-offset: -3px; }
+.tm-card:focus-visible {
+  outline: 3px solid #5b2bd8;
+  outline-offset: -3px;
+}
 
 .tm-card__media {
   position: relative;
@@ -510,9 +536,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background:
-    linear-gradient(135deg, rgba(91, 43, 216, 0.08), rgba(14, 165, 233, 0.08)),
-    #f8fafc;
+  background: linear-gradient(135deg, rgba(91, 43, 216, 0.08), rgba(14, 165, 233, 0.08)), #f8fafc;
   color: #94a3b8;
 }
 
@@ -574,7 +598,11 @@
   cursor: pointer;
   padding: 0;
   font: inherit;
-  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    transform 0.2s;
 }
 
 .tm-favorite-btn:hover {
@@ -713,7 +741,10 @@
   font-weight: 800;
   line-height: 1;
   text-decoration: none;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .tm-card__directions:hover {
@@ -806,7 +837,9 @@
   cursor: pointer;
   font-family: inherit;
   border: 1px solid rgba(226, 232, 240, 0.9);
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .tm-map-tab:hover {
@@ -830,8 +863,20 @@
   padding: 80px 24px 24px;
   background:
     linear-gradient(180deg, rgba(243, 240, 255, 0.5) 0%, rgba(248, 250, 252, 0.9) 100%),
-    repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(91, 43, 216, 0.04) 19px, rgba(91, 43, 216, 0.04) 20px),
-    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(91, 43, 216, 0.04) 19px, rgba(91, 43, 216, 0.04) 20px);
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 19px,
+      rgba(91, 43, 216, 0.04) 19px,
+      rgba(91, 43, 216, 0.04) 20px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 19px,
+      rgba(91, 43, 216, 0.04) 19px,
+      rgba(91, 43, 216, 0.04) 20px
+    );
   z-index: 1;
 }
 
@@ -895,7 +940,11 @@
   line-height: 1;
   cursor: pointer;
   pointer-events: auto;
-  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    opacity 0.2s;
 }
 
 .tm-map-control:hover:not(:disabled) {
@@ -988,12 +1037,12 @@
   border: 1px solid #ddd3f2;
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 8px 28px rgba(31, 19, 55, .22);
+  box-shadow: 0 8px 28px rgba(31, 19, 55, 0.22);
   white-space: normal;
 }
 
 .tm-mapinfo--naver::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -8px;
   left: calc(50% - 7px);
@@ -1531,7 +1580,10 @@ html.tm-photo-modal-open body {
   .tm-card.is-selected {
     border-color: #5b2bd8;
     background: #f0e9ff;
-    box-shadow: inset 5px 0 0 #5b2bd8, inset 0 0 0 1px #5b2bd8, 0 14px 36px rgba(91, 43, 216, 0.17);
+    box-shadow:
+      inset 5px 0 0 #5b2bd8,
+      inset 0 0 0 1px #5b2bd8,
+      0 14px 36px rgba(91, 43, 216, 0.17);
   }
 
   .tm-card__media {

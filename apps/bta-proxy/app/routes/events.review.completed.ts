@@ -1,14 +1,14 @@
 import type { ActionFunctionArgs } from "react-router";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { reviewCompletedSchema } from "~/lib/coupons/validation";
+import { reviewCompletedSchema } from "~/domains/coupons/validation";
 import {
   tryMarkEventOnce,
   getState,
   setReviewCompletedAt,
   grantTourReviewTour15Source,
-} from "~/lib/coupons";
-import { normalizeCustomerId } from "~/lib/coupons/normalize";
+} from "~/domains/coupons";
+import { normalizeCustomerId } from "~/domains/coupons/normalize";
 import { verifyInternalEvent } from "~/middleware/verifyInternalEvent";
 
 /**
@@ -17,7 +17,9 @@ import { verifyInternalEvent } from "~/middleware/verifyInternalEvent";
 export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
   const authResponse = verifyInternalEvent(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   try {
     const body = await request.json();
@@ -29,14 +31,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const marked = await tryMarkEventOnce(
       "review_completed",
       validated.reviewId,
-      180 * 24 * 60 * 60
+      180 * 24 * 60 * 60,
     );
     if (!marked) {
       return respond.ok({ ok: true, duplicate: true }, { correlationId });
@@ -58,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         reviewId: validated.reviewId,
         duplicate: false,
         entitledTour15: shouldEntitle,
-      })
+      }),
     );
 
     return respond.ok(
@@ -69,20 +71,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         tourCompletedAt: state.tourCompletedAt,
         reviewCompletedAt: completedAt,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -91,7 +91,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

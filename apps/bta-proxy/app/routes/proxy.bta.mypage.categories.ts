@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { listStorefrontCategories } from "~/lib/gkv/storefrontViewer.server";
+import { listStorefrontCategories } from "~/domains/guide-viewer/storefrontViewer.server.ts";
 import { respond } from "~/lib/respond";
-import { requireStorefrontCustomerProxyContext } from "~/lib/storefront/customerProxy.server";
+import { requireStorefrontCustomerProxyContext } from "~/domains/storefront/customerProxy.server.ts";
 
 /**
  * GET /proxy/bta/mypage/categories
@@ -11,7 +11,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     rateLimitPolicy: "customer",
     rateLimitBucket: "mypage-read",
   });
-  if (context instanceof Response) return context;
+  if (context instanceof Response) {
+    return context;
+  }
 
   const data = await listStorefrontCategories(request, context.customerId);
   return respond.ok(data, { correlationId: context.correlationId });

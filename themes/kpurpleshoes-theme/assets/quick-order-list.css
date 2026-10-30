@@ -314,7 +314,7 @@ quick-order-list .pagination-wrapper {
     top: 1.2rem;
   }
 
- .variant-remove-total--empty .loading__spinner {
+  .variant-remove-total--empty .loading__spinner {
     top: -1rem;
   }
 }
@@ -486,7 +486,9 @@ quick-order-list .pagination-wrapper {
     padding-left: 5.4rem;
   }
 
-  .quick-order-list__table .quick-order-list__table-heading--wide + .quick-order-list__table-heading--wide {
+  .quick-order-list__table
+    .quick-order-list__table-heading--wide
+    + .quick-order-list__table-heading--wide {
     padding-left: 10rem;
     text-align: right;
   }

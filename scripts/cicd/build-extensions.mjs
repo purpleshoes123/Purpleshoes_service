@@ -1,13 +1,15 @@
 // Credential-free PR compilation. Shopify's authenticated schema validation runs before app release.
-import { createRequire } from 'node:module';
-import { execFileSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { createRequire } from "node:module";
+import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
 
-const root = resolve('shopify/bta-proxy');
+const root = resolve("shopify/bta-proxy");
 // This entry point is invoked from the extension workspace by CI.
-const appRoot = process.cwd().replaceAll('\\', '/').endsWith('/shopify/bta-proxy') ? process.cwd() : root;
-const req = createRequire(resolve(appRoot, 'package.json'));
-const { build } = req('esbuild');
+const appRoot = process.cwd().replaceAll("\\", "/").endsWith("/shopify/bta-proxy")
+  ? process.cwd()
+  : root;
+const req = createRequire(resolve(appRoot, "package.json"));
+const { build } = req("esbuild");
 const python = `
 import json, pathlib, tomllib, sys
 root = pathlib.Path(sys.argv[1])
@@ -28,11 +30,22 @@ for folder in sorted(folders):
    entries.append({'name':folder, 'path':str(module)})
 print(json.dumps(entries))
 `;
-const modules = JSON.parse(execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-c', python, appRoot], { encoding: 'utf8' }));
+const modules = JSON.parse(
+  execFileSync(process.platform === "win32" ? "python" : "python3", ["-c", python, appRoot], {
+    encoding: "utf8",
+  }),
+);
 for (const item of modules) {
-  await build({ entryPoints: [item.path], bundle: true, format: 'iife', globalName: 'extension',
-    jsx: 'automatic', jsxImportSource: 'preact', target: 'es2022',
-    define: { 'process.env.NODE_ENV': '"production"' },
-    outfile: resolve(appRoot, '../../output/cicd/extensions', item.name + '.js') });
+  await build({
+    entryPoints: [item.path],
+    bundle: true,
+    format: "iife",
+    globalName: "extension",
+    jsx: "automatic",
+    jsxImportSource: "preact",
+    target: "es2022",
+    define: { "process.env.NODE_ENV": '"production"' },
+    outfile: resolve(appRoot, "../../output/cicd/extensions", item.name + ".js"),
+  });
 }
 console.log(`Compiled ${modules.length} extension targets without production credentials.`);

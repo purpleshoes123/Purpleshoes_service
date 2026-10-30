@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { getStorefrontGuideDetail } from "~/lib/gkv/storefrontViewer.server";
+import { getStorefrontGuideDetail } from "~/domains/guide-viewer/storefrontViewer.server.ts";
 import { respond } from "~/lib/respond";
-import { requireStorefrontCustomerProxyContext } from "~/lib/storefront/customerProxy.server";
+import { requireStorefrontCustomerProxyContext } from "~/domains/storefront/customerProxy.server.ts";
 
 /**
  * GET /proxy/bta/mypage/guides/:id
@@ -11,7 +11,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const context = await requireStorefrontCustomerProxyContext(request, {
     rateLimitPolicy: "legacy",
   });
-  if (context instanceof Response) return context;
+  if (context instanceof Response) {
+    return context;
+  }
 
   const guideId = params.id;
   if (!guideId) {
@@ -24,19 +26,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     );
   }
 
-  const result = await getStorefrontGuideDetail(
-    request,
-    context.customerId,
-    guideId,
-  );
+  const result = await getStorefrontGuideDetail(request, context.customerId, guideId);
   if (!result.ok) {
     if (result.reason === "not_found") {
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
-        getErrorMessage(
-          ErrorCode.VALIDATION_ERROR,
-          "guide를 찾을 수 없습니다.",
-        ),
+        getErrorMessage(ErrorCode.VALIDATION_ERROR, "guide를 찾을 수 없습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
         context.correlationId,

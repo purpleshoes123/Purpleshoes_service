@@ -18,7 +18,5 @@
       }
     }
   },
-  "order": [
-    "extension_thank_you"
-  ]
+  "order": ["extension_thank_you"]
 }

@@ -10,7 +10,7 @@ import {
   extractBaseTypeFromVariantId,
   extractCustomerIdFromProxyRequest,
   getCustomerEntitlements,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 import { guideBasePurchaseEligibilityQuerySchema } from "~/lib/validation";
 
 /**
@@ -18,10 +18,14 @@ import { guideBasePurchaseEligibilityQuerySchema } from "~/lib/validation";
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -33,7 +37,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -44,7 +48,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
         undefined,
         getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -57,13 +61,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (!requestedType) {
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
-        getErrorMessage(
-          ErrorCode.VALIDATION_ERROR,
-          "variantId가 GUIDE base 상품이 아닙니다."
-        ),
+        getErrorMessage(ErrorCode.VALIDATION_ERROR, "variantId가 GUIDE base 상품이 아닙니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -73,11 +74,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -97,7 +98,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, message),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -105,7 +106,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       JSON.stringify({
         message: "Guide base purchase eligibility error",
         error: error instanceof Error ? error.message : String(error),
-      })
+      }),
     );
 
     return respond.fail(
@@ -113,7 +114,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

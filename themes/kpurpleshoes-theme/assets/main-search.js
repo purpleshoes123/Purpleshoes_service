@@ -8,16 +8,20 @@ class MainSearch extends SearchForm {
   setupEventListeners() {
     let allSearchForms = [];
     this.allSearchInputs.forEach((input) => allSearchForms.push(input.form));
-    this.input.addEventListener('focus', this.onInputFocus.bind(this));
-    if (allSearchForms.length < 2) return;
-    allSearchForms.forEach((form) => form.addEventListener('reset', this.onFormReset.bind(this)));
-    this.allSearchInputs.forEach((input) => input.addEventListener('input', this.onInput.bind(this)));
+    this.input.addEventListener("focus", this.onInputFocus.bind(this));
+    if (allSearchForms.length < 2) {
+      return;
+    }
+    allSearchForms.forEach((form) => form.addEventListener("reset", this.onFormReset.bind(this)));
+    this.allSearchInputs.forEach((input) =>
+      input.addEventListener("input", this.onInput.bind(this)),
+    );
   }
 
   onFormReset(event) {
     super.onFormReset(event);
     if (super.shouldResetForm()) {
-      this.keepInSync('', this.input);
+      this.keepInSync("", this.input);
     }
   }
 
@@ -29,7 +33,7 @@ class MainSearch extends SearchForm {
   onInputFocus() {
     const isSmallScreen = window.innerWidth < 750;
     if (isSmallScreen) {
-      this.scrollIntoView({ behavior: 'smooth' });
+      this.scrollIntoView({ behavior: "smooth" });
     }
   }
 
@@ -42,4 +46,4 @@ class MainSearch extends SearchForm {
   }
 }
 
-customElements.define('main-search', MainSearch);
+customElements.define("main-search", MainSearch);

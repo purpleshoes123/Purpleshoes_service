@@ -8,6 +8,18 @@
  * ------------------------------------------------------------
  */
 {
+  "kit_detail": {
+    "kit_devices": "App & web · Up to 3 devices",
+    "map_tagline": "Local picks. Find your way.",
+    "book_tagline": "Local know-how. Less guesswork.",
+    "video_tagline": "See Korea before you go.",
+    "regular_kit_label": "Regular Kit price:"
+  },
+  "signup_thankyou": {
+    "map_tagline": "Local picks. Find your way.",
+    "guidebook_tagline": "Local know-how. Less guesswork.",
+    "video_tagline": "See Korea before you go."
+  },
   "general": {
     "password_page": {
       "login_form_heading": "Ga winkel binnen met wachtwoord:",

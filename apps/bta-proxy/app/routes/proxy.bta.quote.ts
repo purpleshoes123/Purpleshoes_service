@@ -4,24 +4,24 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { memberRespond as respond } from "~/middleware/verifyMemberAppProxy";
 import { quoteSchema } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
-import { getPricingEngine } from "~/lib/pricingEngine";
-import { getTierVariantTable } from "~/lib/tierVariantPricingService";
-import { paxTierDiagnostics } from "~/lib/paxTierDiagnostics";
+import { getPricingEngine } from "~/domains/catalog/pricingEngine";
+import { getTierVariantTable } from "~/domains/catalog/tierVariantPricingService";
+import { paxTierDiagnostics } from "~/domains/catalog/paxTierDiagnostics";
 import { getEnv } from "~/lib/env";
 import { extractShopFromRequest, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { resolveBookingPolicy } from "~/lib/bookingConfigResolver";
+import { resolveBookingPolicy } from "~/domains/bookings/bookingConfigResolver";
 import { maskPII } from "~/lib/masking";
-import { extractCustomerIdFromProxyRequest } from "~/lib/guideExtension/customerId";
-import { getState } from "~/lib/coupons/state";
-import { resolveEffectiveTour15Balance } from "~/lib/coupons/effectiveEligibility";
-import { resolveActiveExtra10 } from "~/lib/coupons/extra10Availability";
-import { fetchCustomerTourCreditBalance } from "~/lib/tourCredits/metafields";
+import { extractCustomerIdFromProxyRequest } from "~/domains/checkout/guideExtension/customerId";
+import { getState } from "~/domains/coupons/state";
+import { resolveEffectiveTour15Balance } from "~/domains/coupons/effectiveEligibility";
+import { resolveActiveExtra10 } from "~/domains/coupons/extra10Availability";
+import { fetchCustomerTourCreditBalance } from "~/domains/checkout/tourCredits/metafields";
 import {
   getCachedTour15Balance,
   setCachedTour15Balance,
-} from "~/lib/couponDisplay/tour15BalanceCache";
-import { buildMaxDiscountPreview } from "~/lib/couponDisplay/discountPreview";
-import { resolveBookingProductId } from "~/lib/bookingContext.server";
+} from "~/domains/coupons/display/tour15BalanceCache";
+import { buildMaxDiscountPreview } from "~/domains/coupons/display/discountPreview";
+import { resolveBookingProductId } from "~/domains/bookings/bookingContext.server.ts";
 
 /**
  * SSOT 2.1: POST /proxy/bta/quote
@@ -31,11 +31,15 @@ import { resolveBookingProductId } from "~/lib/bookingContext.server";
 export const action = async ({ request }: ActionFunctionArgs) => {
   // 1. 레이트 리밋 검증
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   // 2. App Proxy 서명 검증
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   // 3. correlationId 추출/생성
   const correlationId = respond.getCorrelationId(request);
@@ -50,10 +54,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (!shop) {
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
-        getErrorMessage(
-          ErrorCode.VALIDATION_ERROR,
-          "shop 파라미터가 필요합니다.",
-        ),
+        getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
         correlationId,
@@ -62,7 +63,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const productId = await resolveBookingProductId(validatedInput.productId, shop);
     if (!productId) {
-      return respond.fail(ErrorCode.VALIDATION_ERROR, "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.", undefined, 400, correlationId);
+      return respond.fail(
+        ErrorCode.VALIDATION_ERROR,
+        "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.",
+        undefined,
+        400,
+        correlationId,
+      );
     }
 
     // 6. Resolver를 통해 정책 결정 (maxPax 검증용)
@@ -161,10 +168,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (creditBalance === null) {
           cacheHit = false;
           if (admin) {
-            creditBalance = await fetchCustomerTourCreditBalance(
-              admin,
-              customerId,
-            );
+            creditBalance = await fetchCustomerTourCreditBalance(admin, customerId);
             await setCachedTour15Balance(customerId, creditBalance);
           } else {
             creditBalance = 0;
@@ -202,10 +206,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       console.warn(
         JSON.stringify({
           message: "Quote discount preview fallback",
-          error:
-            previewError instanceof Error
-              ? previewError.message
-              : String(previewError),
+          error: previewError instanceof Error ? previewError.message : String(previewError),
         }),
       );
       discountPreview = buildMaxDiscountPreview({
@@ -239,9 +240,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Zod 검증 에러
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
@@ -314,9 +313,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           correlationId,
           message: "Quote 엔드포인트 오류",
           error: error instanceof Error ? error.message : String(error),
-          ...(error instanceof Error && error.cause
-            ? { cause: error.cause }
-            : {}),
+          ...(error instanceof Error && error.cause ? { cause: error.cause } : {}),
         }),
       ),
     );

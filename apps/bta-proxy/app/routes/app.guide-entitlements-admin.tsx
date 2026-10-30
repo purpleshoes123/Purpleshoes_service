@@ -20,9 +20,9 @@ import {
   isActive,
   normalizeToKstEndOfDay,
   type EntitlementType,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 import db from "~/db.server";
-import { listLogs } from "~/lib/guideExtension/logStore";
+import { listLogs } from "~/domains/checkout/guideExtension/logStore";
 
 type LoaderData = {
   customerId: string;
@@ -98,22 +98,14 @@ export default function GuideEntitlementsAdminPage() {
   const data = useLoaderData<typeof loader>();
   const submit = useSubmit();
   const [input, setInput] = useState(data.customerId || "");
-  const [selectedTypes, setSelectedTypes] = useState<EntitlementType[]>([
-    "PDF",
-    "VIDEO",
-    "BUNDLE",
-  ]);
+  const [selectedTypes, setSelectedTypes] = useState<EntitlementType[]>(["PDF", "VIDEO", "BUNDLE"]);
   const [reason, setReason] = useState("manual recompute by admin");
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const entitlementRows = useMemo(() => {
-    return data.items.map((item) => [
-      item.type,
-      item.expiresAtKst || "-",
-      item.status,
-    ]);
+    return data.items.map((item) => [item.type, item.expiresAtKst || "-", item.status]);
   }, [data.items]);
 
   const logRows = useMemo(() => {
@@ -127,7 +119,7 @@ export default function GuideEntitlementsAdminPage() {
 
   const toggleType = (type: EntitlementType) => {
     setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
   };
 
@@ -142,18 +134,15 @@ export default function GuideEntitlementsAdminPage() {
           : /^\d+$/.test(input)
             ? `gid://shopify/Customer/${input}`
             : input;
-      const response = await fetch(
-        "/app/api/admin/guide-entitlements/recompute",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customerId: normalizedInput,
-            types: selectedTypes,
-            reason,
-          }),
-        }
-      );
+      const response = await fetch("/app/api/admin/guide-entitlements/recompute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: normalizedInput,
+          types: selectedTypes,
+          reason,
+        }),
+      });
       const payload = await response.json();
       if (!payload.ok) {
         throw new Error(payload.error?.message || "API error");
@@ -223,9 +212,7 @@ export default function GuideEntitlementsAdminPage() {
             </Button>
             {error ? <Banner status="critical">{error}</Banner> : null}
             {result ? (
-              <Banner status="success">
-                Recompute completed. Check results below.
-              </Banner>
+              <Banner status="success">Recompute completed. Check results below.</Banner>
             ) : null}
           </BlockStack>
         </Card>
@@ -238,8 +225,7 @@ export default function GuideEntitlementsAdminPage() {
               </Text>
               {result.results.map((entry: any) => (
                 <Text key={entry.type}>
-                  {entry.type}: {entry.status}{" "}
-                  {entry.newExpiresAt ? `→ ${entry.newExpiresAt}` : ""}
+                  {entry.type}: {entry.status} {entry.newExpiresAt ? `→ ${entry.newExpiresAt}` : ""}
                   {entry.error ? ` (error: ${entry.error})` : ""}
                 </Text>
               ))}

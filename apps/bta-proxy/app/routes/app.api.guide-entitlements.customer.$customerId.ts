@@ -7,9 +7,9 @@ import {
   isActive,
   normalizeToKstEndOfDay,
   type EntitlementType,
-} from "~/lib/guideExtension";
+} from "~/domains/checkout/guideExtension";
 import db from "~/db.server";
-import { listLogs } from "~/lib/guideExtension/logStore";
+import { listLogs } from "~/domains/checkout/guideExtension/logStore";
 
 type EntitlementStatus = "ACTIVE" | "EXPIRED" | "NONE";
 
@@ -27,9 +27,7 @@ function serializeLog(log: any) {
   return {
     ...log,
     baseExpiresAt: log.baseExpiresAt ? log.baseExpiresAt.toISOString() : null,
-    previousExpiresAt: log.previousExpiresAt
-      ? log.previousExpiresAt.toISOString()
-      : null,
+    previousExpiresAt: log.previousExpiresAt ? log.previousExpiresAt.toISOString() : null,
     newExpiresAt: log.newExpiresAt ? log.newExpiresAt.toISOString() : null,
     createdAt: log.createdAt.toISOString(),
   };
@@ -47,15 +45,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId는 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const customerId = normalizeCustomerId(customerParam);
-    const entitlements = await getCustomerEntitlements(
-      auth.admin,
-      customerId
-    );
+    const entitlements = await getCustomerEntitlements(auth.admin, customerId);
     const now = new Date();
     const types: EntitlementType[] = ["PDF", "VIDEO", "BUNDLE"];
 
@@ -67,9 +62,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
       try {
         const normalized = normalizeToKstEndOfDay(rawValue);
-        const status: EntitlementStatus = isActive(normalized, now)
-          ? "ACTIVE"
-          : "EXPIRED";
+        const status: EntitlementStatus = isActive(normalized, now) ? "ACTIVE" : "EXPIRED";
         return { type, expiresAtKst: normalized, status };
       } catch {
         return { type, expiresAtKst: null, status: "NONE" as EntitlementStatus };
@@ -87,7 +80,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         items,
         logs: logs.logs.map(serializeLog),
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     return respond.fail(
@@ -95,7 +88,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

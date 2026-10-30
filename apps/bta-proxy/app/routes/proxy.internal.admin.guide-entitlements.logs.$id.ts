@@ -4,15 +4,13 @@ import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import db from "~/db.server";
-import { getLogById } from "~/lib/guideExtension/logStore";
+import { getLogById } from "~/domains/checkout/guideExtension/logStore";
 
 function serializeLog(log: any) {
   return {
     ...log,
     baseExpiresAt: log.baseExpiresAt ? log.baseExpiresAt.toISOString() : null,
-    previousExpiresAt: log.previousExpiresAt
-      ? log.previousExpiresAt.toISOString()
-      : null,
+    previousExpiresAt: log.previousExpiresAt ? log.previousExpiresAt.toISOString() : null,
     newExpiresAt: log.newExpiresAt ? log.newExpiresAt.toISOString() : null,
     createdAt: log.createdAt.toISOString(),
   };
@@ -28,7 +26,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       shop = url.searchParams.get("shop");
       if (!shop) {
@@ -37,7 +37,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
     } else {
@@ -51,7 +51,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_ERROR),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -62,7 +62,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "log id는 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -73,7 +73,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "log를 찾을 수 없습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -84,7 +84,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

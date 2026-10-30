@@ -52,8 +52,16 @@ export type AvailabilityInput = z.infer<typeof availabilitySchema>;
  */
 const travelersSchema = z.object({
   adult: z.number().int("성인 수는 정수여야 합니다.").min(1, "성인 수는 최소 1명이어야 합니다."),
-  child: z.number().int("아동 수는 정수여야 합니다.").min(0, "아동 수는 0 이상이어야 합니다.").default(0),
-  infant: z.number().int("유아 수는 정수여야 합니다.").min(0, "유아 수는 0 이상이어야 합니다.").default(0),
+  child: z
+    .number()
+    .int("아동 수는 정수여야 합니다.")
+    .min(0, "아동 수는 0 이상이어야 합니다.")
+    .default(0),
+  infant: z
+    .number()
+    .int("유아 수는 정수여야 합니다.")
+    .min(0, "유아 수는 0 이상이어야 합니다.")
+    .default(0),
 });
 
 /**
@@ -84,7 +92,7 @@ const quoteBaseSchema = z.object({
         .number()
         .int("guideUnitsRequired는 정수여야 합니다.")
         .min(1, "guideUnitsRequired는 최소 1이어야 합니다.")
-        .max(10, "guideUnitsRequired는 최대 10까지 가능합니다.")
+        .max(10, "guideUnitsRequired는 최대 10까지 가능합니다."),
     )
     .optional()
     .default(1),
@@ -117,8 +125,9 @@ export const quoteSchema = quoteBaseSchema.refine(
     return true;
   },
   {
-    message: "travelers가 있으면 총 인원수(adult+child+infant)는 1~20명이어야 하며, pax와 일치해야 합니다. travelers가 없으면 pax는 필수이며 1~20명이어야 합니다.",
-  }
+    message:
+      "travelers가 있으면 총 인원수(adult+child+infant)는 1~20명이어야 하며, pax와 일치해야 합니다. travelers가 없으면 pax는 필수이며 1~20명이어야 합니다.",
+  },
 );
 
 export type QuoteInput = z.infer<typeof quoteSchema>;
@@ -136,36 +145,39 @@ const customerSchema = z.object({
  * SSOT 5.3: Reservations (JSON body)
  * Quote 바디 + 고객 정보 + idempotency 키
  */
-export const reservationsSchema = quoteBaseSchema.extend({
-  customer: customerSchema,
-  clientRequestId: z.string().optional(),
-}).refine(
-  (data) => {
-    // travelers가 있으면 total 계산 및 검증
-    if (data.travelers) {
-      const total = data.travelers.adult + data.travelers.child + data.travelers.infant;
-      if (total < 1 || total > 20) {
-        return false;
+export const reservationsSchema = quoteBaseSchema
+  .extend({
+    customer: customerSchema,
+    clientRequestId: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // travelers가 있으면 total 계산 및 검증
+      if (data.travelers) {
+        const total = data.travelers.adult + data.travelers.child + data.travelers.infant;
+        if (total < 1 || total > 20) {
+          return false;
+        }
+        // pax가 있으면 일치 여부 검증
+        if (data.pax !== undefined && data.pax !== total) {
+          return false;
+        }
+      } else {
+        // travelers가 없으면 pax는 필수
+        if (data.pax === undefined) {
+          return false;
+        }
+        if (data.pax < 1 || data.pax > 20) {
+          return false;
+        }
       }
-      // pax가 있으면 일치 여부 검증
-      if (data.pax !== undefined && data.pax !== total) {
-        return false;
-      }
-    } else {
-      // travelers가 없으면 pax는 필수
-      if (data.pax === undefined) {
-        return false;
-      }
-      if (data.pax < 1 || data.pax > 20) {
-        return false;
-      }
-    }
-    return true;
-  },
-  {
-    message: "travelers가 있으면 총 인원수(adult+child+infant)는 1~20명이어야 하며, pax와 일치해야 합니다. travelers가 없으면 pax는 필수이며 1~20명이어야 합니다.",
-  }
-);
+      return true;
+    },
+    {
+      message:
+        "travelers가 있으면 총 인원수(adult+child+infant)는 1~20명이어야 하며, pax와 일치해야 합니다. travelers가 없으면 pax는 필수이며 1~20명이어야 합니다.",
+    },
+  );
 
 export type ReservationsInput = z.infer<typeof reservationsSchema>;
 
@@ -200,7 +212,7 @@ export const cartPrepareSchema = z
           .number()
           .int("guideUnitsRequired는 정수여야 합니다.")
           .min(1, "guideUnitsRequired는 최소 1이어야 합니다.")
-          .max(10, "guideUnitsRequired는 최대 10까지 가능합니다.")
+          .max(10, "guideUnitsRequired는 최대 10까지 가능합니다."),
       )
       .optional()
       .default(1),
@@ -213,7 +225,7 @@ export const cartPrepareSchema = z
     },
     {
       message: "총 인원수(adult+child+infant)는 1~20명이어야 합니다.",
-    }
+    },
   );
 
 export type CartPrepareInput = z.infer<typeof cartPrepareSchema>;
@@ -235,7 +247,7 @@ export const tourPrepareCheckoutSchema = z
           .number()
           .int("quantity는 정수여야 합니다.")
           .min(1, "quantity는 최소 1이어야 합니다.")
-          .max(20, "quantity는 최대 20까지 가능합니다.")
+          .max(20, "quantity는 최대 20까지 가능합니다."),
       )
       .optional(),
     bookingMode: z.enum(["private", "shared"]).optional().default("private"),
@@ -248,14 +260,12 @@ export const tourPrepareCheckoutSchema = z
           .number()
           .int("guideUnitsRequired는 정수여야 합니다.")
           .min(1, "guideUnitsRequired는 최소 1이어야 합니다.")
-          .max(10, "guideUnitsRequired는 최대 10까지 가능합니다.")
+          .max(10, "guideUnitsRequired는 최대 10까지 가능합니다."),
       )
       .optional()
       .default(1),
     holdId: z.string().optional(),
-    properties: z
-      .record(z.union([z.string(), z.number(), z.boolean()]))
-      .optional(),
+    properties: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
     mediaConsent: z.boolean(),
     useTour15: z.boolean().optional().default(true),
     useExtra10: z.boolean().optional().default(false),
@@ -265,20 +275,19 @@ export const tourPrepareCheckoutSchema = z
       if (data.variantId) {
         return Boolean(data.quantity && data.quantity >= 1);
       }
-      if (!data.travelers) return false;
-      const total =
-        data.travelers.adult + data.travelers.child + data.travelers.infant;
+      if (!data.travelers) {
+        return false;
+      }
+      const total = data.travelers.adult + data.travelers.child + data.travelers.infant;
       return total >= 1 && total <= 20;
     },
     {
       message:
         "variantId가 있으면 quantity가 필요합니다. variantId가 없으면 travelers가 필요하며 총 인원수는 1~20명이어야 합니다.",
-    }
+    },
   );
 
-export type TourPrepareCheckoutInput = z.infer<
-  typeof tourPrepareCheckoutSchema
->;
+export type TourPrepareCheckoutInput = z.infer<typeof tourPrepareCheckoutSchema>;
 
 /**
  * Guide Prepare Checkout (guide coupon application + checkout URL)
@@ -292,15 +301,13 @@ export const guidePrepareCheckoutSchema = z.object({
       z
         .number()
         .int("quantity는 정수여야 합니다.")
-        .refine((value) => value === 1, "quantity는 현재 1만 지원합니다.")
+        .refine((value) => value === 1, "quantity는 현재 1만 지원합니다."),
     ),
   useExtra10: z.boolean().optional().default(false),
   clientRequestId: z.string().min(1, "clientRequestId는 빈 문자열일 수 없습니다.").optional(),
 });
 
-export type GuidePrepareCheckoutInput = z.infer<
-  typeof guidePrepareCheckoutSchema
->;
+export type GuidePrepareCheckoutInput = z.infer<typeof guidePrepareCheckoutSchema>;
 
 /**
  * SSOT 16.3: Rebuild (JSON body) - Phase 5-6R
@@ -399,7 +406,7 @@ export const adminRefundSchema = z
         z.object({
           lineItemId: z.string().min(1, "lineItemId는 필수입니다."),
           quantity: z.number().int().min(1, "quantity는 1 이상이어야 합니다."),
-        })
+        }),
       )
       .optional(),
   })
@@ -451,27 +458,15 @@ export const guideExtensionCheckoutSchema = z.object({
     .max(24, "months는 최대 24까지 가능합니다."),
 });
 
-export type GuideExtensionCheckoutInput = z.infer<
-  typeof guideExtensionCheckoutSchema
->;
+export type GuideExtensionCheckoutInput = z.infer<typeof guideExtensionCheckoutSchema>;
 
 /**
  * Storefront mail request (App Proxy JSON/form body)
  */
 export const storefrontMailRequestSchema = z.object({
-  templateSlug: z
-    .string()
-    .trim()
-    .min(1, "templateSlug는 필수입니다."),
-  email: z
-    .string()
-    .trim()
-    .email("올바른 이메일 형식이 아닙니다."),
-  name: z
-    .string()
-    .trim()
-    .max(100, "name은 최대 100자까지 가능합니다.")
-    .optional(),
+  templateSlug: z.string().trim().min(1, "templateSlug는 필수입니다."),
+  email: z.string().trim().email("올바른 이메일 형식이 아닙니다."),
+  name: z.string().trim().max(100, "name은 최대 100자까지 가능합니다.").optional(),
   pagePath: z
     .string()
     .trim()
@@ -480,39 +475,25 @@ export const storefrontMailRequestSchema = z.object({
     .refine((value) => !value || value.startsWith("/"), {
       message: "pagePath는 / 로 시작해야 합니다.",
     }),
-  recaptchaToken: z
-    .string()
-    .trim()
-    .min(1, "recaptchaToken은 필수입니다."),
-  requestKey: z
-    .string()
-    .trim()
-    .max(191, "requestKey는 최대 191자까지 가능합니다.")
-    .optional(),
-  country: z
-    .string()
-    .trim()
-    .max(100, "country는 최대 100자까지 가능합니다.")
-    .optional(),
+  recaptchaToken: z.string().trim().min(1, "recaptchaToken은 필수입니다."),
+  requestKey: z.string().trim().max(191, "requestKey는 최대 191자까지 가능합니다.").optional(),
+  country: z.string().trim().max(100, "country는 최대 100자까지 가능합니다.").optional(),
   consent: z
     .union([z.boolean(), z.string()])
     .transform((value) => {
-      if (typeof value === "boolean") return value;
+      if (typeof value === "boolean") {
+        return value;
+      }
       const normalized = value.trim().toLowerCase();
       return (
-        normalized === "true" ||
-        normalized === "1" ||
-        normalized === "yes" ||
-        normalized === "on"
+        normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on"
       );
     })
     .optional(),
   metaMarketingAllowed: z.boolean().optional().default(false),
 });
 
-export type StorefrontMailRequestInput = z.infer<
-  typeof storefrontMailRequestSchema
->;
+export type StorefrontMailRequestInput = z.infer<typeof storefrontMailRequestSchema>;
 
 /**
  * Guide base purchase eligibility (App Proxy Query)
@@ -529,29 +510,17 @@ export type GuideBasePurchaseEligibilityQueryInput = z.infer<
  * Reviews list (App Proxy Query)
  */
 export const reviewsListQuerySchema = z.object({
-  productId: z
-    .string()
-    .trim()
-    .min(1, "productId는 비어 있을 수 없습니다.")
-    .optional(),
+  productId: z.string().trim().min(1, "productId는 비어 있을 수 없습니다.").optional(),
   reviewType: z.enum(["admin", "customer", "all"]).default("all"),
   placement: z.enum(["homepage", "product"]).optional(),
   sort: z.enum(["newest"]).default("newest"),
-  limit: z
-    .preprocess(
-      (value) => {
-        if (value === undefined || value === null || value === "") return undefined;
-        const num = typeof value === "string" ? Number(value) : value;
-        return Number.isNaN(num) ? value : num;
-      },
-      z
-        .number()
-        .int("limit는 정수여야 합니다.")
-        .min(1, "limit는 최소 1이어야 합니다.")
-        .max(50, "limit는 최대 50까지 가능합니다.")
-        .optional()
-        .default(20)
-    ),
+  limit: z.preprocess((value) => {
+    if (value === undefined || value === null || value === "") {
+      return undefined;
+    }
+    const num = typeof value === "string" ? Number(value) : value;
+    return Number.isNaN(num) ? value : num;
+  }, z.number().int("limit는 정수여야 합니다.").min(1, "limit는 최소 1이어야 합니다.").max(50, "limit는 최대 50까지 가능합니다.").optional().default(20)),
   cursor: z.string().optional(),
 });
 
@@ -597,12 +566,7 @@ const shopifyCustomerGidPattern = /^gid:\/\/shopify\/Customer\/\d+$/;
  */
 export const reviewOrderStatusQuerySchema = z.object({
   orderIds: z
-    .array(
-      z
-        .string()
-        .trim()
-        .min(1, "orderId는 비어 있을 수 없습니다.")
-    )
+    .array(z.string().trim().min(1, "orderId는 비어 있을 수 없습니다."))
     .min(1, "orderIds는 최소 1개 이상이어야 합니다.")
     .max(50, "orderIds는 최대 50개까지 가능합니다."),
   loggedInCustomerId: z
@@ -610,15 +574,12 @@ export const reviewOrderStatusQuerySchema = z.object({
     .trim()
     .min(1, "logged_in_customer_id는 필수입니다.")
     .refine(
-      (value) =>
-        /^\d+$/.test(value) || shopifyCustomerGidPattern.test(value),
-      "logged_in_customer_id 형식이 올바르지 않습니다."
+      (value) => /^\d+$/.test(value) || shopifyCustomerGidPattern.test(value),
+      "logged_in_customer_id 형식이 올바르지 않습니다.",
     ),
 });
 
-export type ReviewOrderStatusQueryInput = z.infer<
-  typeof reviewOrderStatusQuerySchema
->;
+export type ReviewOrderStatusQueryInput = z.infer<typeof reviewOrderStatusQuerySchema>;
 
 /**
  * 쿼리 파라미터를 객체로 변환하고 검증합니다.

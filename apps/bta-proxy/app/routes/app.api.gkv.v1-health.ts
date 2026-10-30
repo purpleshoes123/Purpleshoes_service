@@ -27,7 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           message: error instanceof Error ? error.message : "요청 처리에 실패했습니다.",
         },
       },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
+      { status: 500, headers: { "Cache-Control": "no-store" } },
     );
   }
 };

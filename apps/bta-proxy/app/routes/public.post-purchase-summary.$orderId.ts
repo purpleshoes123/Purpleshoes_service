@@ -1,17 +1,23 @@
 import { json } from "~/lib/httpJson";
 import { type LoaderFunctionArgs } from "react-router";
-import { classifyPostPurchaseLines } from "~/lib/postPurchase/confirmation.server";
+import { classifyPostPurchaseLines } from "~/domains/checkout/postPurchase/confirmation.server.ts";
 import { getAdminApiClient } from "~/lib/shopifyAdmin";
 import { authenticate } from "~/shopify.server";
 
 function toOrderGid(value: string): string | null {
   const raw = value.trim();
-  if (/^gid:\/\/shopify\/Order\/\d+$/.test(raw)) return raw;
-  if (/^\d+$/.test(raw)) return `gid://shopify/Order/${raw}`;
+  if (/^gid:\/\/shopify\/Order\/\d+$/.test(raw)) {
+    return raw;
+  }
+  if (/^\d+$/.test(raw)) {
+    return `gid://shopify/Order/${raw}`;
+  }
   return null;
 }
 function shopFromDestination(destination?: string): string | null {
-  if (!destination) return null;
+  if (!destination) {
+    return null;
+  }
   try {
     return new URL(destination).hostname || null;
   } catch {
@@ -39,7 +45,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const admin = await getAdminApiClient(shop);
   if (!admin) {
     return cors(
-      json({ ok: false, error: "Order confirmation is temporarily unavailable." }, { status: 503 })
+      json({ ok: false, error: "Order confirmation is temporarily unavailable." }, { status: 503 }),
     );
   }
 
@@ -59,12 +65,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         }
       }
     `,
-    { variables: { id: orderId } }
+    { variables: { id: orderId } },
   );
 
   if (!response.ok) {
     return cors(
-      json({ ok: false, error: "Order confirmation is temporarily unavailable." }, { status: 502 })
+      json({ ok: false, error: "Order confirmation is temporarily unavailable." }, { status: 502 }),
     );
   }
 
@@ -73,7 +79,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       order?: {
         lineItems?: {
           edges?: Array<{
-            node?: { variant?: { id?: string | null } | null; product?: { productType?: string | null } | null };
+            node?: {
+              variant?: { id?: string | null } | null;
+              product?: { productType?: string | null } | null;
+            };
           }>;
         };
       } | null;

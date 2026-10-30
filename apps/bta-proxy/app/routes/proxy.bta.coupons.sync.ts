@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { verifyAppProxy } from "~/middleware/verifyAppProxy";
 import { enforceRateLimit } from "~/middleware/rateLimit";
-import { handleCouponsSync } from "~/lib/coupons/syncHandler";
+import { handleCouponsSync } from "~/domains/coupons/syncHandler";
 
 /**
  * POST /proxy/bta/coupons/sync
@@ -9,10 +9,14 @@ import { handleCouponsSync } from "~/lib/coupons/syncHandler";
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   return await handleCouponsSync(request);
 };

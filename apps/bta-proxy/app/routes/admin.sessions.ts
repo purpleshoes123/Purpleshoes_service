@@ -6,7 +6,9 @@ import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const url = new URL(request.url);
@@ -18,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId 쿼리가 필요합니다."),
       { fieldErrors: { customerId: "customerId를 입력해 주세요." } },
       422,
-      correlationId
+      correlationId,
     );
   }
 
@@ -57,6 +59,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       activeCount: items.filter((item) => item.sessionStatus === "active").length,
       totalCount: items.length,
     },
-    { correlationId }
+    { correlationId },
   );
 };

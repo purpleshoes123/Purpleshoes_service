@@ -56,15 +56,15 @@
   }
 
   function parseJson(response) {
-    return response
-      .json()
-      .catch(function () {
-        return null;
-      });
+    return response.json().catch(function () {
+      return null;
+    });
   }
 
   async function requestEnvelope(endpoint, options) {
-    if (window.psWelcomeOfferReady) await window.psWelcomeOfferReady;
+    if (window.psWelcomeOfferReady) {
+      await window.psWelcomeOfferReady;
+    }
     var fetchOptions = {
       method: options && options.method ? options.method : "GET",
       credentials: "same-origin",
@@ -94,7 +94,9 @@
       throw createError(
         payload && payload.error ? payload.error.code : "",
         payload && payload.error ? payload.error.message : "Request failed",
-        (payload && payload.meta && payload.meta.correlationId) || response.headers.get("X-Correlation-Id") || ""
+        (payload && payload.meta && payload.meta.correlationId) ||
+          response.headers.get("X-Correlation-Id") ||
+          "",
       );
     }
 
@@ -164,7 +166,7 @@
     }
 
     if (typeof guide50.ttlSeconds === "number" && guide50.ttlSeconds > 0) {
-      return Date.now() + (guide50.ttlSeconds * 1000);
+      return Date.now() + guide50.ttlSeconds * 1000;
     }
 
     return null;
@@ -257,7 +259,10 @@
 
     parts.referralStatus.hidden = !message;
     parts.referralStatus.textContent = message || "";
-    parts.referralStatus.classList.remove("ty-offer__referral-status--success", "ty-offer__referral-status--error");
+    parts.referralStatus.classList.remove(
+      "ty-offer__referral-status--success",
+      "ty-offer__referral-status--error",
+    );
 
     if (message && tone === "success") {
       parts.referralStatus.classList.add("ty-offer__referral-status--success");
@@ -280,9 +285,13 @@
   function updateReferralUi(parts, data, options) {
     var state = getState(parts);
     var extra10 = data && data.coupons ? data.coupons.extra10 : null;
-    var activationState = extra10 && (extra10.activationState || extra10.shareActivationState || extra10.status || "");
+    var activationState =
+      extra10 && (extra10.activationState || extra10.shareActivationState || extra10.status || "");
     var isActive = !!(extra10 && extra10.available === true);
-    var isActivatedState = activationState === "activated" || activationState === "issued" || activationState === "already_activated";
+    var isActivatedState =
+      activationState === "activated" ||
+      activationState === "issued" ||
+      activationState === "already_activated";
     var shouldShowActivated = isActive || isActivatedState;
 
     if (parts.referralLinkPreview) {
@@ -299,7 +308,11 @@
 
     if (!options || !options.preserveStatus) {
       if (shouldShowActivated) {
-        setReferralStatus(parts, "Your Extra $10 coupon is active. You can find it in My Coupons.", "success");
+        setReferralStatus(
+          parts,
+          "Your Extra $10 coupon is active. You can find it in My Coupons.",
+          "success",
+        );
       } else {
         setReferralStatus(parts, "", "");
       }
@@ -399,7 +412,9 @@
 
   async function activateShareCoupon(parts) {
     var state = getState(parts);
-    var endpoint = parts.root.dataset.shareActivateEndpoint || "/apps/bta-booking/coupons/extra10/activate-share";
+    var endpoint =
+      parts.root.dataset.shareActivateEndpoint ||
+      "/apps/bta-booking/coupons/extra10/activate-share";
 
     return requestEnvelope(endpoint, {
       method: "POST",
@@ -431,11 +446,24 @@
 
       var customCopyMsg = parts.root.dataset.referralCopySuccess || "";
       if (outcome === "shared") {
-        setReferralStatus(parts, customCopyMsg || "Your Extra $10 coupon is active. The homepage link has been shared.", "success");
+        setReferralStatus(
+          parts,
+          customCopyMsg || "Your Extra $10 coupon is active. The homepage link has been shared.",
+          "success",
+        );
       } else if (outcome === "copied") {
-        setReferralStatus(parts, customCopyMsg || "Your Extra $10 coupon is active. The homepage link has been copied.", "success");
+        setReferralStatus(
+          parts,
+          customCopyMsg || "Your Extra $10 coupon is active. The homepage link has been copied.",
+          "success",
+        );
       } else {
-        setReferralStatus(parts, customCopyMsg || "Your Extra $10 coupon is active. You can share the homepage link anytime.", "success");
+        setReferralStatus(
+          parts,
+          customCopyMsg ||
+            "Your Extra $10 coupon is active. You can share the homepage link anytime.",
+          "success",
+        );
       }
     } catch (error) {
       if (ALREADY_ACTIVE_CODES[error.code]) {

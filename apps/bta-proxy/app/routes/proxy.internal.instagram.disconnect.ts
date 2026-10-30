@@ -6,13 +6,17 @@ import {
   clearInstagramConnection,
   clearInstagramMediaCacheForShop,
   setInstagramSyncDebug,
-} from "~/lib/instagram/store";
+} from "~/domains/marketing/instagram/store";
 import { normalizeShopDomain } from "~/lib/shopifySession";
 
 function normalizeShop(shopRaw: string): string | null {
   const normalized = normalizeShopDomain(shopRaw);
-  if (!normalized) return null;
-  if (normalized.includes(".")) return normalized;
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.includes(".")) {
+    return normalized;
+  }
   return `${normalized}.myshopify.com`;
 }
 
@@ -23,7 +27,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
 
   const authResponse = await verifyInternal(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   try {
     const body = await request.json();
@@ -35,7 +41,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -56,7 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         disconnected: true,
         shop,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch {
     return respond.fail(
@@ -64,7 +70,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

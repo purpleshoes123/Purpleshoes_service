@@ -4,21 +4,25 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { memberRespond as respond } from "~/middleware/verifyMemberAppProxy";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { extractShopFromRequest, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { extractCustomerIdFromProxyRequest } from "~/lib/guideExtension/customerId";
+import { extractCustomerIdFromProxyRequest } from "~/domains/checkout/guideExtension/customerId";
 import { tourPrepareCheckoutSchema } from "~/lib/validation";
-import { prepareTourCheckout } from "~/lib/tourCheckout/prepareCheckoutService";
-import { resolveCheckoutMode } from "~/lib/checkoutMode.server";
-import { resolveBookingProductId } from "~/lib/bookingContext.server";
+import { prepareTourCheckout } from "~/domains/checkout/tourCheckout/prepareCheckoutService";
+import { resolveCheckoutMode } from "~/domains/checkout/checkoutMode.server.ts";
+import { resolveBookingProductId } from "~/domains/bookings/bookingContext.server.ts";
 
 /**
  * POST /proxy/bta/tour/prepare-checkout
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -33,7 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       throw error;
@@ -48,13 +52,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const productId = await resolveBookingProductId(validated.productId, shop);
     if (!productId) {
-      return respond.fail(ErrorCode.VALIDATION_ERROR, "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.", undefined, 400, correlationId);
+      return respond.fail(
+        ErrorCode.VALIDATION_ERROR,
+        "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.",
+        undefined,
+        400,
+        correlationId,
+      );
     }
 
     const customerId = extractCustomerIdFromProxyRequest(request);
@@ -64,7 +74,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "로그인이 필요합니다."),
         undefined,
         403,
-        correlationId
+        correlationId,
       );
     }
 
@@ -74,11 +84,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -105,7 +115,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     });
 
-    if ("checkoutMode" in result && (result.checkoutMode === "theme_cart" || result.checkoutMode === "private_draft")) {
+    if (
+      "checkoutMode" in result &&
+      (result.checkoutMode === "theme_cart" || result.checkoutMode === "private_draft")
+    ) {
       return respond.ok(result, { correlationId });
     }
 
@@ -117,20 +130,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         creditBalance: result.creditBalance,
         warnings: result.warnings,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -141,7 +152,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_CONFLICT),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_CONFLICT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -151,7 +162,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         "투어 할인코드 적용에 실패했습니다. 잠시 후 다시 시도해주세요.",
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -159,7 +170,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify({
         message: "Tour prepare-checkout failed",
         error: message,
-      })
+      }),
     );
 
     return respond.fail(
@@ -167,7 +178,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

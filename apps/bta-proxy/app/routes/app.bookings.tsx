@@ -22,16 +22,13 @@ import {
   listAdminCalendar,
   type CalendarDayItem,
   type CalendarBookingSummary,
-} from "~/lib/adminCalendarService";
-import { sliceBookings } from "~/lib/calendarUiUtils";
-import { getLastRebuildRun, type RebuildRunMeta } from "~/lib/rebuildMetaStore";
-import { getRedisBookingClient } from "~/lib/bookingStore";
+} from "~/domains/bookings/adminCalendarService";
+import { sliceBookings } from "~/domains/bookings/calendarUiUtils";
+import { getLastRebuildRun, type RebuildRunMeta } from "~/domains/bookings/rebuildMetaStore";
+import { getRedisBookingClient } from "~/domains/bookings/bookingStore";
 import { getEnv } from "~/lib/env";
-import {
-  getBookingStatusDisplay,
-  normalizeBookingStatus,
-} from "~/lib/bookingStatus";
-import { normalizeProductIdForBookings } from "~/lib/shopifyProductId";
+import { getBookingStatusDisplay, normalizeBookingStatus } from "~/domains/bookings/bookingStatus";
+import { normalizeProductIdForBookings } from "~/domains/catalog/shopifyProductId";
 
 type LoaderData = {
   month: string;
@@ -66,16 +63,25 @@ function formatMonth(year: number, month: number): string {
 }
 
 function parseMonth(value: string | null): { year: number; month: number } | null {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   const match = /^(\d{4})-(\d{2})$/.exec(value);
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (month < 1 || month > 12) return null;
+  if (month < 1 || month > 12) {
+    return null;
+  }
   return { year, month };
 }
 
-function getMonthRange(year: number, month: number): {
+function getMonthRange(
+  year: number,
+  month: number,
+): {
   from: string;
   to: string;
   daysInMonth: number;
@@ -91,7 +97,11 @@ function getMonthRange(year: number, month: number): {
   };
 }
 
-function shiftMonth(year: number, month: number, delta: number): {
+function shiftMonth(
+  year: number,
+  month: number,
+  delta: number,
+): {
   year: number;
   month: number;
 } {
@@ -176,12 +186,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    error =
-      message.includes("Access denied for metaobjects")
-        ? "Metaobject 권한이 없습니다. 앱 권한에 read_metaobjects/write_metaobjects가 포함되어 있는지 확인하세요."
-        : message === "REDIS_BOOKING_STORE_REQUIRED"
-          ? "Redis Booking Store가 필요합니다. 환경변수를 확인하세요."
-          : "캘린더 데이터를 불러오지 못했습니다.";
+    error = message.includes("Access denied for metaobjects")
+      ? "Metaobject 권한이 없습니다. 앱 권한에 read_metaobjects/write_metaobjects가 포함되어 있는지 확인하세요."
+      : message === "REDIS_BOOKING_STORE_REQUIRED"
+        ? "Redis Booking Store가 필요합니다. 환경변수를 확인하세요."
+        : "캘린더 데이터를 불러오지 못했습니다.";
   }
 
   return json<LoaderData>({
@@ -238,21 +247,17 @@ export default function AdminBookingsPage() {
   const [currentYear, setCurrentYear] = useState(initialMonth.year);
   const [currentMonth, setCurrentMonth] = useState(initialMonth.month);
   const [items, setItems] = useState<CalendarDayItem[]>(loaderData.items);
-  const [blackoutDates, setBlackoutDates] = useState<string[]>(
-    loaderData.blackouts
-  );
+  const [blackoutDates, setBlackoutDates] = useState<string[]>(loaderData.blackouts);
   const [productIdFilter, setProductIdFilter] = useState(
-    normalizeProductIdForBookings(loaderData.productId || "")
+    normalizeProductIdForBookings(loaderData.productId || ""),
   );
   const [selectedProductTitle, setSelectedProductTitle] = useState("");
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [isPickingProduct, setIsPickingProduct] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(
-    loaderData.error || null
-  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(loaderData.error || null);
   const [summary, setSummary] = useState(loaderData.summary || null);
   const [lastRebuild, setLastRebuild] = useState<RebuildRunMeta | null>(
-    loaderData.lastRebuild || null
+    loaderData.lastRebuild || null,
   );
   const [rebuildError, setRebuildError] = useState<string | null>(null);
   const [rebuildResult, setRebuildResult] = useState<any | null>(null);
@@ -284,13 +289,9 @@ export default function AdminBookingsPage() {
       return selectedBookings;
     }
     const needle = panelProductFilter.trim();
-    return selectedBookings.filter((booking) =>
-      booking.productId.includes(needle)
-    );
+    return selectedBookings.filter((booking) => booking.productId.includes(needle));
   }, [panelProductFilter, selectedBookings]);
-  const selectedIsBlackout = selectedDate
-    ? blackoutSet.has(selectedDate)
-    : false;
+  const selectedIsBlackout = selectedDate ? blackoutSet.has(selectedDate) : false;
 
   useEffect(() => {
     if (isDetail) {
@@ -337,9 +338,7 @@ export default function AdminBookingsPage() {
     } else {
       setRebuildResult(null);
       setRebuildError(
-        rebuildFetcher.data.error?.message ||
-          rebuildFetcher.data.error ||
-          "리빌드에 실패했습니다."
+        rebuildFetcher.data.error?.message || rebuildFetcher.data.error || "리빌드에 실패했습니다.",
       );
     }
   }, [rebuildFetcher.data]);
@@ -370,11 +369,9 @@ export default function AdminBookingsPage() {
     setSelectedDate(null);
     setPanelProductFilter("");
     const nextRange = getMonthRange(next.year, next.month);
-    const productParam = productIdFilter
-      ? `&productId=${encodeURIComponent(productIdFilter)}`
-      : "";
+    const productParam = productIdFilter ? `&productId=${encodeURIComponent(productIdFilter)}` : "";
     listFetcher.load(
-      `/proxy/internal/admin/calendar?from=${nextRange.from}&to=${nextRange.to}${productParam}`
+      `/proxy/internal/admin/calendar?from=${nextRange.from}&to=${nextRange.to}${productParam}`,
     );
   };
 
@@ -386,11 +383,9 @@ export default function AdminBookingsPage() {
     setIsDayModalOpen(false);
     setSelectedDate(null);
     setPanelProductFilter("");
-    const productParam = productIdFilter
-      ? `&productId=${encodeURIComponent(productIdFilter)}`
-      : "";
+    const productParam = productIdFilter ? `&productId=${encodeURIComponent(productIdFilter)}` : "";
     listFetcher.load(
-      `/proxy/internal/admin/calendar?from=${range.from}&to=${range.to}${productParam}`
+      `/proxy/internal/admin/calendar?from=${range.from}&to=${range.to}${productParam}`,
     );
   };
 
@@ -407,11 +402,7 @@ export default function AdminBookingsPage() {
         action: "select",
         multiple: false,
       });
-      const picked = selection
-        ? Array.isArray(selection)
-          ? selection
-          : selection.selection
-        : [];
+      const picked = selection ? (Array.isArray(selection) ? selection : selection.selection) : [];
       const product = picked[0];
       if (!product) {
         return;
@@ -420,9 +411,7 @@ export default function AdminBookingsPage() {
       setProductIdFilter(normalizedProductId);
       setSelectedProductTitle(product.title || normalizedProductId);
     } catch (error) {
-      setPickerError(
-        error instanceof Error ? error.message : "상품 선택에 실패했습니다."
-      );
+      setPickerError(error instanceof Error ? error.message : "상품 선택에 실패했습니다.");
     } finally {
       setIsPickingProduct(false);
     }
@@ -477,11 +466,7 @@ export default function AdminBookingsPage() {
           </Banner>
         ) : null}
         {pickerError ? (
-          <Banner
-            tone="critical"
-            title="상품 선택 실패"
-            onDismiss={() => setPickerError(null)}
-          >
+          <Banner tone="critical" title="상품 선택 실패" onDismiss={() => setPickerError(null)}>
             <p>{pickerError}</p>
           </Banner>
         ) : null}
@@ -555,10 +540,7 @@ export default function AdminBookingsPage() {
               <Button onClick={handlePickProduct} loading={isPickingProduct}>
                 Select product
               </Button>
-              <Button
-                onClick={handleClearProductFilter}
-                disabled={!productIdFilter}
-              >
+              <Button onClick={handleClearProductFilter} disabled={!productIdFilter}>
                 Clear
               </Button>
               <Button onClick={handleApplyFilter}>Apply</Button>
@@ -591,10 +573,7 @@ export default function AdminBookingsPage() {
                     );
                   }
                   const bookings = bookingsByDate.get(cell.date) || [];
-                  const { visible, hiddenCount } = sliceBookings(
-                    bookings,
-                    MAX_BOOKINGS_PER_DAY
-                  );
+                  const { visible, hiddenCount } = sliceBookings(bookings, MAX_BOOKINGS_PER_DAY);
                   const isBlackout = blackoutSet.has(cell.date);
                   return (
                     <div
@@ -643,10 +622,10 @@ export default function AdminBookingsPage() {
                             </Box>
                           ))}
                           {hiddenCount > 0 ? (
-                              <Button
-                                variant="plain"
-                                onClick={() => handleOpenDayModal(cell.date || "")}
-                              >
+                            <Button
+                              variant="plain"
+                              onClick={() => handleOpenDayModal(cell.date || "")}
+                            >
                               +{hiddenCount.toString()} more
                             </Button>
                           ) : null}
@@ -721,13 +700,10 @@ export default function AdminBookingsPage() {
         <Modal.Section>
           <BlockStack gap="300">
             <Text as="p" variant="bodySm">
-              리빌드는 Redis confirmed ledger를 재생성합니다. 실행 중에는
-              락이 걸릴 수 있습니다.
+              리빌드는 Redis confirmed ledger를 재생성합니다. 실행 중에는 락이 걸릴 수 있습니다.
             </Text>
             <InlineStack gap="200">
-              <Button onClick={() => setIsRebuildModalOpen(false)}>
-                취소
-              </Button>
+              <Button onClick={() => setIsRebuildModalOpen(false)}>취소</Button>
               <Button
                 variant="primary"
                 onClick={() => {
@@ -738,9 +714,7 @@ export default function AdminBookingsPage() {
                     mode: rebuildDefaults.mode,
                     dryRun: false,
                   };
-                  const actionUrl = `/proxy/internal/rebuild?shop=${encodeURIComponent(
-                    shop
-                  )}`;
+                  const actionUrl = `/proxy/internal/rebuild?shop=${encodeURIComponent(shop)}`;
                   rebuildFetcher.submit(JSON.stringify(payload), {
                     method: "post",
                     action: actionUrl,

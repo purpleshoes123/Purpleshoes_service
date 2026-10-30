@@ -24,6 +24,8 @@ export async function checkReadiness(
   } catch {
     return false;
   } finally {
-    if (timer) clearTimeout(timer);
+    if (timer) {
+      clearTimeout(timer);
+    }
   }
 }

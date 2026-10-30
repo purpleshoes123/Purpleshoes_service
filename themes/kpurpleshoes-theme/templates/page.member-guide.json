@@ -68,11 +68,7 @@
           }
         }
       },
-      "block_order": [
-        "plan_pdf",
-        "plan_bundle",
-        "plan_video"
-      ],
+      "block_order": ["plan_pdf", "plan_bundle", "plan_video"],
       "settings": {
         "heading": "Choose Your Korea Guide",
         "hero_image": "shopify://shop_images/938207a5477970309a67488f9a0400dc.png"
@@ -219,10 +215,7 @@
           }
         }
       },
-      "block_order": [
-        "item_guide_1",
-        "item_guide_2"
-      ],
+      "block_order": ["item_guide_1", "item_guide_2"],
       "name": "What you'll do (list)",
       "settings": {
         "heading": "How to Master Your Korea Guide Kit",
@@ -252,9 +245,7 @@
           }
         }
       },
-      "block_order": [
-        "review_aLiGEb"
-      ],
+      "block_order": ["review_aLiGEb"],
       "name": "Travel Reviews (List)",
       "settings": {
         "review_product_id": "7523299590238",

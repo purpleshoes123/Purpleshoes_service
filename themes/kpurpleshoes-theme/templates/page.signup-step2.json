@@ -17,7 +17,5 @@
       }
     }
   },
-  "order": [
-    "signup_step2"
-  ]
+  "order": ["signup_step2"]
 }

@@ -2,14 +2,17 @@ import type { ActionFunctionArgs } from "react-router";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { verifyAdminApiKey } from "~/middleware/verifyAdminApiKey";
-import { adminRevokeSchema } from "~/lib/coupons/validation";
+import { adminRevokeSchema } from "~/domains/coupons/validation";
 import { getAdminApiClient } from "~/lib/shopifyAdmin";
-import { revokeCode } from "~/lib/coupons/issuer";
-import { getState } from "~/lib/coupons/state";
-import { normalizeCustomerId } from "~/lib/coupons/normalize";
-import { acquireLock, releaseLock } from "~/lib/coupons/lock";
+import { revokeCode } from "~/domains/coupons/issuer";
+import { getState } from "~/domains/coupons/state";
+import { normalizeCustomerId } from "~/domains/coupons/normalize";
+import { acquireLock, releaseLock } from "~/domains/coupons/lock";
 
-function resolveCodeFromState(kind: string, state: any): { code: string | null; discountId: string | null } {
+function resolveCodeFromState(
+  kind: string,
+  state: any,
+): { code: string | null; discountId: string | null } {
   if (kind === "GUIDE50") {
     return { code: state.guide50Code, discountId: state.guide50DiscountId };
   }
@@ -25,7 +28,9 @@ function resolveCodeFromState(kind: string, state: any): { code: string | null; 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
   const authResponse = verifyAdminApiKey(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   try {
     const body = await request.json();
@@ -37,7 +42,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -48,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_CONFLICT),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_CONFLICT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -61,7 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -71,11 +76,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
           getErrorMessage(
             ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-            "Shopify Admin API 세션을 찾을 수 없습니다."
+            "Shopify Admin API 세션을 찾을 수 없습니다.",
           ),
           undefined,
           getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -87,11 +92,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             ErrorCode.VALIDATION_ERROR,
             getErrorMessage(
               ErrorCode.VALIDATION_ERROR,
-              "code 또는 couponKind 중 하나는 필요합니다."
+              "code 또는 couponKind 중 하나는 필요합니다.",
             ),
             undefined,
             getErrorStatus(ErrorCode.VALIDATION_ERROR),
-            correlationId
+            correlationId,
           );
         }
         const state = await getState(customerId);
@@ -106,7 +111,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "revoke할 코드가 없습니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -119,15 +124,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -136,7 +139,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

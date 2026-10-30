@@ -4,7 +4,10 @@ import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import db from "~/db.server";
-import { listLogs, type GuideEntitlementLogStatus } from "~/lib/guideExtension/logStore";
+import {
+  listLogs,
+  type GuideEntitlementLogStatus,
+} from "~/domains/checkout/guideExtension/logStore";
 
 function normalizeCustomerId(value: string): string {
   if (value.startsWith("gid://")) {
@@ -20,9 +23,7 @@ function serializeLog(log: any) {
   return {
     ...log,
     baseExpiresAt: log.baseExpiresAt ? log.baseExpiresAt.toISOString() : null,
-    previousExpiresAt: log.previousExpiresAt
-      ? log.previousExpiresAt.toISOString()
-      : null,
+    previousExpiresAt: log.previousExpiresAt ? log.previousExpiresAt.toISOString() : null,
     newExpiresAt: log.newExpiresAt ? log.newExpiresAt.toISOString() : null,
     createdAt: log.createdAt.toISOString(),
   };
@@ -38,7 +39,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       shop = url.searchParams.get("shop");
       if (!shop) {
@@ -47,7 +50,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       if (!shop.includes(".")) {
@@ -64,22 +67,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_ERROR),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const limitRaw = url.searchParams.get("limit") || "50";
     let limit = Number.parseInt(limitRaw, 10);
-    if (!Number.isFinite(limit) || limit < 1) limit = 50;
-    if (limit > 200) limit = 200;
+    if (!Number.isFinite(limit) || limit < 1) {
+      limit = 50;
+    }
+    if (limit > 200) {
+      limit = 200;
+    }
 
     const cursor = url.searchParams.get("cursor");
     const customerIdParam = url.searchParams.get("customerId");
     const filters = {
       shop,
-      customerId: customerIdParam
-        ? normalizeCustomerId(customerIdParam)
-        : undefined,
+      customerId: customerIdParam ? normalizeCustomerId(customerIdParam) : undefined,
       orderId: url.searchParams.get("orderId") || undefined,
       refundId: url.searchParams.get("refundId") || undefined,
       status: (url.searchParams.get("status") as GuideEntitlementLogStatus | null) || undefined,
@@ -99,7 +104,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         logs: result.logs.map(serializeLog),
         nextCursor: result.nextCursor,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     return respond.fail(
@@ -107,7 +112,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

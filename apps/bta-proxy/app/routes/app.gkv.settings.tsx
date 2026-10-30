@@ -1,18 +1,10 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import type { LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { useLoaderData } from "react-router";
-import {
-  Badge,
-  BlockStack,
-  Box,
-  Card,
-  InlineStack,
-  Page,
-  Text,
-} from "@shopify/polaris";
+import { Badge, BlockStack, Box, Card, InlineStack, Page, Text } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi } from "~/lib/gkv/adminApi.server";
+import { callGkvAdminApi } from "~/domains/guide-viewer/adminApi.server.ts";
 
 type LoaderData = {
   status: {

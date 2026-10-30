@@ -5,9 +5,9 @@ import {
   listFavorites,
   parseFavoriteTypeQuery,
   parseIncludeDeletedQuery,
-} from "~/lib/gkv/favorites.server";
+} from "~/domains/guide-viewer/favorites.server.ts";
 import { respond } from "~/lib/respond";
-import { requireStorefrontCustomerProxyContext } from "~/lib/storefront/customerProxy.server";
+import { requireStorefrontCustomerProxyContext } from "~/domains/storefront/customerProxy.server.ts";
 
 /**
  * GET /proxy/bta/mypage/favorites
@@ -17,22 +17,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     rateLimitPolicy: "customer",
     rateLimitBucket: "mypage-read",
   });
-  if (context instanceof Response) return respond.withNoStore(context);
+  if (context instanceof Response) {
+    return respond.withNoStore(context);
+  }
 
   try {
     const url = new URL(request.url);
     const type = parseFavoriteTypeQuery(url.searchParams.get("type"));
-    const includeDeleted = parseIncludeDeletedQuery(
-      url.searchParams.get("includeDeleted"),
-    );
+    const includeDeleted = parseIncludeDeletedQuery(url.searchParams.get("includeDeleted"));
     const data = await listFavorites({
       customerId: context.customerId,
       type,
       includeDeleted,
     });
-    return respond.withNoStore(
-      respond.ok(data, { correlationId: context.correlationId }),
-    );
+    return respond.withNoStore(respond.ok(data, { correlationId: context.correlationId }));
   } catch (error) {
     if (error instanceof FavoriteRequestError) {
       return respond.withNoStore(

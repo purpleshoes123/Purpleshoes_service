@@ -22,16 +22,20 @@ import {
   ReviewServiceError,
   sanitizePublicIdentityValue,
   updateReviewContent,
-} from "~/lib/reviewService";
-import { acquireReviewLock, releaseReviewLock } from "~/lib/reviewLock";
-import { extractCustomerIdFromProxyRequest } from "~/lib/guideExtension/customerId";
-import { isTourLineCompleted } from "~/lib/tourCompletion";
+} from "~/domains/reviews/reviewService";
+import { acquireReviewLock, releaseReviewLock } from "~/domains/reviews/reviewLock";
+import { extractCustomerIdFromProxyRequest } from "~/domains/checkout/guideExtension/customerId";
+import { isTourLineCompleted } from "~/domains/bookings/tourCompletion";
 
 const REVIEW_LOCK_TTL_SECONDS = 10;
 
 function normalizeGid(value: string, type: "Product" | "Order") {
-  if (!value) return value;
-  if (value.startsWith("gid://")) return value;
+  if (!value) {
+    return value;
+  }
+  if (value.startsWith("gid://")) {
+    return value;
+  }
   if (/^\d+$/.test(value)) {
     return `gid://shopify/${type}/${value}`;
   }
@@ -62,19 +66,30 @@ type OrderReviewInfo = {
 };
 
 function normalizePropertyKey(value: string | null | undefined): string {
-  return (value || "").trim().toLowerCase().replace(/[ _\[\]]/g, "");
+  return (value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[ _\[\]]/g, "");
 }
 
 function normalizeNullableProductId(value?: string): string | null {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
 function normalizeCustomerId(value: string | null | undefined): string | null {
-  if (!value) return null;
-  if (value.startsWith("gid://")) return value;
-  if (/^\d+$/.test(value)) return `gid://shopify/Customer/${value}`;
+  if (!value) {
+    return null;
+  }
+  if (value.startsWith("gid://")) {
+    return value;
+  }
+  if (/^\d+$/.test(value)) {
+    return `gid://shopify/Customer/${value}`;
+  }
   return null;
 }
 
@@ -132,7 +147,7 @@ async function fetchOrderForReview(params: {
     if (!response.ok) {
       throw new ReviewServiceError(
         ErrorCode.REVIEW_SHOPIFY_API_ERROR,
-        `Shopify Admin API request failed with status ${response.status}`
+        `Shopify Admin API request failed with status ${response.status}`,
       );
     }
 
@@ -164,7 +179,7 @@ async function fetchOrderForReview(params: {
     if (payload.errors && payload.errors.length > 0) {
       throw new ReviewServiceError(
         ErrorCode.REVIEW_SHOPIFY_API_ERROR,
-        `GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`
+        `GraphQL errors: ${payload.errors.map((e) => e.message).join(", ")}`,
       );
     }
 
@@ -186,7 +201,7 @@ async function fetchOrderForReview(params: {
     const matchedLine = lineItems.find(
       (edge) =>
         Boolean(edge.node.product?.id) &&
-        normalizeGid(edge.node.product!.id!, "Product") === productGid
+        normalizeGid(edge.node.product!.id!, "Product") === productGid,
     )?.node;
     hasProduct = Boolean(matchedLine);
     if (matchedLine) {
@@ -201,7 +216,9 @@ async function fetchOrderForReview(params: {
         Boolean(travelDate) ||
         attributes.some((attribute) => normalizePropertyKey(attribute.key).includes("traveler"));
       tourCompleted =
-        !orderInfo?.cancelledAt && isTourProduct && isTourLineCompleted(order.tags || [], matchedLine.id);
+        !orderInfo?.cancelledAt &&
+        isTourProduct &&
+        isTourLineCompleted(order.tags || [], matchedLine.id);
     }
     if (hasProduct) {
       hasNextPage = false;
@@ -228,10 +245,14 @@ async function fetchOrderForReview(params: {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const startTime = Date.now();
@@ -253,20 +274,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           errorCode: ErrorCode.REVIEW_INVALID_INPUT,
           reason: "missing_shop",
         },
-        { correlationId, severity: "warn" }
+        { correlationId, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
         getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
-    const normalizedProductId = normalizeNullableProductId(
-      validatedInput.productId
-    );
+    const normalizedProductId = normalizeNullableProductId(validatedInput.productId);
 
     logEvent(
       "review.list.attempt",
@@ -280,7 +299,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         limit: validatedInput.limit,
         cursor: validatedInput.cursor || null,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     const result = await listReviewsByProduct({
@@ -296,10 +315,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const items = result.items.map((item) => {
       const internalIds = [item.orderId, item.customerId];
-      const firstName = sanitizePublicIdentityValue(
-        item.firstName,
-        internalIds
-      );
+      const firstName = sanitizePublicIdentityValue(item.firstName, internalIds);
       const lastName = sanitizePublicIdentityValue(item.lastName, internalIds);
       const country = sanitizePublicIdentityValue(item.country, internalIds);
       const authorDisplayName =
@@ -330,7 +346,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         count: items.length,
         durationMs: Date.now() - startTime,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     return respond.ok(
@@ -338,14 +354,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         items,
         pageInfo: result.pageInfo,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       logEvent(
         "review.list.fail",
         {
@@ -355,14 +369,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           reason: errorMessage,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "warn" }
+        { correlationId, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
         getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -376,14 +390,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           reason: error.message,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "error" }
+        { correlationId, severity: "error" },
       );
       return respond.fail(
         error.code,
         getErrorMessage(error.code, error.message),
         error.details,
         getErrorStatus(error.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -396,24 +410,28 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         reason: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       },
-      { correlationId, severity: "error" }
+      { correlationId, severity: "error" },
     );
     return respond.fail(
       ErrorCode.INTERNAL_ERROR,
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const startTime = Date.now();
@@ -436,14 +454,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             reason: "invalid_json",
             durationMs: Date.now() - startTime,
           },
-          { correlationId, severity: "warn" }
+          { correlationId, severity: "warn" },
         );
         return respond.fail(
           ErrorCode.REVIEW_INVALID_INPUT,
           getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, "잘못된 JSON 형식입니다."),
           undefined,
           getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-          correlationId
+          correlationId,
         );
       }
       body = {};
@@ -460,14 +478,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "missing_shop",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "warn" }
+        { correlationId, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
         getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -478,7 +496,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
         undefined,
         getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -492,23 +510,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         requestedAction === "update"
           ? reviewUpdateBodySchema.parse(body)
           : reviewDeleteBodySchema.parse(body);
-      const updateInput =
-        requestedAction === "update"
-          ? reviewUpdateBodySchema.parse(body)
-          : null;
+      const updateInput = requestedAction === "update" ? reviewUpdateBodySchema.parse(body) : null;
       lockKey = `lock:review:manage:${validatedInput.orderId}`;
-      lockAcquired = await acquireReviewLock(
-        lockKey,
-        lockValue,
-        REVIEW_LOCK_TTL_SECONDS
-      );
+      lockAcquired = await acquireReviewLock(lockKey, lockValue, REVIEW_LOCK_TTL_SECONDS);
       if (!lockAcquired) {
         return respond.fail(
           ErrorCode.REVIEW_CONFLICT,
           getErrorMessage(ErrorCode.REVIEW_CONFLICT),
           undefined,
           getErrorStatus(ErrorCode.REVIEW_CONFLICT),
-          correlationId
+          correlationId,
         );
       }
 
@@ -521,10 +532,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         existing?.id === validatedInput.reviewId &&
         normalizeCustomerId(existing.customerId) === customerId;
       if (!isOwnedByCustomer) {
-        throw new ReviewServiceError(
-          ErrorCode.REVIEW_NOT_FOUND,
-          "Review not found"
-        );
+        throw new ReviewServiceError(ErrorCode.REVIEW_NOT_FOUND, "Review not found");
       }
 
       if (requestedAction === "delete") {
@@ -541,7 +549,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             reviewId: validatedInput.reviewId,
             durationMs: Date.now() - startTime,
           },
-          { correlationId, shop }
+          { correlationId, shop },
         );
         return respond.ok({ deletedId: deleted.deletedId }, { correlationId });
       }
@@ -561,7 +569,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reviewId: validatedInput.reviewId,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop }
+        { correlationId, shop },
       );
       return respond.ok({ item: updated }, { correlationId });
     }
@@ -569,11 +577,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const validatedInput = reviewCreateBodySchema.parse(body);
 
     lockKey = `lock:review:create:${validatedInput.orderId}`;
-    lockAcquired = await acquireReviewLock(
-      lockKey,
-      lockValue,
-      REVIEW_LOCK_TTL_SECONDS
-    );
+    lockAcquired = await acquireReviewLock(lockKey, lockValue, REVIEW_LOCK_TTL_SECONDS);
     if (!lockAcquired) {
       logEvent(
         "review.create.customer.fail",
@@ -586,14 +590,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "lock_conflict",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_CONFLICT,
         getErrorMessage(ErrorCode.REVIEW_CONFLICT),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_CONFLICT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -610,17 +614,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "missing_admin_session",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "error" }
+        { correlationId, shop, severity: "error" },
       );
       return respond.fail(
         ErrorCode.REVIEW_SHOPIFY_API_ERROR,
         getErrorMessage(
           ErrorCode.REVIEW_SHOPIFY_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_SHOPIFY_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -633,7 +637,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         orderId: validatedInput.orderId,
         bodyLength: validatedInput.body.length,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     const orderInfo = await fetchOrderForReview({
@@ -654,14 +658,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "order_not_found_or_customer_missing",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_NOT_ELIGIBLE,
         getErrorMessage(ErrorCode.REVIEW_NOT_ELIGIBLE),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_NOT_ELIGIBLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -677,14 +681,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "order_customer_mismatch",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_NOT_ELIGIBLE,
         getErrorMessage(ErrorCode.REVIEW_NOT_ELIGIBLE),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_NOT_ELIGIBLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -700,14 +704,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "order_not_paid",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_NOT_ELIGIBLE,
         getErrorMessage(ErrorCode.REVIEW_NOT_ELIGIBLE),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_NOT_ELIGIBLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -723,12 +727,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           productId: validatedInput.productId,
           orderId: validatedInput.orderId,
           errorCode,
-          reason: orderInfo.lineItemsTruncated
-            ? "line_items_truncated"
-            : "product_not_in_order",
+          reason: orderInfo.lineItemsTruncated ? "line_items_truncated" : "product_not_in_order",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         errorCode,
@@ -737,7 +739,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ...(orderInfo.lineItemsTruncated ? { lineItemsTruncated: true } : {}),
         },
         getErrorStatus(errorCode),
-        correlationId
+        correlationId,
       );
     }
 
@@ -755,14 +757,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "tour_not_completed",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_NOT_ELIGIBLE,
         "Tour reviews are available after the tour is completed.",
         undefined,
         getErrorStatus(ErrorCode.REVIEW_NOT_ELIGIBLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -784,14 +786,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: "duplicate_review",
           durationMs: Date.now() - startTime,
         },
-        { correlationId, shop, severity: "warn" }
+        { correlationId, shop, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_DUPLICATE,
         getErrorMessage(ErrorCode.REVIEW_DUPLICATE),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_DUPLICATE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -814,7 +816,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         authorDisplayName: created.authorDisplayName ?? null,
         submittedAt: created.submittedAt,
       },
-      { correlationId }
+      { correlationId },
     );
 
     logEvent(
@@ -826,16 +828,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         orderId: validatedInput.orderId,
         durationMs: Date.now() - startTime,
       },
-      { correlationId, shop }
+      { correlationId, shop },
     );
 
     return response;
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       logEvent(
         "review.create.customer.fail",
         {
@@ -845,14 +845,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: errorMessage,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "warn" }
+        { correlationId, severity: "warn" },
       );
       return respond.fail(
         ErrorCode.REVIEW_INVALID_INPUT,
         getErrorMessage(ErrorCode.REVIEW_INVALID_INPUT, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.REVIEW_INVALID_INPUT),
-        correlationId
+        correlationId,
       );
     }
 
@@ -866,14 +866,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: error.message,
           durationMs: Date.now() - startTime,
         },
-        { correlationId, severity: "error" }
+        { correlationId, severity: "error" },
       );
       return respond.fail(
         error.code,
         getErrorMessage(error.code, error.message),
         error.details,
         getErrorStatus(error.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -886,14 +886,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         reason: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       },
-      { correlationId, severity: "error" }
+      { correlationId, severity: "error" },
     );
     return respond.fail(
       ErrorCode.INTERNAL_ERROR,
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   } finally {
     if (lockKey && lockAcquired) {

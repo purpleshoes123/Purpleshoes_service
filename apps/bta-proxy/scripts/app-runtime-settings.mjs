@@ -16,21 +16,35 @@ RATE_LIMIT_PER_MIN SCOPES SHOPIFY_API_KEY SHOPIFY_API_SECRET SHOPIFY_APP_URL SHO
 SMTP_HOST SMTP_PASSWORD SMTP_PORT SMTP_SECURE SMTP_USERNAME SQUEEZE_EVENT_TOKEN
 STOREFRONT_RATE_LIMIT_MYPAGE_READ_PER_MIN STOREFRONT_RATE_LIMIT_MYPAGE_WRITE_PER_MIN STOREFRONT_RATE_LIMIT_REDIS_CIRCUIT_COOLDOWN_MS STOREFRONT_RATE_LIMIT_REDIS_TIMEOUT_MS STOREFRONT_RATE_LIMIT_SIGNED_URL_PER_MIN STOREFRONT_RATE_LIMIT_V2_MODE STOREFRONT_RATE_LIMIT_WINDOW_SEC STORE_TIMEOUT_MS TIER_ENABLED
 TRAVEL_TAXONOMY_NAME TRAVEL_TAXONOMY_NODE_ID TRAVEL_TAXONOMY_PUBLIC_ID TRAVEL_TAXONOMY_SEARCH
-`.trim().split(/\s+/);
+`
+  .trim()
+  .split(/\s+/);
 
 export function selectRuntimeSettings(env) {
   const selected = {};
   for (const key of RUNTIME_KEYS) {
     if (Object.hasOwn(env, key) && typeof env[key] === "string" && env[key] !== "") {
-      if (env[key].includes("\u0000")) throw new Error("Invalid runtime setting");
+      if (env[key].includes("\u0000")) {
+        throw new Error("Invalid runtime setting");
+      }
       selected[key] = env[key];
     }
   }
-  for (const key of ["SHOPIFY_API_KEY", "SHOPIFY_API_SECRET", "SHOPIFY_APP_URL",
-    "SMTP_HOST", "SMTP_PASSWORD", "SMTP_USERNAME", "GKV_SIGNED_URL_SECRET"]) {
-    if (!selected[key]) throw new Error("Required runtime settings are missing");
+  for (const key of [
+    "SHOPIFY_API_KEY",
+    "SHOPIFY_API_SECRET",
+    "SHOPIFY_APP_URL",
+    "SMTP_HOST",
+    "SMTP_PASSWORD",
+    "SMTP_USERNAME",
+    "GKV_SIGNED_URL_SECRET",
+  ]) {
+    if (!selected[key]) {
+      throw new Error("Required runtime settings are missing");
+    }
   }
-  if (Buffer.byteLength(JSON.stringify(selected)) > 65536)
+  if (Buffer.byteLength(JSON.stringify(selected)) > 65536) {
     throw new Error("Runtime settings exceed secret size limit");
+  }
   return selected;
 }

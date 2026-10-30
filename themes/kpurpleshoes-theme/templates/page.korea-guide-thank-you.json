@@ -41,7 +41,5 @@
       }
     }
   },
-  "order": [
-    "korea_guide_thank_you"
-  ]
+  "order": ["korea_guide_thank_you"]
 }
