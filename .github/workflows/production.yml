@@ -81,7 +81,7 @@ jobs:
     needs: verify
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 110
     permissions:
       contents: read
       id-token: write
