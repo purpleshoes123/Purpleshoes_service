@@ -27,23 +27,15 @@
       "blocks": {
         "subtotal": {
           "type": "subtotal",
-          "settings": {
-          }
+          "settings": {}
         },
         "buttons": {
           "type": "buttons",
-          "settings": {
-          }
+          "settings": {}
         }
       },
-      "block_order": [
-        "subtotal",
-        "buttons"
-      ]
+      "block_order": ["subtotal", "buttons"]
     }
   },
-  "order": [
-    "cart-items",
-    "cart-footer"
-  ]
+  "order": ["cart-items", "cart-footer"]
 }

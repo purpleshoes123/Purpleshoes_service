@@ -1,21 +1,25 @@
 import type { ActionFunctionArgs } from "react-router";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { requireGkvCustomerId } from "~/lib/gkv/customerAuth";
-import { buildGkvSignedUrl } from "~/lib/gkv/signedUrl";
+import { requireGkvCustomerId } from "~/domains/guide-viewer/customerAuth";
+import { buildGkvSignedUrl } from "~/domains/guide-viewer/signedUrl";
 import {
   canAccessAssetKind,
   loadGuideExtensionEntitlements,
-} from "~/lib/gkv/v1EntitlementAccess.server";
-import { requireActiveGkvSession } from "~/lib/gkv/sessions.server";
+} from "~/domains/guide-viewer/v1EntitlementAccess.server.ts";
+import { requireActiveGkvSession } from "~/domains/guide-viewer/sessions.server.ts";
 import { respond } from "~/lib/respond";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const auth = await requireGkvCustomerId(request);
-  if (auth instanceof Response) return auth;
+  if (auth instanceof Response) {
+    return auth;
+  }
   const correlationId = respond.getCorrelationId(request);
   const session = await requireActiveGkvSession(request, auth.customerId, correlationId);
-  if (session instanceof Response) return session;
+  if (session instanceof Response) {
+    return session;
+  }
   const assetId = params.id;
   if (!assetId) {
     return respond.fail(
@@ -23,7 +27,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "asset id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -34,7 +38,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "asset을 찾을 수 없거나 READY 상태가 아닙니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -56,7 +60,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
       undefined,
       getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-      correlationId
+      correlationId,
     );
   }
 
@@ -77,7 +81,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
       undefined,
       getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-      correlationId
+      correlationId,
     );
   }
 
@@ -94,6 +98,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       expiresAt: signed.expiresAt,
       ttlSec: signed.ttlSec,
     },
-    { correlationId }
+    { correlationId },
   );
 };

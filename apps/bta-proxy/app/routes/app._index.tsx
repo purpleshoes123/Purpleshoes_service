@@ -16,7 +16,7 @@ import { authenticate } from "../shopify.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // 인증 확인 (실패 시 자동으로 로그인 페이지로 리다이렉트됨)
   await authenticate.admin(request);
-  
+
   // 인증 성공 후 booking 페이지로 리다이렉트
   // 원래 요청의 쿼리 파라미터를 유지하여 인증 정보 전달
   const url = new URL(request.url);
@@ -26,9 +26,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
+  const color = ["Red", "Orange", "Yellow", "Green"][Math.floor(Math.random() * 4)];
   const response = await admin.graphql(
     `#graphql
       mutation populateProduct($product: ProductCreateInput!) {
@@ -88,15 +86,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return {
     product: responseJson!.data!.productCreate!.product,
-    variant:
-      variantResponseJson!.data!.productVariantsBulkUpdate!.productVariants,
+    variant: variantResponseJson!.data!.productVariantsBulkUpdate!.productVariants,
   };
 };
 
 export default function Index() {
   // 이 컴포넌트는 loader에서 리다이렉트되므로 실행되지 않습니다.
   // 하지만 타입 체크를 위해 컴포넌트는 유지합니다.
-  return null; 
+  return null;
   /*(
     <Page>
       <TitleBar title="Booking Admin">

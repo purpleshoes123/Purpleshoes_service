@@ -4,11 +4,11 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { memberRespond as respond } from "~/middleware/verifyMemberAppProxy";
 import { reservationsSchema } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
-import { getBookingStore } from "~/lib/bookingStore";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
 import { extractShopFromRequest } from "~/lib/shopifyAdmin";
-import { checkEligibility, normalizeBookingInput } from "~/lib/bookingEligibility";
+import { checkEligibility, normalizeBookingInput } from "~/domains/bookings/bookingEligibility";
 import { maskPII } from "~/lib/masking";
-import { resolveBookingProductId } from "~/lib/bookingContext.server";
+import { resolveBookingProductId } from "~/domains/bookings/bookingContext.server.ts";
 
 /**
  * SSOT 2.1: POST /proxy/bta/reservations
@@ -19,11 +19,15 @@ import { resolveBookingProductId } from "~/lib/bookingContext.server";
 export const action = async ({ request }: ActionFunctionArgs) => {
   // 1. 레이트 리밋 검증
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   // 2. App Proxy 서명 검증
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   // 3. correlationId 추출/생성
   const correlationId = respond.getCorrelationId(request);
@@ -33,11 +37,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const body = await request.json();
     const validatedInput = reservationsSchema.parse(body);
     const reservationDate = validatedInput.date;
-    const reservationPax = validatedInput.pax ?? (validatedInput.travelers
-      ? validatedInput.travelers.adult + validatedInput.travelers.child + validatedInput.travelers.infant : 0);
+    const reservationPax =
+      validatedInput.pax ??
+      (validatedInput.travelers
+        ? validatedInput.travelers.adult +
+          validatedInput.travelers.child +
+          validatedInput.travelers.infant
+        : 0);
     if (!reservationDate || reservationPax < 1) {
-      return respond.fail(ErrorCode.VALIDATION_ERROR, "예약 날짜와 인원수가 필요합니다.", undefined,
-        getErrorStatus(ErrorCode.VALIDATION_ERROR), correlationId);
+      return respond.fail(
+        ErrorCode.VALIDATION_ERROR,
+        "예약 날짜와 인원수가 필요합니다.",
+        undefined,
+        getErrorStatus(ErrorCode.VALIDATION_ERROR),
+        correlationId,
+      );
     }
 
     // 5. shop 정보 추출 (metafield 조회용)
@@ -48,13 +62,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const productId = await resolveBookingProductId(validatedInput.productId, shop);
     if (!productId) {
-      return respond.fail(ErrorCode.VALIDATION_ERROR, "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.", undefined, 400, correlationId);
+      return respond.fail(
+        ErrorCode.VALIDATION_ERROR,
+        "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.",
+        undefined,
+        400,
+        correlationId,
+      );
     }
 
     // 6. 공통 정규화/Eligibility 체크 (hold 생성 직전)
@@ -102,8 +122,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: eligibility.message,
               details: eligibility.details,
             },
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -111,7 +131,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Blackouts and absent policy remain hard failures. Capacity/hold reads
     // are advisory: the atomic store both rechecks them and handles a retry
     // of the caller's existing hold before deciding availability.
-    const atomicRecheck = durable && ["CAPACITY", "ACTIVE_HOLD", "CONFIRMED"].includes(eligibility.reason);
+    const atomicRecheck =
+      durable && ["CAPACITY", "ACTIVE_HOLD", "CONFIRMED"].includes(eligibility.reason);
     if (!eligibility.available && !atomicRecheck) {
       return respond.fail(
         ErrorCode.BOOKING_NOT_AVAILABLE,
@@ -125,7 +146,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           reason: eligibility.reason,
         },
         getErrorStatus(ErrorCode.BOOKING_NOT_AVAILABLE),
-        correlationId
+        correlationId,
       );
     }
 
@@ -137,9 +158,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     // 9. Idempotency 체크 (clientRequestId가 있는 경우)
     if (!durable && validatedInput.clientRequestId) {
-      const existingHold = await store.getHoldByIdempotencyKey(
-        validatedInput.clientRequestId
-      );
+      const existingHold = await store.getHoldByIdempotencyKey(validatedInput.clientRequestId);
       if (existingHold) {
         // 기존 hold 반환
         return respond.ok(existingHold, { correlationId });
@@ -163,17 +182,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           poolKey: normalized.poolKey,
           date: reservationDate,
           capacityUnits,
-        }
+        },
       );
 
       // 11. 응답 반환
       return respond.ok(reservationDTO, { correlationId });
     } catch (holdError) {
       // Phase 5-5: 원자적 락 획득 실패 (BOOKING_NOT_AVAILABLE)
-      if (
-        holdError instanceof Error &&
-        holdError.message === "BOOKING_NOT_AVAILABLE"
-      ) {
+      if (holdError instanceof Error && holdError.message === "BOOKING_NOT_AVAILABLE") {
         return respond.fail(
           ErrorCode.BOOKING_NOT_AVAILABLE,
           getErrorMessage(ErrorCode.BOOKING_NOT_AVAILABLE),
@@ -182,7 +198,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             poolKey: validatedInput.poolKey,
           },
           getErrorStatus(ErrorCode.BOOKING_NOT_AVAILABLE),
-          correlationId
+          correlationId,
         );
       }
       // 다른 에러는 아래 catch 블록에서 처리
@@ -196,38 +212,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     // Zod 검증 에러
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     // Booking Store 에러
     if (error instanceof Error) {
       // 타임아웃 에러
-      if (
-        error.message.includes("timeout") ||
-        error.name === "TimeoutError"
-      ) {
+      if (error.message.includes("timeout") || error.name === "TimeoutError") {
         return respond.fail(
           ErrorCode.BOOKING_STORE_TIMEOUT,
           getErrorMessage(ErrorCode.BOOKING_STORE_TIMEOUT),
           undefined,
           getErrorStatus(ErrorCode.BOOKING_STORE_TIMEOUT),
-          correlationId
+          correlationId,
         );
       }
 
@@ -237,7 +248,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.BOOKING_STORE_ERROR),
         undefined,
         getErrorStatus(ErrorCode.BOOKING_STORE_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -249,8 +260,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Reservations 엔드포인트 오류",
           error: error instanceof Error ? error.message : String(error),
           ...(error instanceof Error && error.cause && { cause: error.cause }),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -258,7 +269,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

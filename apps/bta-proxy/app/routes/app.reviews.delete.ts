@@ -3,10 +3,7 @@ import { z } from "zod";
 import { authenticate } from "~/shopify.server";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import {
-  deleteReviewContent,
-  ReviewServiceError,
-} from "~/lib/reviewService";
+import { deleteReviewContent, ReviewServiceError } from "~/domains/reviews/reviewService";
 import { logEvent } from "~/lib/logEvent";
 
 const deleteSchema = z.object({
@@ -63,9 +60,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return respond.ok(deleted, { correlationId });
   } catch (error) {
-    if (error instanceof Response) throw error;
-    const isValidationError =
-      error && typeof error === "object" && "issues" in error;
+    if (error instanceof Response) {
+      throw error;
+    }
+    const isValidationError = error && typeof error === "object" && "issues" in error;
     const message = isValidationError
       ? (error as { issues: Array<{ message: string }> }).issues
           .map((issue) => issue.message)

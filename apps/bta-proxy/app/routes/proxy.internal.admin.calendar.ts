@@ -4,7 +4,7 @@ import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { parseQueryParams, adminCalendarSchema } from "~/lib/validation";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { listAdminCalendar } from "~/lib/adminCalendarService";
+import { listAdminCalendar } from "~/domains/bookings/adminCalendarService";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
@@ -19,7 +19,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       shop = validatedInput.shop || url.searchParams.get("shop");
       if (!shop) {
@@ -28,7 +30,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -47,7 +49,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
             undefined,
             getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-            correlationId
+            correlationId,
           );
         }
         throw error;
@@ -60,7 +62,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -77,15 +79,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -93,13 +93,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (message === "REDIS_BOOKING_STORE_REQUIRED") {
       return respond.fail(
         ErrorCode.INTERNAL_ERROR,
-        getErrorMessage(
-          ErrorCode.INTERNAL_ERROR,
-          "Redis Booking Store가 필요합니다."
-        ),
+        getErrorMessage(ErrorCode.INTERNAL_ERROR, "Redis Booking Store가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -108,7 +105,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

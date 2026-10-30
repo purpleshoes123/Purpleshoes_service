@@ -2,8 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { verifyAdminApiKey } from "~/middleware/verifyAdminApiKey";
-import { getState, listRevoked } from "~/lib/coupons";
-import { normalizeCustomerId } from "~/lib/coupons/normalize";
+import { getState, listRevoked } from "~/domains/coupons";
+import { normalizeCustomerId } from "~/domains/coupons/normalize";
 
 /**
  * GET /coupons/state?customerId=
@@ -13,7 +13,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (process.env.ADMIN_API_KEY) {
     const authResponse = verifyAdminApiKey(request);
-    if (authResponse) return authResponse;
+    if (authResponse) {
+      return authResponse;
+    }
   }
 
   const url = new URL(request.url);
@@ -25,7 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -38,6 +40,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       state,
       revoked: Array.from(revoked).sort(),
     },
-    { correlationId }
+    { correlationId },
   );
 };

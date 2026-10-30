@@ -1,11 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router";
 import prisma from "~/db.server";
-import { requireGkvCustomerId } from "~/lib/gkv/customerAuth";
+import { requireGkvCustomerId } from "~/domains/guide-viewer/customerAuth";
 import {
   listEligibleSharedCategories,
   pickLatestPdfAndVideoForCategory,
   toSharedGuideIdFromCategoryId,
-} from "~/lib/gkv/sharedVirtualGuides.server";
+} from "~/domains/guide-viewer/sharedVirtualGuides.server.ts";
 import {
   canAccessGuideType,
   loadGuideExtensionEntitlements,
@@ -13,17 +13,21 @@ import {
   toGuideEntitlementType,
   VIRTUAL_GUIDE_IDS,
   VIRTUAL_GUIDE_TITLES,
-} from "~/lib/gkv/v1EntitlementAccess.server";
-import { requireActiveGkvSession } from "~/lib/gkv/sessions.server";
+} from "~/domains/guide-viewer/v1EntitlementAccess.server.ts";
+import { requireActiveGkvSession } from "~/domains/guide-viewer/sessions.server.ts";
 import { respond } from "~/lib/respond";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await requireGkvCustomerId(request);
-  if (auth instanceof Response) return auth;
+  if (auth instanceof Response) {
+    return auth;
+  }
   const includeExpired = new URL(request.url).searchParams.get("includeExpired") === "true";
   const correlationId = respond.getCorrelationId(request);
   const session = await requireActiveGkvSession(request, auth.customerId, correlationId);
-  if (session instanceof Response) return session;
+  if (session instanceof Response) {
+    return session;
+  }
   const now = new Date();
   const guideExtensionEntitlements = await loadGuideExtensionEntitlements(request, auth.customerId);
 
@@ -72,8 +76,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       .map((item) => toGuideEntitlementType(item.type))
       .filter(
         (type): type is "PDF" | "VIDEO" | "BUNDLE" =>
-          type === "PDF" || type === "VIDEO" || type === "BUNDLE"
-      )
+          type === "PDF" || type === "VIDEO" || type === "BUNDLE",
+      ),
   );
   const virtualTypes = [
     { type: "BUNDLE" as const, id: VIRTUAL_GUIDE_IDS.BUNDLE, title: VIRTUAL_GUIDE_TITLES.BUNDLE },
@@ -82,9 +86,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ];
 
   virtualTypes.forEach((virtual) => {
-    if (representedTypes.has(virtual.type)) return;
+    if (representedTypes.has(virtual.type)) {
+      return;
+    }
     const expiresAt = resolveEntitlementExpiry(virtual.type, guideExtensionEntitlements, now);
-    if (!expiresAt) return;
+    if (!expiresAt) {
+      return;
+    }
     items.push({
       id: virtual.id,
       title: virtual.title,
@@ -94,16 +102,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   });
 
-  const sharedExpiresAt = resolveEntitlementExpiry(
-    "SHARED",
-    guideExtensionEntitlements,
-    now
-  );
+  const sharedExpiresAt = resolveEntitlementExpiry("SHARED", guideExtensionEntitlements, now);
   if (sharedExpiresAt) {
     const sharedCategories = await listEligibleSharedCategories();
     for (const cat of sharedCategories) {
       const { pdfAsset, videoAsset } = await pickLatestPdfAndVideoForCategory(cat.id);
-      if (!pdfAsset && !videoAsset) continue;
+      if (!pdfAsset && !videoAsset) {
+        continue;
+      }
       items.push({
         id: toSharedGuideIdFromCategoryId(cat.id),
         title: cat.name,
@@ -118,6 +124,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     {
       items,
     },
-    { correlationId }
+    { correlationId },
   );
 };

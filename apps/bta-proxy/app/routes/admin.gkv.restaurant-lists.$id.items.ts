@@ -3,16 +3,18 @@ import { randomUUID } from "crypto";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { respond } from "~/lib/respond";
-import { restaurantItemCreateSchema } from "~/lib/gkv/adminSchemas";
+import { restaurantItemCreateSchema } from "~/domains/guide-viewer/adminSchemas";
 import {
   buildRestaurantPhotoUrls,
   serializeRestaurantPhotoMeta,
   toRestaurantPhotoData,
-} from "~/lib/gkv/restaurantPhotoUrls.server";
+} from "~/domains/guide-viewer/restaurantPhotoUrls.server.ts";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 function parseMaybeJson(value: string | null | undefined): unknown {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   try {
     return JSON.parse(value);
   } catch {
@@ -22,7 +24,9 @@ function parseMaybeJson(value: string | null | undefined): unknown {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
   const listId = params.id;
 
@@ -32,7 +36,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "restaurant list id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -69,8 +73,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 isVeganOnly: dietary.isVeganOnly,
                 hasVeganOptions: dietary.hasVeganOptions,
                 veganLevel: dietary.veganLevel,
-                meatTypes:
-                  (parseMaybeJson(dietary.meatTypes) as string[] | null) ?? [],
+                meatTypes: (parseMaybeJson(dietary.meatTypes) as string[] | null) ?? [],
                 halalLevel: dietary.halalLevel,
                 notes: dietary.notes,
               }
@@ -78,13 +81,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         };
       }),
     },
-    { correlationId }
+    { correlationId },
   );
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
   const listId = params.id;
 
@@ -94,7 +99,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "restaurant list id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -140,11 +145,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -152,7 +157,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

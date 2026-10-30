@@ -15,7 +15,7 @@ import {
 } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "~/shopify.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 
 type LoaderData = {
   ok: boolean;
@@ -44,7 +44,9 @@ export default function AdminReviewCreatePage() {
 
   useEffect(() => {
     const payload = createFetcher.data as any;
-    if (!payload) return;
+    if (!payload) {
+      return;
+    }
     if (payload.ok) {
       setSuccessMessage("Admin review created.");
       setErrorMessage(null);
@@ -68,28 +70,20 @@ export default function AdminReviewCreatePage() {
         action: "select",
         multiple: false,
       });
-      const picked = selection
-        ? Array.isArray(selection)
-          ? selection
-          : selection.selection
-        : [];
+      const picked = selection ? (Array.isArray(selection) ? selection : selection.selection) : [];
       const product = picked[0];
       if (product) {
         setProductId(product.id);
         setProductTitle(product.title || product.id);
       }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to select product."
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Failed to select product.");
     } finally {
       setIsPicking(false);
     }
   };
 
-  const canSubmit =
-    body.trim().length >= 20 &&
-    (placement === "homepage" || Boolean(productId));
+  const canSubmit = body.trim().length >= 20 && (placement === "homepage" || Boolean(productId));
 
   return (
     <Page>
@@ -112,7 +106,10 @@ export default function AdminReviewCreatePage() {
               <Text as="h2" variant="headingMd">
                 Create Admin Review
               </Text>
-              <Button onClick={() => navigate(withEmbeddedSearch("/app/reviews", location.search))} variant="secondary">
+              <Button
+                onClick={() => navigate(withEmbeddedSearch("/app/reviews", location.search))}
+                variant="secondary"
+              >
                 Back to Reviews
               </Button>
             </InlineStack>

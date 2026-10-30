@@ -128,30 +128,18 @@ export function getErrorStatus(errorCode: ErrorCode): number {
  */
 export function getErrorMessage(errorCode: ErrorCode, details?: string): string {
   const messages: Record<ErrorCode, string> = {
-    [ErrorCode.AUTH_PROXY_SIGNATURE_INVALID]:
-      "App Proxy 서명 검증에 실패했습니다.",
-    [ErrorCode.VALIDATION_ERROR]:
-      details || "입력 값 검증에 실패했습니다.",
-    [ErrorCode.MAILER_INVALID_INPUT]:
-      details || "메일 요청 입력 값이 올바르지 않습니다.",
-    [ErrorCode.MAILER_NOT_CONFIGURED]:
-      "메일러 설정이 올바르지 않습니다. 관리자에게 문의해주세요.",
-    [ErrorCode.MAILER_RECAPTCHA_FAILED]:
-      "요청을 처리할 수 없습니다.",
-    [ErrorCode.MAILER_RECIPIENT_UNSUBSCRIBED]:
-      "수신 거부된 이메일 주소입니다.",
-    [ErrorCode.MAILER_RATE_LIMITED]:
-      "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
-    [ErrorCode.MAILER_TEMPLATE_NOT_FOUND]:
-      "요청을 처리할 수 없습니다.",
-    [ErrorCode.MAILER_TEMPLATE_INACTIVE]:
-      "현재 요청 가능한 메일 템플릿이 아닙니다.",
-    [ErrorCode.MAILER_ATTACHMENT_INVALID]:
-      "첨부파일 처리 중 오류가 발생했습니다.",
-    [ErrorCode.MAILER_PROVIDER_ERROR]:
-      "메일 발송 처리 중 오류가 발생했습니다.",
-    [ErrorCode.MAILER_PROVIDER_TIMEOUT]:
-      "메일 발송이 시간 초과되었습니다.",
+    [ErrorCode.AUTH_PROXY_SIGNATURE_INVALID]: "App Proxy 서명 검증에 실패했습니다.",
+    [ErrorCode.VALIDATION_ERROR]: details || "입력 값 검증에 실패했습니다.",
+    [ErrorCode.MAILER_INVALID_INPUT]: details || "메일 요청 입력 값이 올바르지 않습니다.",
+    [ErrorCode.MAILER_NOT_CONFIGURED]: "메일러 설정이 올바르지 않습니다. 관리자에게 문의해주세요.",
+    [ErrorCode.MAILER_RECAPTCHA_FAILED]: "요청을 처리할 수 없습니다.",
+    [ErrorCode.MAILER_RECIPIENT_UNSUBSCRIBED]: "수신 거부된 이메일 주소입니다.",
+    [ErrorCode.MAILER_RATE_LIMITED]: "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
+    [ErrorCode.MAILER_TEMPLATE_NOT_FOUND]: "요청을 처리할 수 없습니다.",
+    [ErrorCode.MAILER_TEMPLATE_INACTIVE]: "현재 요청 가능한 메일 템플릿이 아닙니다.",
+    [ErrorCode.MAILER_ATTACHMENT_INVALID]: "첨부파일 처리 중 오류가 발생했습니다.",
+    [ErrorCode.MAILER_PROVIDER_ERROR]: "메일 발송 처리 중 오류가 발생했습니다.",
+    [ErrorCode.MAILER_PROVIDER_TIMEOUT]: "메일 발송이 시간 초과되었습니다.",
     [ErrorCode.RATE_LIMITED]: "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
     [ErrorCode.BOOKING_NOT_AVAILABLE]: "예약이 불가능한 상태입니다.",
     [ErrorCode.BOOKING_STORE_ERROR]: "Booking Store 호출 중 오류가 발생했습니다.",
@@ -159,27 +147,19 @@ export function getErrorMessage(errorCode: ErrorCode, details?: string): string 
     [ErrorCode.INTERNAL_ERROR]: "서버 내부 오류가 발생했습니다.",
     [ErrorCode.INTERNAL_CONFLICT]: "요청이 이미 처리 중입니다. 잠시 후 다시 시도해주세요.",
     [ErrorCode.AUTH_LOGIN_REQUIRED]: "로그인이 필요합니다.",
-    [ErrorCode.GKV_SESSION_REQUIRED]:
-      details || "활성화된 GKV 기기 세션이 필요합니다.",
-    [ErrorCode.GKV_SESSION_INACTIVE]:
-      details || "GKV 기기 세션이 만료되었거나 해제되었습니다.",
-    [ErrorCode.GKV_SESSION_LIMIT_EXCEEDED]:
-      details || "동시 로그인 제한을 초과했습니다.",
-    [ErrorCode.FAVORITE_INVALID_TYPE]:
-      details || "즐겨찾기 타입이 올바르지 않습니다.",
-    [ErrorCode.FAVORITE_INVALID_TARGET]:
-      details || "즐겨찾기 대상이 올바르지 않습니다.",
-    [ErrorCode.FAVORITE_INVALID_CHANGE]:
-      details || "즐겨찾기 변경 요청이 올바르지 않습니다.",
-    [ErrorCode.FAVORITE_BATCH_TOO_LARGE]:
-      details || "즐겨찾기 변경 요청 수가 너무 많습니다.",
+    [ErrorCode.GKV_SESSION_REQUIRED]: details || "활성화된 GKV 기기 세션이 필요합니다.",
+    [ErrorCode.GKV_SESSION_INACTIVE]: details || "GKV 기기 세션이 만료되었거나 해제되었습니다.",
+    [ErrorCode.GKV_SESSION_LIMIT_EXCEEDED]: details || "동시 로그인 제한을 초과했습니다.",
+    [ErrorCode.FAVORITE_INVALID_TYPE]: details || "즐겨찾기 타입이 올바르지 않습니다.",
+    [ErrorCode.FAVORITE_INVALID_TARGET]: details || "즐겨찾기 대상이 올바르지 않습니다.",
+    [ErrorCode.FAVORITE_INVALID_CHANGE]: details || "즐겨찾기 변경 요청이 올바르지 않습니다.",
+    [ErrorCode.FAVORITE_BATCH_TOO_LARGE]: details || "즐겨찾기 변경 요청 수가 너무 많습니다.",
     [ErrorCode.FAVORITE_IDEMPOTENCY_CONFLICT]:
       details || "이미 다른 내용으로 처리된 즐겨찾기 변경 요청입니다.",
     [ErrorCode.INSTAGRAM_AUTH_REQUIRED]: "Instagram 연결 인증이 필요합니다.",
     [ErrorCode.INSTAGRAM_STATE_INVALID]: "Instagram OAuth state 검증에 실패했습니다.",
     [ErrorCode.INSTAGRAM_STATE_EXPIRED]: "Instagram OAuth state가 만료되었습니다.",
-    [ErrorCode.INSTAGRAM_TOKEN_EXCHANGE_FAILED]:
-      "Instagram 토큰 교환에 실패했습니다.",
+    [ErrorCode.INSTAGRAM_TOKEN_EXCHANGE_FAILED]: "Instagram 토큰 교환에 실패했습니다.",
     [ErrorCode.INSTAGRAM_TOKEN_EXPIRED]: "Instagram 토큰이 만료되었습니다.",
     [ErrorCode.INSTAGRAM_API_ERROR]: "Instagram API 호출 중 오류가 발생했습니다.",
     [ErrorCode.INSTAGRAM_DISCONNECTED]: "Instagram 계정 연결이 해제되었습니다.",
@@ -188,21 +168,16 @@ export function getErrorMessage(errorCode: ErrorCode, details?: string): string 
     [ErrorCode.REBUILD_IN_PROGRESS]: "Rebuild가 이미 진행 중입니다. 잠시 후 다시 시도해주세요.",
     [ErrorCode.SHOPIFY_ADMIN_API_ERROR]: "Shopify Admin API 호출 중 오류가 발생했습니다.",
     [ErrorCode.SHOPIFY_ADMIN_API_TIMEOUT]: "Shopify Admin API 호출이 시간 초과되었습니다.",
-    [ErrorCode.GUIDE_EXTENSION_NOT_ELIGIBLE]:
-      "연장 구매 대상이 아닙니다.",
-    [ErrorCode.GUIDE_EXTENSION_EXPIRED]:
-      "만료된 권리는 연장할 수 없습니다.",
-    [ErrorCode.GUIDE_EXTENSION_INVALID_INPUT]:
-      details || "연장 구매 입력 값이 올바르지 않습니다.",
+    [ErrorCode.GUIDE_EXTENSION_NOT_ELIGIBLE]: "연장 구매 대상이 아닙니다.",
+    [ErrorCode.GUIDE_EXTENSION_EXPIRED]: "만료된 권리는 연장할 수 없습니다.",
+    [ErrorCode.GUIDE_EXTENSION_INVALID_INPUT]: details || "연장 구매 입력 값이 올바르지 않습니다.",
     [ErrorCode.GUIDE_EXTENSION_CONFIG_ERROR]:
       "연장권 설정이 올바르지 않습니다. 관리자에게 문의해주세요.",
-    [ErrorCode.REVIEW_INVALID_INPUT]:
-      details || "리뷰 입력 값이 올바르지 않습니다.",
+    [ErrorCode.REVIEW_INVALID_INPUT]: details || "리뷰 입력 값이 올바르지 않습니다.",
     [ErrorCode.REVIEW_NOT_ELIGIBLE]: "Verified purchases only.",
     [ErrorCode.REVIEW_DUPLICATE]: "Already submitted for this order.",
     [ErrorCode.REVIEW_CONFLICT]: "Please retry.",
-    [ErrorCode.REVIEW_SHOPIFY_API_ERROR]:
-      "Shopify Admin API 호출 중 오류가 발생했습니다.",
+    [ErrorCode.REVIEW_SHOPIFY_API_ERROR]: "Shopify Admin API 호출 중 오류가 발생했습니다.",
     [ErrorCode.REVIEW_NOT_FOUND]: "Review not found.",
     [ErrorCode.REVIEW_QUERY_FAILED]: "Review query failed.",
   };

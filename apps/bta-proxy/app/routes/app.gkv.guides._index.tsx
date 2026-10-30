@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { Link, useFetcher, useLoaderData, useLocation } from "react-router";
@@ -14,8 +14,8 @@ import {
   Text,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 
 type CategoryItem = {
   id: string;
@@ -43,16 +43,10 @@ type ActionData = {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireGkvAdmin(request);
   try {
-    const data = await callGkvAdminApi<{ items: CategoryItem[] }>(
-      request,
-      "/admin/gkv/categories",
-    );
+    const data = await callGkvAdminApi<{ items: CategoryItem[] }>(request, "/admin/gkv/categories");
     return json<LoaderData>({ items: data.items });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "카테고리를 불러오지 못했습니다.";
+    const message = error instanceof Error ? error.message : "카테고리를 불러오지 못했습니다.";
     return json<LoaderData>({ items: [], error: message });
   }
 };
@@ -68,10 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const intent = String(formData.get("intent") || "");
     const id = String(formData.get("id") || "");
     if (!id) {
-      return json<ActionData>(
-        { ok: false, message: "id가 필요합니다." },
-        { status: 400 },
-      );
+      return json<ActionData>({ ok: false, message: "id가 필요합니다." }, { status: 400 });
     }
 
     if (intent === "toggle-expose") {
@@ -91,21 +82,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
     }
 
-    return json<ActionData>(
-      { ok: false, message: "지원하지 않는 작업입니다." },
-      { status: 400 },
-    );
+    return json<ActionData>({ ok: false, message: "지원하지 않는 작업입니다." }, { status: 400 });
   } catch (error) {
     if (error instanceof GkvAdminApiError) {
-      return json<ActionData>(
-        { ok: false, message: error.message },
-        { status: error.status },
-      );
+      return json<ActionData>({ ok: false, message: error.message }, { status: error.status });
     }
-    return json<ActionData>(
-      { ok: false, message: "요청 처리에 실패했습니다." },
-      { status: 500 },
-    );
+    return json<ActionData>({ ok: false, message: "요청 처리에 실패했습니다." }, { status: 500 });
   }
 };
 
@@ -114,7 +96,9 @@ function buildCategoryPathById(items: CategoryItem[]): Map<string, string> {
   const cache = new Map<string, string>();
   const resolve = (id: string): string => {
     const cached = cache.get(id);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
     const item = byId.get(id);
     if (!item) {
       cache.set(id, id);
@@ -136,8 +120,12 @@ function buildCategoryPathById(items: CategoryItem[]): Map<string, string> {
 
 function buildExposeConfirmText(item: CategoryItem): string | undefined {
   const next = !item.exposeAsGuide;
-  if (!next) return undefined;
-  if (item.pdfAssetCount > 0 || item.videoAssetCount > 0) return undefined;
+  if (!next) {
+    return undefined;
+  }
+  if (item.pdfAssetCount > 0 || item.videoAssetCount > 0) {
+    return undefined;
+  }
   return [
     `이 카테고리는 현재 PDF/VIDEO가 없습니다.`,
     `자산이 추가되면 자동으로 가상 가이드(\`gkv_virtual_shared_${item.id}\`)에 포함됩니다.`,
@@ -207,19 +195,13 @@ export default function GkvGuidesConsolePage() {
   const fetcher = useFetcher<ActionData>();
   const location = useLocation();
   const toInApp = (path: string) => withEmbeddedSearch(path, location.search);
-  const pendingToggleId =
-    fetcher.state !== "idle" ? String(fetcher.formData?.get("id") ?? "") : "";
+  const pendingToggleId = fetcher.state !== "idle" ? String(fetcher.formData?.get("id") ?? "") : "";
 
   const totalCount = items.length;
   const activeCount = items.filter((c) => c.isActive).length;
-  const exposedActiveCount = items.filter(
-    (c) => c.isActive && c.exposeAsGuide,
-  ).length;
+  const exposedActiveCount = items.filter((c) => c.isActive && c.exposeAsGuide).length;
   const exposedReadyCount = items.filter(
-    (c) =>
-      c.isActive &&
-      c.exposeAsGuide &&
-      (c.pdfAssetCount > 0 || c.videoAssetCount > 0),
+    (c) => c.isActive && c.exposeAsGuide && (c.pdfAssetCount > 0 || c.videoAssetCount > 0),
   ).length;
   const exposedEmptyCount = exposedActiveCount - exposedReadyCount;
 
@@ -229,8 +211,12 @@ export default function GkvGuidesConsolePage() {
     if (a.exposeAsGuide !== b.exposeAsGuide) {
       return a.exposeAsGuide ? -1 : 1;
     }
-    if (a.depth !== b.depth) return a.depth - b.depth;
-    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    if (a.depth !== b.depth) {
+      return a.depth - b.depth;
+    }
+    if (a.sortOrder !== b.sortOrder) {
+      return a.sortOrder - b.sortOrder;
+    }
     return a.name.localeCompare(b.name);
   });
 
@@ -265,11 +251,7 @@ export default function GkvGuidesConsolePage() {
           </div>
           <div style={guideRowActionsStyle}>
             <InlineStack gap="200" align="end" wrap>
-              <Link
-                to={toInApp(
-                  `/app/gkv/guides/${encodeURIComponent(item.id)}/assets`,
-                )}
-              >
+              <Link to={toInApp(`/app/gkv/guides/${encodeURIComponent(item.id)}/assets`)}>
                 <Button size="micro" variant="primary">
                   파일 관리
                 </Button>
@@ -284,30 +266,18 @@ export default function GkvGuidesConsolePage() {
               >
                 <input type="hidden" name="intent" value="toggle-expose" />
                 <input type="hidden" name="id" value={item.id} />
-                <input
-                  type="hidden"
-                  name="nextExpose"
-                  value={String(!item.exposeAsGuide)}
-                />
-                <Button
-                  submit
-                  size="micro"
-                  loading={pendingToggleId === item.id}
-                >
+                <input type="hidden" name="nextExpose" value={String(!item.exposeAsGuide)} />
+                <Button submit size="micro" loading={pendingToggleId === item.id}>
                   {item.exposeAsGuide ? "노출 OFF" : "노출 ON"}
                 </Button>
               </fetcher.Form>
               <Link
-                to={toInApp(
-                  `/app/gkv/guides/${encodeURIComponent(item.id)}/assets/new?kind=pdf`,
-                )}
+                to={toInApp(`/app/gkv/guides/${encodeURIComponent(item.id)}/assets/new?kind=pdf`)}
               >
                 <Button size="micro">PDF 업로드</Button>
               </Link>
               <Link
-                to={toInApp(
-                  `/app/gkv/guides/${encodeURIComponent(item.id)}/assets/new?kind=video`,
-                )}
+                to={toInApp(`/app/gkv/guides/${encodeURIComponent(item.id)}/assets/new?kind=video`)}
               >
                 <Button size="micro">VIDEO 업로드</Button>
               </Link>
@@ -325,14 +295,12 @@ export default function GkvGuidesConsolePage() {
         <Banner tone="info" title="카테고리 = 가이드 콘솔">
           <BlockStack gap="100">
             <Text as="p" variant="bodyMd">
-              "노출 ON"인 카테고리는 SHARED 가상
-              가이드(`gkv_virtual_shared_&lt;id&gt;`)로 자동 생성되어 entitle된
-              사용자에게 노출됩니다.
+              "노출 ON"인 카테고리는 SHARED 가상 가이드(`gkv_virtual_shared_&lt;id&gt;`)로 자동
+              생성되어 entitle된 사용자에게 노출됩니다.
             </Text>
             <Text as="p" variant="bodySm" tone="subdued">
-              자산이 0건인 노출 ON 카테고리도 정상 상태입니다. 자산이 추가되면
-              자동으로 가상 가이드 구성에 포함됩니다. 카테고리
-              이름·정렬·생성/삭제는 GKV Categories 화면에서 관리하세요.
+              자산이 0건인 노출 ON 카테고리도 정상 상태입니다. 자산이 추가되면 자동으로 가상 가이드
+              구성에 포함됩니다. 카테고리 이름·정렬·생성/삭제는 GKV Categories 화면에서 관리하세요.
             </Text>
           </BlockStack>
         </Banner>
@@ -420,11 +388,7 @@ export default function GkvGuidesConsolePage() {
         ) : null}
         {fetcher.data?.message ? (
           <Card>
-            <Text
-              as="p"
-              variant="bodyMd"
-              tone={fetcher.data.ok ? "success" : "critical"}
-            >
+            <Text as="p" variant="bodyMd" tone={fetcher.data.ok ? "success" : "critical"}>
               {fetcher.data.message}
             </Text>
           </Card>

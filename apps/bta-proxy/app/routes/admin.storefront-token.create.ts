@@ -7,7 +7,9 @@ import { getAdminApiClient } from "~/lib/shopifyAdmin";
 const DEFAULT_TITLE = "bta-proxy-storefront";
 
 function parseJsonSafely(text: string): Record<string, unknown> | null {
-  if (!text) return {};
+  if (!text) {
+    return {};
+  }
   try {
     return JSON.parse(text) as Record<string, unknown>;
   } catch {
@@ -21,7 +23,9 @@ function parseJsonSafely(text: string): Record<string, unknown> | null {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
   const authResponse = verifyAdminApiKey(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   const url = new URL(request.url);
   const bodyText = await request.text();
@@ -32,21 +36,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "JSON body 파싱에 실패했습니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
-  const shop =
-    (url.searchParams.get("shop") ||
-      (typeof body.shop === "string" ? body.shop : ""))
-      .trim();
+  const shop = (
+    url.searchParams.get("shop") || (typeof body.shop === "string" ? body.shop : "")
+  ).trim();
   if (!shop) {
     return respond.fail(
       ErrorCode.VALIDATION_ERROR,
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -59,11 +62,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       ErrorCode.SHOPIFY_ADMIN_API_ERROR,
       getErrorMessage(
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-        "Shopify Admin API 세션을 찾을 수 없습니다."
+        "Shopify Admin API 세션을 찾을 수 없습니다.",
       ),
       undefined,
       getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -93,7 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         shop,
         status: response.status,
         body: responseBody,
-      })
+      }),
     );
     return respond.fail(
       ErrorCode.SHOPIFY_ADMIN_API_ERROR,
@@ -103,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         body: responseBody || undefined,
       },
       getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -123,7 +126,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         message: "Storefront token create graphql errors",
         shop,
         errors: payload.errors.map((e) => e.message),
-      })
+      }),
     );
     return respond.fail(
       ErrorCode.SHOPIFY_ADMIN_API_ERROR,
@@ -132,7 +135,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         errors: payload.errors.map((e) => e.message),
       },
       getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -143,7 +146,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         message: "Storefront token create userErrors",
         shop,
         userErrors: userErrors.map((e) => e.message),
-      })
+      }),
     );
     return respond.fail(
       ErrorCode.SHOPIFY_ADMIN_API_ERROR,
@@ -155,7 +158,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         })),
       },
       getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -169,7 +172,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
       { reason: "missing_access_token" },
       getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -179,6 +182,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       title: resolvedTitle,
       accessToken: token,
     },
-    { correlationId }
+    { correlationId },
   );
 };

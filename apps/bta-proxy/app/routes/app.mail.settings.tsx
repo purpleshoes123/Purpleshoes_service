@@ -1,25 +1,14 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { Form, useActionData, useLoaderData, useLocation, useNavigation } from "react-router";
-import {
-  Banner,
-  Badge,
-  BlockStack,
-  Button,
-  Card,
-  InlineStack,
-  Page,
-  Text,
-} from "@shopify/polaris";
+import { Banner, Badge, BlockStack, Button, Card, InlineStack, Page, Text } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import db from "~/db.server";
-import { MAILER_ROUTE_PATHS } from "~/lib/mailer/contracts";
-import { getMailerEnvSummary } from "~/lib/mailer/env";
-import {
-  verifyConfiguredMailProviderConnection,
-} from "~/lib/mailer/provider.server";
-import { getMailerSettingsSnapshot } from "~/lib/mailer/settings.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { MAILER_ROUTE_PATHS } from "~/domains/mail/contracts";
+import { getMailerEnvSummary } from "~/domains/mail/env";
+import { verifyConfiguredMailProviderConnection } from "~/domains/mail/provider.server.ts";
+import { getMailerSettingsSnapshot } from "~/domains/mail/settings.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 import { authenticate } from "~/shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -61,15 +50,7 @@ function getVerifyErrorMessage(error: unknown) {
     return "SMTP 인증에 실패했습니다. SMTP_USERNAME과 앱 비밀번호를 다시 확인하세요.";
   }
 
-  if (
-    [
-      "ECONNECTION",
-      "ECONNREFUSED",
-      "ENOTFOUND",
-      "EHOSTUNREACH",
-      "ESOCKET",
-    ].includes(code)
-  ) {
+  if (["ECONNECTION", "ECONNREFUSED", "ENOTFOUND", "EHOSTUNREACH", "ESOCKET"].includes(code)) {
     return "SMTP 서버 연결에 실패했습니다. SMTP_HOST, SMTP_PORT, SMTP_SECURE 조합과 방화벽 정책을 확인하세요.";
   }
 
@@ -96,8 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json<ActionData>({
       ok: false,
       intent,
-      errorMessage:
-        "현재 연결 검증은 MAIL_PROVIDER=SMTP 일 때만 실행할 수 있습니다.",
+      errorMessage: "현재 연결 검증은 MAIL_PROVIDER=SMTP 일 때만 실행할 수 있습니다.",
     });
   }
 
@@ -175,9 +155,7 @@ export default function MailSettingsPage() {
     navigation.state === "submitting" &&
     navigation.formData?.get("intent") === "verify_smtp_connection";
   const canVerifySmtp =
-    snapshot.provider === "SMTP" &&
-    snapshot.envConfigured &&
-    snapshot.runtimeReady;
+    snapshot.provider === "SMTP" && snapshot.envConfigured && snapshot.runtimeReady;
 
   return (
     <Page>
@@ -194,8 +172,8 @@ export default function MailSettingsPage() {
           actionData.ok ? (
             <Banner tone="success">
               <p>
-                {actionData.successMessage} {actionData.checkedAt.replace(".000Z", "Z").replace("T", " ")} /{" "}
-                {actionData.detail}
+                {actionData.successMessage}{" "}
+                {actionData.checkedAt.replace(".000Z", "Z").replace("T", " ")} / {actionData.detail}
               </p>
             </Banner>
           ) : (
@@ -236,15 +214,11 @@ export default function MailSettingsPage() {
                 </Text>
                 <Text as="p" variant="bodyMd">
                   SES configuration set:{" "}
-                  {snapshot.providerSettings.sesConfigurationSetConfigured
-                    ? "configured"
-                    : "unset"}
+                  {snapshot.providerSettings.sesConfigurationSetConfigured ? "configured" : "unset"}
                 </Text>
                 <Text as="p" variant="bodyMd">
                   SES source ARN:{" "}
-                  {snapshot.providerSettings.sesSourceArnConfigured
-                    ? "configured"
-                    : "unset"}
+                  {snapshot.providerSettings.sesSourceArnConfigured ? "configured" : "unset"}
                 </Text>
               </>
             ) : null}
@@ -267,22 +241,16 @@ export default function MailSettingsPage() {
                 </Text>
                 <Text as="p" variant="bodyMd">
                   SMTP username:{" "}
-                  {snapshot.providerSettings.smtpUsernameConfigured
-                    ? "configured"
-                    : "unset"}
+                  {snapshot.providerSettings.smtpUsernameConfigured ? "configured" : "unset"}
                   {` `}/ password:{" "}
-                  {snapshot.providerSettings.smtpPasswordConfigured
-                    ? "configured"
-                    : "unset"}
+                  {snapshot.providerSettings.smtpPasswordConfigured ? "configured" : "unset"}
                 </Text>
               </>
             ) : null}
             {snapshot.provider === "SENDGRID" || snapshot.provider === "RESEND" ? (
               <Text as="p" variant="bodyMd">
                 Provider API key:{" "}
-                {snapshot.providerSettings.apiKeyConfigured
-                  ? "configured"
-                  : "unset"}
+                {snapshot.providerSettings.apiKeyConfigured ? "configured" : "unset"}
               </Text>
             ) : null}
             <Text as="p" variant="bodyMd">
@@ -294,8 +262,8 @@ export default function MailSettingsPage() {
             </Text>
             <Text as="p" variant="bodyMd">
               Rate limits: email {snapshot.rateLimits.emailPer10Min}/10min, IP{" "}
-              {snapshot.rateLimits.ipPer10Min}/10min, template{" "}
-              {snapshot.rateLimits.templatePerHour}/hour
+              {snapshot.rateLimits.ipPer10Min}/10min, template {snapshot.rateLimits.templatePerHour}
+              /hour
             </Text>
             <Text as="p" variant="bodyMd">
               Log retention: {snapshot.retention.logRetentionDays} days
@@ -336,18 +304,14 @@ export default function MailSettingsPage() {
               </Text>
               <Form method="post" action={verifyFormAction}>
                 <input type="hidden" name="intent" value="verify_smtp_connection" />
-                <Button
-                  submit
-                  variant="primary"
-                  loading={isVerifying}
-                  disabled={!canVerifySmtp}
-                >
+                <Button submit variant="primary" loading={isVerifying} disabled={!canVerifySmtp}>
                   Verify SMTP Connection
                 </Button>
               </Form>
               {!canVerifySmtp ? (
                 <Text as="p" variant="bodyMd" tone="critical">
-                  SMTP 연결 검증은 `MAIL_PROVIDER=SMTP` 이고 필수 env가 모두 준비된 상태에서만 실행할 수 있습니다.
+                  SMTP 연결 검증은 `MAIL_PROVIDER=SMTP` 이고 필수 env가 모두 준비된 상태에서만
+                  실행할 수 있습니다.
                 </Text>
               ) : null}
             </BlockStack>
@@ -397,9 +361,8 @@ export default function MailSettingsPage() {
             <Text as="p" variant="bodyMd">
               Last {snapshot.activity.recentWindowHours}h: requests{" "}
               {snapshot.activity.recentRequestCount} / pending{" "}
-              {snapshot.activity.recentPendingCount} / sent{" "}
-              {snapshot.activity.recentSentCount} / failed{" "}
-              {snapshot.activity.recentFailedCount} / blocked{" "}
+              {snapshot.activity.recentPendingCount} / sent {snapshot.activity.recentSentCount} /
+              failed {snapshot.activity.recentFailedCount} / blocked{" "}
               {snapshot.activity.recentBlockedCount}
             </Text>
             <Text as="p" variant="bodyMd">
@@ -431,10 +394,8 @@ export default function MailSettingsPage() {
             </Text>
             <Text as="p" variant="bodyMd">
               Logs {snapshot.persistence.sendRequestCount} / pending{" "}
-              {snapshot.persistence.pendingCount} / sent{" "}
-              {snapshot.persistence.sentCount} / failed{" "}
-              {snapshot.persistence.failedCount} / blocked{" "}
-              {snapshot.persistence.blockedCount}
+              {snapshot.persistence.pendingCount} / sent {snapshot.persistence.sentCount} / failed{" "}
+              {snapshot.persistence.failedCount} / blocked {snapshot.persistence.blockedCount}
             </Text>
             <Text as="p" variant="bodyMd">
               Rate-limit windows tracked: {snapshot.persistence.rateCounterCount}

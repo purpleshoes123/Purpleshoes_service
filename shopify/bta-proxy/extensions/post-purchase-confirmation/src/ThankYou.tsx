@@ -12,9 +12,7 @@ type Section = {
   extensionTypes?: Array<"PDF" | "VIDEO" | "BUNDLE">;
 };
 
-type SummaryResponse =
-  | { ok: true; sections: Section[] }
-  | { ok: false; error: string };
+type SummaryResponse = { ok: true; sections: Section[] } | { ok: false; error: string };
 
 const APP_URL = "https://bta-proxy.kpurpleshoes.com";
 const ACCOUNT_URL = "https://kpurpleshoes.com/account";
@@ -33,7 +31,9 @@ function Extension() {
 
   useEffect(() => {
     const orderId = confirmation.order?.id;
-    if (!orderId) return;
+    if (!orderId) {
+      return;
+    }
 
     let cancelled = false;
     (async () => {
@@ -41,10 +41,12 @@ function Extension() {
         const token = await api.sessionToken.get();
         const response = await fetch(
           `${APP_URL}/public/post-purchase-summary/${encodeURIComponent(orderId)}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         const payload = (await response.json()) as SummaryResponse;
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         if (!response.ok) {
           setFailed(true);
           return;
@@ -55,7 +57,9 @@ function Extension() {
         }
         setSections(payload.sections);
       } catch {
-        if (!cancelled) setFailed(true);
+        if (!cancelled) {
+          setFailed(true);
+        }
       }
     })();
 
@@ -67,8 +71,12 @@ function Extension() {
   // The Shopify Thank you page and confirmation email remain usable even when
   // this optional enrichment request fails. Avoid showing customers a warning
   // banner for that non-blocking failure.
-  if (failed) return null;
-  if (!sections || sections.length === 0) return null;
+  if (failed) {
+    return null;
+  }
+  if (!sections || sections.length === 0) {
+    return null;
+  }
 
   return (
     <s-stack gap="base" direction="block">
@@ -87,7 +95,10 @@ function ConfirmationCard({ section }: { section: Section }) {
     return (
       <s-stack gap="small" direction="block">
         <s-text type="strong">Your Korea Guide Kit is ready</s-text>
-        <s-text>Your Guidebook, Video Guide, and map access are available in My Page. Your unlimited 15% Tour benefit has also been added.</s-text>
+        <s-text>
+          Your Guidebook, Video Guide, and map access are available in My Page. Your unlimited 15%
+          Tour benefit has also been added.
+        </s-text>
         <s-link href={ACCOUNT_URL}>Open My Page and Viewer</s-link>
       </s-stack>
     );
@@ -98,7 +109,10 @@ function ConfirmationCard({ section }: { section: Section }) {
     return (
       <s-stack gap="small" direction="block">
         <s-text type="strong">Your {label} purchase is ready</s-text>
-        <s-text>Only the guide content included in this order is available in My Page. Add the Korea Guide Kit there when you are ready for the full bundle.</s-text>
+        <s-text>
+          Only the guide content included in this order is available in My Page. Add the Korea Guide
+          Kit there when you are ready for the full bundle.
+        </s-text>
         <s-link href={ACCOUNT_URL}>Open My Page</s-link>
       </s-stack>
     );
@@ -108,7 +122,10 @@ function ConfirmationCard({ section }: { section: Section }) {
     return (
       <s-stack gap="small" direction="block">
         <s-text type="strong">Your Tour is confirmed</s-text>
-        <s-text>Your reservation details and confirmation have been sent by email. You can also review your trip information from My Page.</s-text>
+        <s-text>
+          Your reservation details and confirmation have been sent by email. You can also review
+          your trip information from My Page.
+        </s-text>
         <s-link href={ACCOUNT_URL}>Open My Page</s-link>
         <s-link href={TOUR_URL}>Explore Tours</s-link>
       </s-stack>
@@ -119,7 +136,9 @@ function ConfirmationCard({ section }: { section: Section }) {
   return (
     <s-stack gap="small" direction="block">
       <s-text type="strong">Your {types} access extension is complete</s-text>
-      <s-text>Your new expiration date is available in My Page after the payment update is processed.</s-text>
+      <s-text>
+        Your new expiration date is available in My Page after the payment update is processed.
+      </s-text>
       <s-link href={EXTENSION_THANK_YOU_URL}>View updated access details</s-link>
       <s-link href={ACCOUNT_URL}>Open My Page</s-link>
     </s-stack>

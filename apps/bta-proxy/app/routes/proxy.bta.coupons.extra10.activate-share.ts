@@ -5,22 +5,26 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { extractShopFromRequest, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { extractCustomerIdFromProxyRequest } from "~/lib/guideExtension/customerId";
-import { extra10ActivateShareSchema } from "~/lib/coupons/validation";
+import { extractCustomerIdFromProxyRequest } from "~/domains/checkout/guideExtension/customerId";
+import { extra10ActivateShareSchema } from "~/domains/coupons/validation";
 import {
   activateExtra10Share,
   Extra10ShareActivationError,
-} from "~/lib/coupons/shareActivation";
+} from "~/domains/coupons/shareActivation";
 
 /**
  * POST /proxy/bta/coupons/extra10/activate-share
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -35,7 +39,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       throw error;
@@ -50,7 +54,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -61,7 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.AUTH_LOGIN_REQUIRED),
         undefined,
         getErrorStatus(ErrorCode.AUTH_LOGIN_REQUIRED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -71,11 +75,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -94,7 +98,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, message),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -104,7 +108,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(error.code, error.message),
         undefined,
         getErrorStatus(error.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -112,7 +116,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       JSON.stringify({
         message: "Extra10 activate-share failed",
         error: error instanceof Error ? error.message : String(error),
-      })
+      }),
     );
 
     return respond.fail(
@@ -120,7 +124,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

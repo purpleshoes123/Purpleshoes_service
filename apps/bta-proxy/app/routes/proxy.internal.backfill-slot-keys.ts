@@ -4,10 +4,10 @@ import { respond } from "~/lib/respond";
 import { backfillSlotKeysSchema } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
 import { getEnv } from "~/lib/env";
-import { getBookingStore } from "~/lib/bookingStore";
-import { makeSlotKey } from "~/lib/bookingKeys";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
+import { makeSlotKey } from "~/domains/bookings/bookingKeys";
 import { maskPII } from "~/lib/masking";
-import { RebuildStoreKeys } from "~/lib/rebuildStore";
+import { RebuildStoreKeys } from "~/domains/bookings/rebuildStore";
 
 async function scanKeys(redisClient: any, pattern: string): Promise<string[]> {
   let cursor = "0";
@@ -29,7 +29,9 @@ async function scanKeys(redisClient: any, pattern: string): Promise<string[]> {
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authResponse = await verifyInternal(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const env = getEnv();
@@ -44,7 +46,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const validatedInput = backfillSlotKeysSchema.parse(body);
     if (!validatedInput.dryRun && process.env.DEPLOYMENT_MODE?.trim() === "multi-node") {
-      return new Response("Legacy backfill is unavailable on the durable fleet; use verified journal recovery", { status: 409 });
+      return new Response(
+        "Legacy backfill is unavailable on the durable fleet; use verified journal recovery",
+        { status: 409 },
+      );
     }
     let shop = validatedInput.shop || null;
 
@@ -59,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -75,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID, "허용되지 않은 shop입니다."),
           undefined,
           getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-          correlationId
+          correlationId,
         );
       }
     }
@@ -86,27 +91,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.INTERNAL_ERROR,
         getErrorMessage(
           ErrorCode.INTERNAL_ERROR,
-          "Backfill은 Redis Store에서만 사용할 수 있습니다."
+          "Backfill은 Redis Store에서만 사용할 수 있습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const redisClient = (bookingStore as any).client;
 
-    const ledgerKeys = await scanKeys(
-      redisClient,
-      `booking:confirmed:${shop}:*`
-    );
+    const ledgerKeys = await scanKeys(redisClient, `booking:confirmed:${shop}:*`);
 
     const slotKeys = new Set<string>();
     let matchedRecords = 0;
 
     for (const key of ledgerKeys) {
       const raw = await redisClient.get(key);
-      if (!raw) continue;
+      if (!raw) {
+        continue;
+      }
       try {
         const record = JSON.parse(raw) as {
           bookingId?: string;
@@ -131,31 +135,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         await redisClient.sadd(
           RebuildStoreKeys.dateIndex(shop, record.travelDate),
-          record.bookingId
+          record.bookingId,
         );
-        await redisClient.sadd(
-          RebuildStoreKeys.slotIndex(shop, slotKey),
-          record.bookingId
-        );
+        await redisClient.sadd(RebuildStoreKeys.slotIndex(shop, slotKey), record.bookingId);
         if (record.poolKey) {
           await redisClient.sadd(
-            RebuildStoreKeys.poolIndex(
-              shop,
-              `${record.poolKey}|${record.travelDate}`
-            ),
-            record.bookingId
+            RebuildStoreKeys.poolIndex(shop, `${record.poolKey}|${record.travelDate}`),
+            record.bookingId,
           );
         }
         if (record.orderId) {
           await redisClient.sadd(
             RebuildStoreKeys.orderIndex(shop, record.orderId),
-            record.bookingId
+            record.bookingId,
           );
         }
         if (record.groupKey) {
           await redisClient.set(
             RebuildStoreKeys.groupIndex(shop, record.groupKey),
-            record.bookingId
+            record.bookingId,
           );
         }
         if (record.orderId && record.groupKey) {
@@ -172,7 +170,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               poolKey: record.poolKey,
               guideUnitsRequired: record.guideUnitsRequired,
               groupKey: record.groupKey,
-            })
+            }),
           );
         }
       } catch {
@@ -193,7 +191,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         updatedSlotKeys: slotKeys.size,
         dryRun: validatedInput.dryRun,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -202,21 +200,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -226,8 +222,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           correlationId,
           message: "Backfill slot keys error",
           error: error instanceof Error ? error.message : String(error),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -235,7 +231,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

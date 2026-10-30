@@ -73,11 +73,7 @@
           }
         }
       },
-      "block_order": [
-        "plan_image_YL9gbC",
-        "plan_image_zGmzWP",
-        "plan_image_xbQPgi"
-      ],
+      "block_order": ["plan_image_YL9gbC", "plan_image_zGmzWP", "plan_image_xbQPgi"],
       "disabled": true,
       "settings": {
         "background_color_1": "#1e3a5f",
@@ -159,11 +155,7 @@
           }
         }
       },
-      "block_order": [
-        "plan_GeqjVp",
-        "plan_yQQXUf",
-        "plan_NxcQjX"
-      ],
+      "block_order": ["plan_GeqjVp", "plan_yQQXUf", "plan_NxcQjX"],
       "name": "Tour Plans - Plans Grid",
       "settings": {
         "background_color_1": "#1e3a5f",
@@ -411,10 +403,7 @@
           }
         }
       },
-      "block_order": [
-        "item_guide_1",
-        "item_guide_2"
-      ],
+      "block_order": ["item_guide_1", "item_guide_2"],
       "name": "What you'll do (list)",
       "settings": {
         "heading": "How to Master Your Korea Guide Kit",
@@ -443,9 +432,7 @@
           }
         }
       },
-      "block_order": [
-        "review_aLiGEb"
-      ],
+      "block_order": ["review_aLiGEb"],
       "name": "Travel Reviews (List)",
       "settings": {
         "heading": "Reviews",

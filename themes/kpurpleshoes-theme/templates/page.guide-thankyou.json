@@ -56,7 +56,5 @@
       }
     }
   },
-  "order": [
-    "guide_thankyou"
-  ]
+  "order": ["guide_thankyou"]
 }

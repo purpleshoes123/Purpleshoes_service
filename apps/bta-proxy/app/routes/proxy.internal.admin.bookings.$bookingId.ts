@@ -3,9 +3,9 @@ import { authenticate } from "~/shopify.server";
 import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { getRedisBookingClient } from "~/lib/bookingStore";
-import { RebuildStoreKeys, type ConfirmedBookingRecord } from "~/lib/rebuildStore";
-import { getOrderSummary } from "~/lib/adminOrderService";
+import { getRedisBookingClient } from "~/domains/bookings/bookingStore";
+import { RebuildStoreKeys, type ConfirmedBookingRecord } from "~/domains/bookings/rebuildStore";
+import { getOrderSummary } from "~/domains/bookings/adminOrderService";
 
 function buildFallbackOrderUrl(shop: string, orderId: string): string | null {
   if (!orderId || orderId.startsWith("gid://")) {
@@ -23,7 +23,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "bookingId는 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -33,7 +33,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       const url = new URL(request.url);
       shop = url.searchParams.get("shop");
@@ -43,7 +45,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -62,7 +64,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
             getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
             undefined,
             getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-            correlationId
+            correlationId,
           );
         }
         throw error;
@@ -75,7 +77,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -83,13 +85,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     if (!redisClient) {
       return respond.fail(
         ErrorCode.INTERNAL_ERROR,
-        getErrorMessage(
-          ErrorCode.INTERNAL_ERROR,
-          "Redis Booking Store가 필요합니다."
-        ),
+        getErrorMessage(ErrorCode.INTERNAL_ERROR, "Redis Booking Store가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -101,7 +100,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "bookingId를 찾을 수 없습니다."),
         undefined,
         404,
-        correlationId
+        correlationId,
       );
     }
 
@@ -114,7 +113,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.INTERNAL_ERROR, "booking 레코드 파싱 실패"),
         undefined,
         getErrorStatus(ErrorCode.INTERNAL_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -135,7 +134,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         order: orderSummary,
         orderUrl: orderSummary?.adminUrl || buildFallbackOrderUrl(shop, booking.orderId),
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     return respond.fail(
@@ -143,7 +142,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

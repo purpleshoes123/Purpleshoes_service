@@ -2,10 +2,10 @@ import type { ActionFunctionArgs } from "react-router";
 import { randomUUID } from "crypto";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { requireGkvCustomerId } from "~/lib/gkv/customerAuth";
-import { resolveGuideSessionLimit } from "~/lib/gkv/entitlementLimits";
-import { listActiveGkvSessions } from "~/lib/gkv/sessions.server";
-import { loadGuideExtensionEntitlements } from "~/lib/gkv/v1EntitlementAccess.server";
+import { requireGkvCustomerId } from "~/domains/guide-viewer/customerAuth";
+import { resolveGuideSessionLimit } from "~/domains/guide-viewer/entitlementLimits";
+import { listActiveGkvSessions } from "~/domains/guide-viewer/sessions.server.ts";
+import { loadGuideExtensionEntitlements } from "~/domains/guide-viewer/v1EntitlementAccess.server.ts";
 import { respond } from "~/lib/respond";
 import { z } from "zod";
 
@@ -17,15 +17,14 @@ const schema = z.object({
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const auth = await requireGkvCustomerId(request);
-  if (auth instanceof Response) return auth;
+  if (auth instanceof Response) {
+    return auth;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   try {
     const payload = schema.parse(await request.json());
-    const guideEntitlements = await loadGuideExtensionEntitlements(
-      request,
-      auth.customerId
-    );
+    const guideEntitlements = await loadGuideExtensionEntitlements(request, auth.customerId);
     const max = resolveGuideSessionLimit(guideEntitlements, new Date());
 
     await prisma.gkvCustomer.upsert({
@@ -61,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (existing) {
       return respond.ok(
         { sessionId: existing.id, reused: true, activeCount: active.length, maxActive: max },
-        { correlationId }
+        { correlationId },
       );
     }
     if (active.length >= max) {
@@ -71,7 +70,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.GKV_SESSION_LIMIT_EXCEEDED),
         { activeCount: active.length, maxActive: max, activeSessions },
         getErrorStatus(ErrorCode.GKV_SESSION_LIMIT_EXCEEDED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -85,7 +84,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return respond.ok(
       { sessionId: created.id, reused: false, activeCount: active.length + 1, maxActive: max },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
@@ -94,11 +93,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -106,7 +105,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

@@ -17,11 +17,7 @@ export interface RateLimitCounterStore {
 type RedisEvalClient = {
   readonly status?: string;
   ping?(): Promise<unknown>;
-  eval(
-    script: string,
-    numberOfKeys: number,
-    ...args: Array<string | number>
-  ): Promise<unknown>;
+  eval(script: string, numberOfKeys: number, ...args: Array<string | number>): Promise<unknown>;
 };
 
 const INCREMENT_WITH_TTL_SCRIPT = `
@@ -43,20 +39,14 @@ const INCREMENT_WITH_TTL_SCRIPT = `
 export class InMemoryRateLimitCounterStore implements RateLimitCounterStore {
   readonly name = "memory" as const;
 
-  private readonly entries = new Map<
-    string,
-    { count: number; resetAt: number }
-  >();
+  private readonly entries = new Map<string, { count: number; resetAt: number }>();
   private readonly now: () => number;
 
   constructor(now: () => number = () => Date.now()) {
     this.now = now;
   }
 
-  async increment(
-    key: string,
-    windowMs: number,
-  ): Promise<RateLimitCounterResult> {
+  async increment(key: string, windowMs: number): Promise<RateLimitCounterResult> {
     const now = this.now();
     const entry = this.entries.get(key);
 
@@ -92,32 +82,31 @@ export class RedisRateLimitCounterStore implements RateLimitCounterStore {
 
   async isReady(): Promise<boolean> {
     // Do not queue probes or consume customer rate-limit counters.
-    if (this.client.status !== "ready" || !this.client.ping) return false;
+    if (this.client.status !== "ready" || !this.client.ping) {
+      return false;
+    }
     try {
-      return await this.client.ping() === "PONG";
+      return (await this.client.ping()) === "PONG";
     } catch {
       return false;
     }
   }
 
-  async increment(
-    key: string,
-    windowMs: number,
-  ): Promise<RateLimitCounterResult> {
-    const raw = await this.client.eval(
-      INCREMENT_WITH_TTL_SCRIPT,
-      1,
-      key,
-      windowMs,
-    );
+  async increment(key: string, windowMs: number): Promise<RateLimitCounterResult> {
+    const raw = await this.client.eval(INCREMENT_WITH_TTL_SCRIPT, 1, key, windowMs);
     if (!Array.isArray(raw) || raw.length < 2) {
       throw new Error("Invalid Redis rate limit counter result");
     }
 
     const count = Number(raw[0]);
     const ttlMs = Number(raw[1]);
-    if (!Number.isSafeInteger(count) || count < 1 ||
-        !Number.isSafeInteger(ttlMs) || ttlMs < 0 || ttlMs > windowMs) {
+    if (
+      !Number.isSafeInteger(count) ||
+      count < 1 ||
+      !Number.isSafeInteger(ttlMs) ||
+      ttlMs < 0 ||
+      ttlMs > windowMs
+    ) {
       throw new Error("Invalid Redis rate limit counter values");
     }
 
@@ -140,7 +129,9 @@ function positiveInteger(value: string | undefined, fallback: number): number {
  */
 export function getRedisRateLimitCounterStore(): RedisRateLimitCounterStore | null {
   const redisUrl = process.env.REDIS_URL;
-  if (!redisUrl) return null;
+  if (!redisUrl) {
+    return null;
+  }
 
   if (cachedRedisUrl === redisUrl && cachedRedisStore !== undefined) {
     return cachedRedisStore;
@@ -149,10 +140,7 @@ export function getRedisRateLimitCounterStore(): RedisRateLimitCounterStore | nu
   cachedRedisUrl = redisUrl;
 
   try {
-    const timeoutMs = positiveInteger(
-      process.env.STOREFRONT_RATE_LIMIT_REDIS_TIMEOUT_MS,
-      300,
-    );
+    const timeoutMs = positiveInteger(process.env.STOREFRONT_RATE_LIMIT_REDIS_TIMEOUT_MS, 300);
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Redis = require("ioredis");
     const client = new Redis(redisUrl, {
@@ -160,8 +148,7 @@ export function getRedisRateLimitCounterStore(): RedisRateLimitCounterStore | nu
       commandTimeout: timeoutMs,
       maxRetriesPerRequest: 0,
       enableOfflineQueue: false,
-      retryStrategy: (attempt: number) =>
-        Math.min(500, Math.max(50, attempt * 50)),
+      retryStrategy: (attempt: number) => Math.min(500, Math.max(50, attempt * 50)),
     });
 
     // ioredis emits connection errors through EventEmitter. A listener keeps

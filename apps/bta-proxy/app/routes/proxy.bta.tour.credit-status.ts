@@ -4,17 +4,21 @@ import { enforceRateLimit } from "~/middleware/rateLimit";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { extractShopFromRequest, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { extractCustomerIdFromProxyRequest } from "~/lib/guideExtension/customerId";
-import { refreshCreditsForCustomer } from "~/lib/tourCredits/creditRefreshService";
-import { getTourPending, clearTourPending } from "~/lib/tourCheckout/pending";
-import { revokeCode } from "~/lib/coupons/issuer";
+import { extractCustomerIdFromProxyRequest } from "~/domains/checkout/guideExtension/customerId";
+import { refreshCreditsForCustomer } from "~/domains/checkout/tourCredits/creditRefreshService";
+import { getTourPending, clearTourPending } from "~/domains/checkout/tourCheckout/pending";
+import { revokeCode } from "~/domains/coupons/issuer";
 
 async function handle(request: Request) {
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   const correlationId = respond.getCorrelationId(request);
 
@@ -25,7 +29,7 @@ async function handle(request: Request) {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -36,7 +40,7 @@ async function handle(request: Request) {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "로그인이 필요합니다."),
       undefined,
       403,
-      correlationId
+      correlationId,
     );
   }
 
@@ -46,11 +50,11 @@ async function handle(request: Request) {
       ErrorCode.SHOPIFY_ADMIN_API_ERROR,
       getErrorMessage(
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-        "Shopify Admin API 세션을 찾을 수 없습니다."
+        "Shopify Admin API 세션을 찾을 수 없습니다.",
       ),
       undefined,
       getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -61,7 +65,7 @@ async function handle(request: Request) {
       await revokeCode(admin, customerId, pending.code, pending.discountId || undefined);
     } catch (error) {
       warnings.push(
-        `PENDING_REVOKE_FAILED:${error instanceof Error ? error.message : String(error)}`
+        `PENDING_REVOKE_FAILED:${error instanceof Error ? error.message : String(error)}`,
       );
     } finally {
       await clearTourPending(customerId);
@@ -81,14 +85,14 @@ async function handle(request: Request) {
       JSON.stringify({
         message: "Tour credit refresh failed",
         error: error instanceof Error ? error.message : String(error),
-      })
+      }),
     );
     return respond.fail(
       ErrorCode.INTERNAL_ERROR,
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -98,7 +102,7 @@ async function handle(request: Request) {
       getErrorMessage(ErrorCode.INTERNAL_CONFLICT),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_CONFLICT),
-      correlationId
+      correlationId,
     );
   }
 
@@ -108,7 +112,7 @@ async function handle(request: Request) {
       newlyGrantedOrderIds: result.newlyGrantedOrderIds,
       warnings: [...warnings, ...result.warnings],
     },
-    { correlationId }
+    { correlationId },
   );
 }
 

@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { Link, useFetcher, useLoaderData, useLocation, useRevalidator } from "react-router";
@@ -17,8 +17,8 @@ import {
   TextField,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 
 type AssetItem = {
   id: string;
@@ -67,7 +67,10 @@ async function readVideoDurationSec(file: File): Promise<number | undefined> {
     const video = document.createElement("video");
     video.preload = "metadata";
     video.onloadedmetadata = () => {
-      const sec = Number.isFinite(video.duration) && video.duration > 0 ? Math.ceil(video.duration) : undefined;
+      const sec =
+        Number.isFinite(video.duration) && video.duration > 0
+          ? Math.ceil(video.duration)
+          : undefined;
       URL.revokeObjectURL(url);
       resolve(sec);
     };
@@ -227,13 +230,23 @@ export default function GkvAssetsPage() {
   const filteredItems = useMemo(() => {
     const q = searchValue.trim().toLowerCase();
     return items.filter((item) => {
-      if (kindFilter !== "ALL" && item.kind !== kindFilter) return false;
+      if (kindFilter !== "ALL" && item.kind !== kindFilter) {
+        return false;
+      }
       const usageCount = item.usageCategoryCount ?? 0;
       const currentCount = item.currentCategoryIds?.length ?? 0;
-      if (usageFilter === "UNASSIGNED" && usageCount !== 0) return false;
-      if (usageFilter === "CURRENT" && currentCount === 0) return false;
-      if (usageFilter === "SHARED" && usageCount <= 1) return false;
-      if (!q) return true;
+      if (usageFilter === "UNASSIGNED" && usageCount !== 0) {
+        return false;
+      }
+      if (usageFilter === "CURRENT" && currentCount === 0) {
+        return false;
+      }
+      if (usageFilter === "SHARED" && usageCount <= 1) {
+        return false;
+      }
+      if (!q) {
+        return true;
+      }
       return [item.title, item.id, item.s3Key, ...(item.categoryPaths ?? [])]
         .join(" ")
         .toLowerCase()
@@ -257,7 +270,10 @@ export default function GkvAssetsPage() {
         {item.categoryPaths.map((path, index) => {
           const categoryId = item.categoryIds?.[index];
           return categoryId ? (
-            <Link key={`${item.id}-${categoryId}`} to={toInApp(`/app/gkv/guides/${encodeURIComponent(categoryId)}/assets`)}>
+            <Link
+              key={`${item.id}-${categoryId}`}
+              to={toInApp(`/app/gkv/guides/${encodeURIComponent(categoryId)}/assets`)}
+            >
               {path}
             </Link>
           ) : (
@@ -334,7 +350,9 @@ export default function GkvAssetsPage() {
   }, [uploadFetcher.data]);
 
   useEffect(() => {
-    if (!registerFetcher.data) return;
+    if (!registerFetcher.data) {
+      return;
+    }
     if (registerFetcher.data.ok) {
       setUploadState("done");
       setUploadMessage(registerFetcher.data.message || "에셋 등록을 완료했습니다.");
@@ -366,7 +384,9 @@ export default function GkvAssetsPage() {
       xhr.open("PUT", uploadUrl);
       xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
       xhr.upload.onprogress = (event) => {
-        if (!event.lengthComputable) return;
+        if (!event.lengthComputable) {
+          return;
+        }
         const percent = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)));
         setUploadProgress(percent);
       };
@@ -563,7 +583,9 @@ export default function GkvAssetsPage() {
                       setPreparedUpload(null);
                       setUploadProgress(null);
                       setUploadState("idle");
-                      if (file && !uploadTitle) setUploadTitle(file.name);
+                      if (file && !uploadTitle) {
+                        setUploadTitle(file.name);
+                      }
                       if (file && uploadKind === "VIDEO") {
                         void readVideoDurationSec(file).then((duration) => {
                           if (duration && duration > 0) {
@@ -584,7 +606,12 @@ export default function GkvAssetsPage() {
                   <Button
                     variant="primary"
                     onClick={runOneClickUpload}
-                    disabled={!selectedFile || uploadState === "preparing" || uploadState === "uploading" || uploadState === "registering"}
+                    disabled={
+                      !selectedFile ||
+                      uploadState === "preparing" ||
+                      uploadState === "uploading" ||
+                      uploadState === "registering"
+                    }
                   >
                     원클릭 업로드 (발급+업로드+등록)
                   </Button>
@@ -632,7 +659,13 @@ export default function GkvAssetsPage() {
                   <Text
                     as="p"
                     variant="bodySm"
-                    tone={uploadState === "failed" ? "critical" : uploadState === "cancelled" ? "warning" : "subdued"}
+                    tone={
+                      uploadState === "failed"
+                        ? "critical"
+                        : uploadState === "cancelled"
+                          ? "warning"
+                          : "subdued"
+                    }
                   >
                     {uploadMessage}
                   </Text>
@@ -668,7 +701,12 @@ export default function GkvAssetsPage() {
                 <TextField name="s3Key" label="S3 Key" autoComplete="off" requiredIndicator />
                 <TextField name="mimeType" label="MIME Type" autoComplete="off" requiredIndicator />
                 <TextField name="sizeBytes" type="number" label="Size Bytes" autoComplete="off" />
-                <TextField name="durationSec" type="number" label="Duration Sec" autoComplete="off" />
+                <TextField
+                  name="durationSec"
+                  type="number"
+                  label="Duration Sec"
+                  autoComplete="off"
+                />
                 <TextField name="checksumSha256" label="Checksum SHA256" autoComplete="off" />
                 <Select
                   name="status"
@@ -727,16 +765,7 @@ export default function GkvAssetsPage() {
               표시 {filteredItems.length} / 전체 {items.length}
             </Text>
             <DataTable
-              columnContentTypes={[
-                "text",
-                "text",
-                "text",
-                "text",
-                "text",
-                "text",
-                "text",
-                "text",
-              ]}
+              columnContentTypes={["text", "text", "text", "text", "text", "text", "text", "text"]}
               headings={[
                 "Title",
                 "Kind",

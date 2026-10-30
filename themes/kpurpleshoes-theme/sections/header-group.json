@@ -22,9 +22,7 @@
           }
         }
       },
-      "block_order": [
-        "announcement-bar-0"
-      ],
+      "block_order": ["announcement-bar-0"],
       "settings": {
         "auto_rotate": false,
         "change_slides_speed": 5,
@@ -55,8 +53,5 @@
       }
     }
   },
-  "order": [
-    "announcement-bar",
-    "header"
-  ]
+  "order": ["announcement-bar", "header"]
 }

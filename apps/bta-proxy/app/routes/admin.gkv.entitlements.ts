@@ -4,13 +4,15 @@ import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import {
   entitlementDeleteSchema,
   entitlementUpsertSchema,
-} from "~/lib/gkv/adminSchemas";
+} from "~/domains/guide-viewer/adminSchemas";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
   const url = new URL(request.url);
   const customerId = url.searchParams.get("customerId")?.trim();
@@ -20,7 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId 쿼리가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -33,7 +35,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   try {
@@ -56,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -94,11 +98,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -106,7 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

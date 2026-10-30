@@ -18,15 +18,12 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "~/shopify.server";
-import {
-  getEmbeddedSearchEntries,
-  withEmbeddedSearch,
-} from "~/lib/gkv/embeddedPath";
+import { getEmbeddedSearchEntries, withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 import {
   listAllReviews,
   type ReviewItem,
   type ReviewStatusFilter,
-} from "~/lib/reviewService";
+} from "~/domains/reviews/reviewService";
 
 type ReviewTypeFilter = "all" | "admin" | "customer";
 
@@ -44,14 +41,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const reviewTypeRaw = url.searchParams.get("reviewType");
   const reviewTypeFilter: ReviewTypeFilter =
-    reviewTypeRaw === "admin" || reviewTypeRaw === "customer"
-      ? reviewTypeRaw
-      : "all";
+    reviewTypeRaw === "admin" || reviewTypeRaw === "customer" ? reviewTypeRaw : "all";
   const statusRaw = (url.searchParams.get("status") || "").toUpperCase();
   const statusFilter: ReviewStatusFilter =
-    statusRaw === "ACTIVE" || statusRaw === "DRAFT" || statusRaw === "UNKNOWN"
-      ? statusRaw
-      : "all";
+    statusRaw === "ACTIVE" || statusRaw === "DRAFT" || statusRaw === "UNKNOWN" ? statusRaw : "all";
   const searchKeyword = (url.searchParams.get("q") || "").trim();
 
   try {
@@ -82,32 +75,31 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 function formatSubmittedAt(value: string | null): string {
-  if (!value) return "-";
+  if (!value) {
+    return "-";
+  }
   return new Date(value).toLocaleString("ko-KR");
 }
 
 function shortProductId(productId: string): string {
   const parts = productId.split("/").filter(Boolean);
   const last = parts.at(-1);
-  if (productId.includes("/Product/") && last) return `.../Product/${last}`;
-  if (productId.length <= 36) return productId;
+  if (productId.includes("/Product/") && last) {
+    return `.../Product/${last}`;
+  }
+  if (productId.length <= 36) {
+    return productId;
+  }
   return `...${productId.slice(-32)}`;
 }
 
 function reviewStatusBadge(status: string) {
-  const statusTone =
-    status === "ACTIVE"
-      ? "success"
-      : status === "DRAFT"
-        ? "warning"
-        : "attention";
+  const statusTone = status === "ACTIVE" ? "success" : status === "DRAFT" ? "warning" : "attention";
   return <Badge tone={statusTone}>{status}</Badge>;
 }
 
 function reviewTypeBadge(reviewType: ReviewItem["reviewType"]) {
-  return (
-    <Badge tone={reviewType === "admin" ? "info" : "new"}>{reviewType}</Badge>
-  );
+  return <Badge tone={reviewType === "admin" ? "info" : "new"}>{reviewType}</Badge>;
 }
 
 export default function AdminReviewsPage() {
@@ -124,24 +116,17 @@ export default function AdminReviewsPage() {
   );
 
   const [items, setItems] = useState<ReviewItem[]>(loaderData.items || []);
-  const [errorMessage, setErrorMessage] = useState<string | null>(
-    loaderData.error || null,
-  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(loaderData.error || null);
   const [reviewTypeFilter, setReviewTypeFilter] = useState<ReviewTypeFilter>(
     loaderData.reviewTypeFilter,
   );
-  const [statusFilter, setStatusFilter] = useState<ReviewStatusFilter>(
-    loaderData.statusFilter,
-  );
-  const [searchKeyword, setSearchKeyword] = useState<string>(
-    loaderData.searchKeyword || "",
-  );
+  const [statusFilter, setStatusFilter] = useState<ReviewStatusFilter>(loaderData.statusFilter);
+  const [searchKeyword, setSearchKeyword] = useState<string>(loaderData.searchKeyword || "");
   const [toggleTargetId, setToggleTargetId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState<string>("");
-  const [editAuthorDisplayName, setEditAuthorDisplayName] =
-    useState<string>("");
+  const [editAuthorDisplayName, setEditAuthorDisplayName] = useState<string>("");
 
   useEffect(() => {
     setItems(loaderData.items || []);
@@ -161,13 +146,13 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     const payload = toggleFetcher.data as any;
-    if (!payload) return;
+    if (!payload) {
+      return;
+    }
     if (payload.ok) {
       const updated = payload.data?.item as ReviewItem | undefined;
       if (updated) {
-        setItems((prev) =>
-          prev.map((item) => (item.id === updated.id ? updated : item)),
-        );
+        setItems((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       }
       setErrorMessage(null);
       setToggleTargetId(null);
@@ -181,13 +166,13 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     const payload = updateFetcher.data as any;
-    if (!payload) return;
+    if (!payload) {
+      return;
+    }
     if (payload.ok) {
       const updated = payload.data?.item as ReviewItem | undefined;
       if (updated) {
-        setItems((prev) =>
-          prev.map((item) => (item.id === updated.id ? updated : item)),
-        );
+        setItems((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       }
       setErrorMessage(null);
       setEditingReviewId(null);
@@ -202,7 +187,9 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     const payload = deleteFetcher.data as any;
-    if (!payload) return;
+    if (!payload) {
+      return;
+    }
     if (payload.ok) {
       const deletedId = payload.data?.deletedId as string | undefined;
       if (deletedId) {
@@ -235,11 +222,7 @@ export default function AdminReviewsPage() {
       labels.push(`Search: ${loaderData.searchKeyword.trim()}`);
     }
     return labels;
-  }, [
-    loaderData.reviewTypeFilter,
-    loaderData.searchKeyword,
-    loaderData.statusFilter,
-  ]);
+  }, [loaderData.reviewTypeFilter, loaderData.searchKeyword, loaderData.statusFilter]);
   const resetUrl = toInApp("/app/reviews");
 
   const rowSeparatorStyle = {
@@ -319,17 +302,12 @@ export default function AdminReviewsPage() {
   function renderToggleActions(item: ReviewItem) {
     const isActive = item.status === "ACTIVE";
     const isUnknown = item.status === "UNKNOWN";
-    const isLoading =
-      toggleFetcher.state !== "idle" && toggleTargetId === item.id;
+    const isLoading = toggleFetcher.state !== "idle" && toggleTargetId === item.id;
 
     if (isUnknown) {
       return (
         <>
-          <Button
-            size="micro"
-            loading={isLoading}
-            onClick={() => submitToggle(item, true)}
-          >
+          <Button size="micro" loading={isLoading} onClick={() => submitToggle(item, true)}>
             Publish
           </Button>
           <Button
@@ -380,8 +358,7 @@ export default function AdminReviewsPage() {
   function renderReviewRow(item: ReviewItem, index: number) {
     const isFirst = index === 0;
     const isLast = index === items.length - 1;
-    const isDeleting =
-      deleteFetcher.state !== "idle" && deleteTargetId === item.id;
+    const isDeleting = deleteFetcher.state !== "idle" && deleteTargetId === item.id;
     const rowStyle = {
       ...(isFirst ? {} : rowSeparatorStyle),
       paddingTop: isFirst ? 0 : "16px",
@@ -410,10 +387,7 @@ export default function AdminReviewsPage() {
               </p>
               <div style={metaWrapStyle}>
                 <Text as="span" variant="bodySm" tone="subdued">
-                  Product:{" "}
-                  <span title={item.productId}>
-                    {shortProductId(item.productId)}
-                  </span>
+                  Product: <span title={item.productId}>{shortProductId(item.productId)}</span>
                 </Text>
                 <Text as="span" variant="bodySm" tone="subdued">
                   Submitted: {formatSubmittedAt(item.submittedAt)}
@@ -455,7 +429,9 @@ export default function AdminReviewsPage() {
         <Modal
           open={Boolean(editingItem)}
           onClose={() => {
-            if (updateFetcher.state !== "idle") return;
+            if (updateFetcher.state !== "idle") {
+              return;
+            }
             setEditingReviewId(null);
             setEditBody("");
             setEditAuthorDisplayName("");
@@ -466,7 +442,9 @@ export default function AdminReviewsPage() {
             loading: updateFetcher.state !== "idle",
             disabled: !editingItem || editBody.trim().length < 20,
             onAction: () => {
-              if (!editingItem) return;
+              if (!editingItem) {
+                return;
+              }
               const formData = new FormData();
               formData.set("reviewId", editingItem.id);
               formData.set("body", editBody.trim());
@@ -482,7 +460,9 @@ export default function AdminReviewsPage() {
             {
               content: "Cancel",
               onAction: () => {
-                if (updateFetcher.state !== "idle") return;
+                if (updateFetcher.state !== "idle") {
+                  return;
+                }
                 setEditingReviewId(null);
                 setEditBody("");
                 setEditAuthorDisplayName("");
@@ -493,9 +473,7 @@ export default function AdminReviewsPage() {
           <Modal.Section>
             <BlockStack gap="300">
               <Text as="p" variant="bodySm" tone="subdued">
-                {editingItem
-                  ? `${editingItem.label} (${editingItem.reviewType})`
-                  : ""}
+                {editingItem ? `${editingItem.label} (${editingItem.reviewType})` : ""}
               </Text>
               <TextField
                 label="Body"
@@ -518,12 +496,7 @@ export default function AdminReviewsPage() {
 
         <Card>
           <BlockStack gap="400">
-            <InlineStack
-              align="space-between"
-              blockAlign="center"
-              gap="300"
-              wrap
-            >
+            <InlineStack align="space-between" blockAlign="center" gap="300" wrap>
               <Text as="h2" variant="headingMd">
                 All Reviews
               </Text>
@@ -533,12 +506,7 @@ export default function AdminReviewsPage() {
             </InlineStack>
             <Form method="get">
               {embeddedSearchEntries.map((entry) => (
-                <input
-                  key={entry.name}
-                  type="hidden"
-                  name={entry.name}
-                  value={entry.value}
-                />
+                <input key={entry.name} type="hidden" name={entry.name} value={entry.value} />
               ))}
               <BlockStack gap="300">
                 <InlineGrid columns={{ xs: 1, md: 3 }} gap="300">
@@ -551,9 +519,7 @@ export default function AdminReviewsPage() {
                       { label: "Customer", value: "customer" },
                     ]}
                     value={reviewTypeFilter}
-                    onChange={(value) =>
-                      setReviewTypeFilter(value as ReviewTypeFilter)
-                    }
+                    onChange={(value) => setReviewTypeFilter(value as ReviewTypeFilter)}
                   />
                   <Select
                     label="Status"
@@ -565,9 +531,7 @@ export default function AdminReviewsPage() {
                       { label: "Unknown", value: "UNKNOWN" },
                     ]}
                     value={statusFilter}
-                    onChange={(value) =>
-                      setStatusFilter(value as ReviewStatusFilter)
-                    }
+                    onChange={(value) => setStatusFilter(value as ReviewStatusFilter)}
                   />
                   <TextField
                     label="Search"
@@ -597,9 +561,7 @@ export default function AdminReviewsPage() {
                 등록된 리뷰가 없습니다.
               </Text>
             ) : (
-              <div>
-                {items.map((item, index) => renderReviewRow(item, index))}
-              </div>
+              <div>{items.map((item, index) => renderReviewRow(item, index))}</div>
             )}
           </BlockStack>
         </Card>

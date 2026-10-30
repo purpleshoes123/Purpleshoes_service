@@ -13,14 +13,14 @@ loadEnv();
 // 부팅 시 자동 Rebuild (프로세스당 1회만)
 if (!globalThis.__startupRebuildRan) {
   globalThis.__startupRebuildRan = true;
-  import("./lib/startupRebuild")
+  import("./domains/bookings/startupRebuild")
     .then(({ startupRebuild }) => startupRebuild())
     .catch((error) => {
       console.error(
         JSON.stringify({
           message: "Startup rebuild failed",
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     });
 }
@@ -31,20 +31,15 @@ export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  remixContext: EntryContext
+  remixContext: EntryContext,
 ) {
   addDocumentResponseHeaders(request, responseHeaders);
   const userAgent = request.headers.get("user-agent");
-  const callbackName = isbot(userAgent ?? '')
-    ? "onAllReady"
-    : "onShellReady";
+  const callbackName = isbot(userAgent ?? "") ? "onAllReady" : "onShellReady";
 
   return new Promise((resolve, reject) => {
     const { pipe, abort } = renderToPipeableStream(
-      <ServerRouter
-        context={remixContext}
-        url={request.url}
-      />,
+      <ServerRouter context={remixContext} url={request.url} />,
       {
         [callbackName]: () => {
           const body = new PassThrough();
@@ -55,7 +50,7 @@ export default async function handleRequest(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
-            })
+            }),
           );
           pipe(body);
         },
@@ -66,7 +61,7 @@ export default async function handleRequest(
           responseStatusCode = 500;
           console.error(error);
         },
-      }
+      },
     );
 
     // Automatically timeout the React renderer after 6 seconds, which ensures

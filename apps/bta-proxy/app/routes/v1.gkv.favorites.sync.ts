@@ -1,11 +1,11 @@
 import type { ActionFunctionArgs } from "react-router";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { requireGkvCustomerId } from "~/lib/gkv/customerAuth";
+import { requireGkvCustomerId } from "~/domains/guide-viewer/customerAuth";
 import {
   FavoriteRequestError,
   parseSyncRequestBody,
   syncFavoriteChanges,
-} from "~/lib/gkv/favorites.server";
+} from "~/domains/guide-viewer/favorites.server.ts";
 import { respond } from "~/lib/respond";
 
 async function readJsonBody(request: Request): Promise<unknown> {
@@ -18,7 +18,9 @@ async function readJsonBody(request: Request): Promise<unknown> {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const auth = await requireGkvCustomerId(request);
-  if (auth instanceof Response) return respond.withNoStore(auth);
+  if (auth instanceof Response) {
+    return respond.withNoStore(auth);
+  }
   const correlationId = respond.getCorrelationId(request);
 
   try {

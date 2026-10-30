@@ -31,7 +31,5 @@
       }
     }
   },
-  "order": [
-    "free_guide_optin"
-  ]
+  "order": ["free_guide_optin"]
 }

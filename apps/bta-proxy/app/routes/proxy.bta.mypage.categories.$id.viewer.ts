@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { getStorefrontCategoryAvailability } from "~/lib/gkv/storefrontViewer.server";
+import { getStorefrontCategoryAvailability } from "~/domains/guide-viewer/storefrontViewer.server.ts";
 import { respond } from "~/lib/respond";
-import { requireStorefrontCustomerProxyContext } from "~/lib/storefront/customerProxy.server";
+import { requireStorefrontCustomerProxyContext } from "~/domains/storefront/customerProxy.server.ts";
 
 /**
  * GET /proxy/bta/mypage/categories/:id/viewer
@@ -12,7 +12,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     rateLimitPolicy: "customer",
     rateLimitBucket: "mypage-read",
   });
-  if (context instanceof Response) return context;
+  if (context instanceof Response) {
+    return context;
+  }
 
   const categoryId = params.id;
   if (!categoryId) {
@@ -25,10 +27,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     );
   }
 
-  const data = await getStorefrontCategoryAvailability(
-    request,
-    context.customerId,
-    categoryId,
-  );
+  const data = await getStorefrontCategoryAvailability(request, context.customerId, categoryId);
   return respond.ok(data, { correlationId: context.correlationId });
 };

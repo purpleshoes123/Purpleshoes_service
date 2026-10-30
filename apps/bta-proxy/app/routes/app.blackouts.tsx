@@ -56,16 +56,25 @@ function addDays(date: Date, days: number): Date {
 }
 
 function parseMonth(value: string | null): { year: number; month: number } | null {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
   const match = /^(\d{4})-(\d{2})$/.exec(value);
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (month < 1 || month > 12) return null;
+  if (month < 1 || month > 12) {
+    return null;
+  }
   return { year, month };
 }
 
-function getMonthRange(year: number, month: number): {
+function getMonthRange(
+  year: number,
+  month: number,
+): {
   from: string;
   to: string;
   daysInMonth: number;
@@ -81,7 +90,11 @@ function getMonthRange(year: number, month: number): {
   };
 }
 
-function shiftMonth(year: number, month: number, delta: number): {
+function shiftMonth(
+  year: number,
+  month: number,
+  delta: number,
+): {
   year: number;
   month: number;
 } {
@@ -121,10 +134,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     items = response.items;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    error =
-      message.includes("Access denied for metaobjects")
-        ? "Metaobject 권한이 없습니다. 앱 권한에 read_metaobjects/write_metaobjects가 포함되어 있는지 확인하세요."
-        : "Metaobject 조회에 실패했습니다. metaobject 정의와 권한을 확인하세요.";
+    error = message.includes("Access denied for metaobjects")
+      ? "Metaobject 권한이 없습니다. 앱 권한에 read_metaobjects/write_metaobjects가 포함되어 있는지 확인하세요."
+      : "Metaobject 조회에 실패했습니다. metaobject 정의와 권한을 확인하세요.";
   }
 
   return json<LoaderData>({
@@ -156,9 +168,7 @@ export default function GlobalBlackoutPage() {
   const [currentYear, setCurrentYear] = useState(initialMonth.year);
   const [currentMonth, setCurrentMonth] = useState(initialMonth.month);
   const [blackoutDates, setBlackoutDates] = useState<string[]>(loaderData.dates);
-  const [blackoutItems, setBlackoutItems] = useState<GlobalBlackoutItem[]>(
-    loaderData.items || []
-  );
+  const [blackoutItems, setBlackoutItems] = useState<GlobalBlackoutItem[]>(loaderData.items || []);
   const [rangeMode, setRangeMode] = useState<"month" | "next90">("month");
   const [searchTerm, setSearchTerm] = useState("");
   const [createDate, setCreateDate] = useState("");
@@ -170,9 +180,7 @@ export default function GlobalBlackoutPage() {
   const [icsPreview, setIcsPreview] = useState<any | null>(null);
   const [icsWarnings, setIcsWarnings] = useState<string[]>([]);
   const [icsConfirmOpen, setIcsConfirmOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(
-    loaderData.error || null
-  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(loaderData.error || null);
   const [optimisticBackup, setOptimisticBackup] = useState<string[] | null>(null);
 
   const range = getMonthRange(currentYear, currentMonth);
@@ -201,9 +209,7 @@ export default function GlobalBlackoutPage() {
   }, [blackoutItems, searchTerm]);
 
   const refreshList = () => {
-    listFetcher.load(
-      `/proxy/internal/admin/blackouts?from=${listRange.from}&to=${listRange.to}`
-    );
+    listFetcher.load(`/proxy/internal/admin/blackouts?from=${listRange.from}&to=${listRange.to}`);
   };
 
   useEffect(() => {
@@ -358,9 +364,7 @@ export default function GlobalBlackoutPage() {
     setErrorMessage(null);
     if (rangeMode === "month") {
       const nextRange = getMonthRange(next.year, next.month);
-      listFetcher.load(
-        `/proxy/internal/admin/blackouts?from=${nextRange.from}&to=${nextRange.to}`
-      );
+      listFetcher.load(`/proxy/internal/admin/blackouts?from=${nextRange.from}&to=${nextRange.to}`);
     }
   };
 
@@ -454,7 +458,7 @@ export default function GlobalBlackoutPage() {
                       method: "post",
                       encType: "application/json",
                       action: "/proxy/internal/admin/blackouts",
-                    }
+                    },
                   );
                 }}
                 loading={createFetcher.state !== "idle"}
@@ -484,11 +488,7 @@ export default function GlobalBlackoutPage() {
                     >
                       메모 편집
                     </Button>
-                    <Button
-                      size="micro"
-                      tone="critical"
-                      onClick={() => setDeleteTarget(item)}
-                    >
+                    <Button size="micro" tone="critical" onClick={() => setDeleteTarget(item)}>
                       삭제
                     </Button>
                   </InlineStack>,
@@ -503,8 +503,8 @@ export default function GlobalBlackoutPage() {
               ICS 가져오기
             </Text>
             <Text as="p" variant="bodySm" tone="subdued">
-              Google 캘린더 내보내기(ICS)를 업로드하면 전역 블랙아웃으로
-              변환합니다. 과거 날짜는 기본 제외됩니다.
+              Google 캘린더 내보내기(ICS)를 업로드하면 전역 블랙아웃으로 변환합니다. 과거 날짜는
+              기본 제외됩니다.
             </Text>
             <input
               type="file"
@@ -548,9 +548,8 @@ export default function GlobalBlackoutPage() {
               <BlockStack gap="300">
                 <Text as="p" variant="bodySm">
                   이벤트 {icsPreview.stats?.eventsParsed ?? 0}건, 확장{" "}
-                  {icsPreview.stats?.datesExpanded ?? 0}일, 신규{" "}
-                  {icsPreview.stats?.datesNew ?? 0}일, 기존{" "}
-                  {icsPreview.stats?.datesExisting ?? 0}일
+                  {icsPreview.stats?.datesExpanded ?? 0}일, 신규 {icsPreview.stats?.datesNew ?? 0}
+                  일, 기존 {icsPreview.stats?.datesExisting ?? 0}일
                 </Text>
                 {icsWarnings.length > 0 ? (
                   <Banner tone="warning" title="주의 사항">
@@ -579,11 +578,9 @@ export default function GlobalBlackoutPage() {
                 <Box>
                   <div style={{ maxHeight: "160px", overflow: "auto" }}>
                     <ul style={{ margin: 0, paddingLeft: "18px" }}>
-                      {(icsPreview.existingDates || [])
-                        .slice(0, 50)
-                        .map((date: string) => (
-                          <li key={date}>{date}</li>
-                        ))}
+                      {(icsPreview.existingDates || []).slice(0, 50).map((date: string) => (
+                        <li key={date}>{date}</li>
+                      ))}
                     </ul>
                   </div>
                 </Box>
@@ -649,35 +646,23 @@ export default function GlobalBlackoutPage() {
           </BlockStack>
         </Card>
       </BlockStack>
-      <Modal
-        open={Boolean(editTarget)}
-        onClose={() => setEditTarget(null)}
-        title="메모 편집"
-      >
+      <Modal open={Boolean(editTarget)} onClose={() => setEditTarget(null)} title="메모 편집">
         <Modal.Section>
           <BlockStack gap="300">
-            <TextField
-              label="메모"
-              value={editNote}
-              onChange={setEditNote}
-              autoComplete="off"
-            />
+            <TextField label="메모" value={editNote} onChange={setEditNote} autoComplete="off" />
             <InlineStack gap="200">
               <Button onClick={() => setEditTarget(null)}>취소</Button>
               <Button
                 variant="primary"
                 onClick={() => {
-                  if (!editTarget) return;
-                  updateFetcher.submit(
-                    JSON.stringify({ note: editNote }),
-                    {
-                      method: "patch",
-                      encType: "application/json",
-                      action: `/proxy/internal/admin/blackouts/${encodeURIComponent(
-                        editTarget.id
-                      )}`,
-                    }
-                  );
+                  if (!editTarget) {
+                    return;
+                  }
+                  updateFetcher.submit(JSON.stringify({ note: editNote }), {
+                    method: "patch",
+                    encType: "application/json",
+                    action: `/proxy/internal/admin/blackouts/${encodeURIComponent(editTarget.id)}`,
+                  });
                 }}
                 loading={updateFetcher.state !== "idle"}
               >
@@ -695,8 +680,7 @@ export default function GlobalBlackoutPage() {
         <Modal.Section>
           <BlockStack gap="300">
             <Text as="p" variant="bodySm">
-              미리보기에서 신규로 표시된 날짜를 전역 블랙아웃으로
-              등록합니다. 계속할까요?
+              미리보기에서 신규로 표시된 날짜를 전역 블랙아웃으로 등록합니다. 계속할까요?
             </Text>
             <InlineStack gap="200">
               <Button onClick={() => setIcsConfirmOpen(false)}>취소</Button>
@@ -717,7 +701,7 @@ export default function GlobalBlackoutPage() {
                       method: "post",
                       encType: "application/json",
                       action: "/proxy/internal/admin/blackouts/ics/apply",
-                    }
+                    },
                   );
                 }}
                 loading={applyFetcher.state !== "idle"}
@@ -743,11 +727,13 @@ export default function GlobalBlackoutPage() {
               <Button
                 tone="critical"
                 onClick={() => {
-                  if (!deleteTarget) return;
+                  if (!deleteTarget) {
+                    return;
+                  }
                   deleteFetcher.submit(null, {
                     method: "delete",
                     action: `/proxy/internal/admin/blackouts/${encodeURIComponent(
-                      deleteTarget.id
+                      deleteTarget.id,
                     )}`,
                   });
                 }}

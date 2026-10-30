@@ -49,10 +49,7 @@ export function getCorrelationId(request: Request): string {
  * @param data - 응답 데이터
  * @param meta - 메타 정보 (correlationId 포함)
  */
-export function ok<T>(
-  data: T,
-  meta: { correlationId: string; rebuildRunId?: string },
-): Response {
+export function ok<T>(data: T, meta: { correlationId: string; rebuildRunId?: string }): Response {
   const response: SuccessResponse<T> = {
     ok: true,
     data,
@@ -69,10 +66,7 @@ export function ok<T>(
 }
 
 export function withNoStore(response: Response): Response {
-  response.headers.set(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate, private",
-  );
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");
   return response;

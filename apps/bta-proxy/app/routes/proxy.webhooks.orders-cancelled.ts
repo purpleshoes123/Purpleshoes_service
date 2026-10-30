@@ -1,42 +1,42 @@
 import type { ActionFunctionArgs } from "react-router";
-import { webhookReceiptResponse } from "~/lib/webhookReceipt.server";
-import { updateWebhookEventStatus } from "~/lib/webhookEventStore";
+import { webhookReceiptResponse } from "~/domains/webhooks/webhookReceipt.server.ts";
+import { updateWebhookEventStatus } from "~/domains/webhooks/webhookEventStore";
 import { verifyWebhook } from "~/middleware/verifyWebhook";
-import { getBookingStore } from "~/lib/bookingStore";
+import { getBookingStore } from "~/domains/bookings/bookingStore";
 import { maskPII } from "~/lib/masking";
-import { extractBookingInfoFromLineItem } from "~/lib/webhookUtils";
-import { groupLineItemsByBooking } from "~/lib/webhookGrouping";
+import { extractBookingInfoFromLineItem } from "~/domains/webhooks/webhookUtils";
+import { groupLineItemsByBooking } from "~/domains/webhooks/webhookGrouping";
 import { getAdminApiClient, fetchOrderLineItemsGraphQL } from "~/lib/shopifyAdmin";
-import { upsertOrderBookingIdMetafield } from "~/lib/orderMetafieldService";
+import { upsertOrderBookingIdMetafield } from "~/domains/bookings/orderMetafieldService";
 import {
   resolveBookingIdsByOrderIndex,
   resolveBookingIdByGroupIndex,
   removeConfirmedBookingRecord,
-} from "~/lib/confirmedLedger";
+} from "~/domains/bookings/confirmedLedger";
 import { createHash, randomUUID } from "crypto";
 import { logEvent } from "~/lib/logEvent";
 import {
   saveWebhookEvent,
   updateWebhookEventEvaluation,
   updateWebhookEventOrderId,
-} from "~/lib/webhookEventStore";
-import { normalizeTerminalStatus } from "~/lib/webhookVoidNormalizer";
-import { extractHoldMapping } from "~/lib/webhookHoldMapping";
-import { executeHoldRelease } from "~/lib/webhookHoldRelease";
-import { revokeTourCodesForOrder } from "~/lib/tourCredits/revokeService";
-import { restoreTourCreditForOrder } from "~/lib/tourCredits/creditRestoreService";
-import { revokePendingTourCreditIfNeeded } from "~/lib/tourCredits/pendingRevoke";
-import { restoreGuide50ForOrder } from "~/lib/coupons/guide50Lifecycle";
-import { maskCouponCode, maskCustomerId } from "~/lib/coupons/logging";
-import { restoreExtra10ForOrder } from "~/lib/coupons/extra10RestoreService";
-import { fetchOrderCustomerId } from "~/lib/guideExtension/orderCustomer";
+} from "~/domains/webhooks/webhookEventStore";
+import { normalizeTerminalStatus } from "~/domains/webhooks/webhookVoidNormalizer";
+import { extractHoldMapping } from "~/domains/webhooks/webhookHoldMapping";
+import { executeHoldRelease } from "~/domains/webhooks/webhookHoldRelease";
+import { revokeTourCodesForOrder } from "~/domains/checkout/tourCredits/revokeService";
+import { restoreTourCreditForOrder } from "~/domains/checkout/tourCredits/creditRestoreService";
+import { revokePendingTourCreditIfNeeded } from "~/domains/checkout/tourCredits/pendingRevoke";
+import { restoreGuide50ForOrder } from "~/domains/coupons/guide50Lifecycle";
+import { maskCouponCode, maskCustomerId } from "~/domains/coupons/logging";
+import { restoreExtra10ForOrder } from "~/domains/coupons/extra10RestoreService";
+import { fetchOrderCustomerId } from "~/domains/checkout/guideExtension/orderCustomer";
 import {
   extractBaseLineItems,
   revokeGuideBaseEntitlementsForOrder,
-} from "~/lib/guideExtension";
-import { orderContainsGuideKitBundle } from "~/lib/coupons/orderUtils";
-import { removeGuideBundleTour15Source } from "~/lib/coupons/tour15Sources";
-import { clearCachedTour15Balance } from "~/lib/couponDisplay/tour15BalanceCache";
+} from "~/domains/checkout/guideExtension";
+import { orderContainsGuideKitBundle } from "~/domains/coupons/orderUtils";
+import { removeGuideBundleTour15Source } from "~/domains/coupons/tour15Sources";
+import { clearCachedTour15Balance } from "~/domains/coupons/display/tour15BalanceCache";
 
 /**
  * SSOT 15.1: POST /proxy/webhooks/orders-cancelled
@@ -53,14 +53,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const rawBody = verification.rawBody;
   const correlationId =
-    request.headers.get("X-Request-Id") ||
-    request.headers.get("X-Correlation-Id") ||
-    randomUUID();
+    request.headers.get("X-Request-Id") || request.headers.get("X-Correlation-Id") || randomUUID();
 
   // Phase 1: Webhook 이벤트 저장 (멱등성 보장)
   const topic = request.headers.get("X-Shopify-Topic") || "orders/cancelled";
   const webhookId = request.headers.get("X-Shopify-Webhook-Id");
-  
+
   let eventResult: Awaited<ReturnType<typeof saveWebhookEvent>> | null = null;
   let processingIncomplete = false;
   try {
@@ -68,7 +66,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       topic,
       rawBody,
       null, // orderId는 JSON 파싱 후에 추출
-      webhookId
+      webhookId,
     );
 
     // 구조화 로그 추가
@@ -79,14 +77,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         eventKey: eventResult.eventKey,
         isDuplicate: eventResult.isDuplicate,
         correlationId,
-      })
+      }),
     );
 
     // 중복 이벤트면 비즈니스 로직 스킵하고 200 OK 반환
     const receiptResponse = webhookReceiptResponse(eventResult);
-    if (receiptResponse) return receiptResponse;
+    if (receiptResponse) {
+      return receiptResponse;
+    }
   } catch (error) {
-    if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node") return new Response("Webhook storage unavailable", { status: 503 });
+    if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node") {
+      return new Response("Webhook storage unavailable", { status: 503 });
+    }
     // 이벤트 저장 실패해도 기존 로직은 계속 진행 (no-op)
     console.error(
       JSON.stringify({
@@ -94,7 +96,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         topic,
         error: error instanceof Error ? error.message : String(error),
         correlationId,
-      })
+      }),
     );
   }
 
@@ -115,16 +117,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     };
 
     // 3. shop 추출
-    const shop =
-      request.headers.get("X-Shopify-Shop-Domain") ||
-      (payload as any).shop ||
-      "";
+    const shop = request.headers.get("X-Shopify-Shop-Domain") || (payload as any).shop || "";
 
     if (!shop) {
       console.error(
         JSON.stringify({
           message: "Missing shop information in webhook",
-        })
+        }),
       );
       return new Response("Missing shop information", { status: 400 });
     }
@@ -134,7 +133,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       console.error(
         JSON.stringify({
           message: "Missing order ID in webhook payload",
-        })
+        }),
       );
       return new Response("Missing order ID", { status: 400 });
     }
@@ -149,8 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
 
     // Phase 2: 정규화/추출 평가 (드라이런)
-    const pipelineEnabled =
-      process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
+    const pipelineEnabled = process.env.HOLD_RELEASE_VOID_PIPELINE_ENABLED === "true";
     const dryrun = process.env.HOLD_RELEASE_VOID_DRYRUN !== "false";
     const forceCancel = process.env.HOLD_RELEASE_CANCEL_FORCE === "true";
     if (!pipelineEnabled) {
@@ -160,7 +158,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           topic,
           orderId,
           correlationId,
-        })
+        }),
       );
     } else if (!eventResult) {
       console.log(
@@ -169,7 +167,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           topic,
           orderId,
           correlationId,
-        })
+        }),
       );
     } else if (eventResult.isDuplicate) {
       console.log(
@@ -179,7 +177,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           eventKey: eventResult.eventKey,
           orderId,
           correlationId,
-        })
+        }),
       );
     } else {
       try {
@@ -191,10 +189,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           try {
             const admin = await getAdminApiClient(shop);
             if (admin) {
-              const adminLineItems = await fetchOrderLineItemsGraphQL(
-                admin,
-                orderId
-              );
+              const adminLineItems = await fetchOrderLineItemsGraphQL(admin, orderId);
               if (adminLineItems.length > 0) {
                 const fallbackPayload = {
                   line_items: adminLineItems.map((item) => ({
@@ -207,14 +202,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                     ? payload.note_attributes
                     : [],
                 };
-                const fallbackMapping = await extractHoldMapping(
-                  fallbackPayload,
-                  shop
-                );
-                if (
-                  fallbackMapping.holdIds.length > 0 ||
-                  fallbackMapping.attemptIds.length > 0
-                ) {
+                const fallbackMapping = await extractHoldMapping(fallbackPayload, shop);
+                if (fallbackMapping.holdIds.length > 0 || fallbackMapping.attemptIds.length > 0) {
                   mapping = fallbackMapping;
                   mappingSource = "admin";
                 }
@@ -227,10 +216,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 topic,
                 orderId,
                 error:
-                  fallbackError instanceof Error
-                    ? fallbackError.message
-                    : String(fallbackError),
-              })
+                  fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+              }),
             );
           }
         }
@@ -242,7 +229,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               orderId,
               mappingSource,
               correlationId,
-            })
+            }),
           );
         }
         if (mapping.attemptIds.length === 0) {
@@ -253,7 +240,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               orderId,
               mappingSource,
               correlationId,
-            })
+            }),
           );
         }
         await updateWebhookEventEvaluation(eventResult.eventKey, {
@@ -275,7 +262,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             mappingSource,
             forceCancel,
             correlationId,
-          })
+          }),
         );
 
         await executeHoldRelease({
@@ -303,7 +290,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             error: error instanceof Error ? error.message : String(error),
             dryrun,
-          })
+          }),
         );
       }
     }
@@ -316,7 +303,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           JSON.stringify({
             message: "Tour coupon revoke skipped (admin unavailable)",
             orderId,
-          })
+          }),
         );
       } else {
         const revokeResult = await revokeTourCodesForOrder({
@@ -331,7 +318,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               orderId,
               revokedCodes: revokeResult.revoked,
               warnings: revokeResult.warnings,
-            })
+            }),
           );
         }
       }
@@ -342,7 +329,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Tour coupon revoke failed",
           orderId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -355,7 +342,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           orderId,
           payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
           hasPayloadCustomerId: Boolean(payloadCustomerId),
-        })
+        }),
       );
 
       const admin = await getAdminApiClient(shop);
@@ -366,7 +353,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             reason: "ADMIN_UNAVAILABLE",
             payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
-          })
+          }),
         );
       } else {
         const tourRestore = await restoreTourCreditForOrder({
@@ -387,7 +374,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             balanceBefore: tourRestore.balanceBefore ?? null,
             balanceAfter: tourRestore.balanceAfter ?? null,
             warnings: tourRestore.warnings,
-          })
+          }),
         );
 
         const extra10Restore = await restoreExtra10ForOrder({
@@ -406,7 +393,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             oldCodeMasked: maskCouponCode(extra10Restore.oldCode),
             newCodeMasked: maskCouponCode(extra10Restore.newCode),
             warnings: extra10Restore.warnings,
-          })
+          }),
         );
       }
     } catch (error) {
@@ -416,7 +403,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Cancellation coupon restore failed",
           orderId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -430,7 +417,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           orderId,
           payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
           hasPayloadCustomerId: Boolean(payloadCustomerId),
-        })
+        }),
       );
 
       const admin = await getAdminApiClient(shop);
@@ -441,7 +428,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             reason: "ADMIN_UNAVAILABLE",
             payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
-          })
+          }),
         );
       } else {
         let customerId = payloadCustomerId;
@@ -451,7 +438,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             JSON.stringify({
               message: "Guide50 restore admin customer lookup start",
               orderId,
-            })
+            }),
           );
           customerId = await fetchOrderCustomerId(admin, orderId);
         }
@@ -463,7 +450,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             customerIdMasked: maskCustomerId(customerId),
             customerIdSource,
             hasCustomerId: Boolean(customerId),
-          })
+          }),
         );
 
         if (!customerId) {
@@ -473,7 +460,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               orderId,
               reason: "MISSING_CUSTOMER_ID",
               customerIdSource,
-            })
+            }),
           );
         } else {
           const restoreResult = await restoreGuide50ForOrder({ admin, customerId, orderId });
@@ -487,7 +474,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 restored: restoreResult.restored,
                 reason: restoreResult.reason,
                 expiresAt: restoreResult.expiresAt,
-              })
+              }),
             );
           }
         }
@@ -499,7 +486,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Guide50 restore failed",
           orderId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -523,7 +510,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Tour15 guide bundle cancel admin line item lookup failed",
               orderId,
               error: error instanceof Error ? error.message : String(error),
-            })
+            }),
           );
         }
       }
@@ -539,7 +526,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           payloadCustomerIdMasked: maskCustomerId(payloadCustomerId),
           hasPayloadCustomerId: Boolean(payloadCustomerId),
           adminAvailable: Boolean(admin),
-        })
+        }),
       );
 
       if (guideKitBundleCancelled) {
@@ -554,7 +541,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               JSON.stringify({
                 message: "Tour15 guide bundle cancel admin customer lookup start",
                 orderId,
-              })
+              }),
             );
             customerId = await fetchOrderCustomerId(admin, orderId);
           }
@@ -568,7 +555,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               reason: "MISSING_CUSTOMER_ID",
               customerIdSource,
               adminAvailable: Boolean(admin),
-            })
+            }),
           );
         } else {
           const sourceResult = await removeGuideBundleTour15Source(customerId, orderId);
@@ -579,7 +566,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             cacheInvalidated = true;
           } catch (error) {
             warnings.push(
-              `CACHE_INVALIDATE_FAILED:${error instanceof Error ? error.message : String(error)}`
+              `CACHE_INVALIDATE_FAILED:${error instanceof Error ? error.message : String(error)}`,
             );
           }
 
@@ -621,7 +608,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               pendingTourSkippedReason,
               cacheInvalidated,
               warnings,
-            })
+            }),
           );
         }
       }
@@ -632,7 +619,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Tour15 guide bundle cancel processing failed",
           orderId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -657,7 +644,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Guide base cancel admin line item lookup failed",
               orderId,
               error: error instanceof Error ? error.message : String(error),
-            })
+            }),
           );
         }
       }
@@ -669,7 +656,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Guide base cancel skipped (admin unavailable)",
               orderId,
               lineItemsSource,
-            })
+            }),
           );
         } else {
           const payloadCustomerId = payload.customer?.id?.toString() || null;
@@ -680,7 +667,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Guide base cancel skipped (missing customerId)",
                 orderId,
                 lineItemsSource,
-              })
+              }),
             );
           } else {
             const revokeResult = await revokeGuideBaseEntitlementsForOrder({
@@ -707,7 +694,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   revoked: revokeResult.revoked,
                   skipped: revokeResult.skipped,
                   failed: revokeResult.failed,
-                })
+                }),
               );
             }
           }
@@ -720,7 +707,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           message: "Guide base cancel processing failed",
           orderId,
           error: error instanceof Error ? error.message : String(error),
-        })
+        }),
       );
     }
 
@@ -729,14 +716,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const store = getBookingStore();
     const redisClient = (store as any).client || null;
     const durableBookings = process.env.DEPLOYMENT_MODE?.trim() === "multi-node";
-    if (durableBookings && !redisClient) throw new Error("Durable booking store unavailable");
+    if (durableBookings && !redisClient) {
+      throw new Error("Durable booking store unavailable");
+    }
 
     // Phase 5-7: line_items를 그룹으로 묶어서 그룹 기반 해제 (shop 전달)
-    const groups = await groupLineItemsByBooking(
-      lineItems,
-      extractBookingInfoFromLineItem,
-      shop
-    );
+    const groups = await groupLineItemsByBooking(lineItems, extractBookingInfoFromLineItem, shop);
 
     try {
       if (groups.length === 1 && !durableBookings) {
@@ -758,8 +743,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                   orderId,
                   bookingId,
                   error: metaResult.message,
-                })
-              )
+                }),
+              ),
             );
           }
         } else {
@@ -769,8 +754,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Order booking_id sync skipped (admin unavailable)",
                 orderId,
                 bookingId,
-              })
-            )
+              }),
+            ),
           );
         }
       } else if (groups.length > 1) {
@@ -780,8 +765,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Order booking_id sync skipped (multiple groups)",
               orderId,
               groupCount: groups.length,
-            })
-          )
+            }),
+          ),
         );
       }
     } catch (error) {
@@ -791,8 +776,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             message: "Order booking_id sync error (orders/cancelled)",
             orderId,
             error: error instanceof Error ? error.message : String(error),
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -809,9 +794,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // 그룹 기반으로 confirmed 해제
       try {
         await store.removeConfirmedBookingByGroupKey(groupKey);
-        const bookingId = createHash("sha256")
-          .update(`${shop}|${groupKey}`)
-          .digest("hex");
+        const bookingId = createHash("sha256").update(`${shop}|${groupKey}`).digest("hex");
         logEvent(
           "webhook.orders_cancelled",
           {
@@ -821,7 +804,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             ...logContext,
             action: "delete",
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
       } catch (error) {
         // 그룹 기반 해제 실패 시 기존 방식(lineItemId 기반)으로 폴백
@@ -832,8 +815,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "Group-based removal failed, falling back to lineItemId-based",
               groupKey: groupKey.substring(0, 50) + "...",
               error: error instanceof Error ? error.message : String(error),
-            })
-          )
+            }),
+          ),
         );
 
         // 기존 방식: 각 line_item별로 제거
@@ -854,7 +837,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             action: "delete",
             reason: "group_removal_failed",
           },
-          { correlationId, shop, severity: "warn" }
+          { correlationId, shop, severity: "warn" },
         );
       }
     }
@@ -875,7 +858,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       // 이미 그룹에서 처리되었는지 확인
       const alreadyProcessed = groups.some((group) =>
-        group.lineItems.some((item) => item.id === lineItem.id)
+        group.lineItems.some((item) => item.id === lineItem.id),
       );
 
       if (!alreadyProcessed) {
@@ -895,7 +878,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             action: "delete",
             reason: "lineItem_fallback",
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
       }
     }
@@ -914,14 +897,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             const adminGroups = await groupLineItemsByBooking(
               adminLineItems,
               extractBookingInfoFromLineItem,
-              shop
+              shop,
             );
             for (const group of adminGroups) {
               const bookingId = await resolveBookingIdByGroupIndex(
                 redisClient,
                 shop,
                 group.groupKey,
-                orderId
+                orderId,
               );
               if (bookingId) {
                 bookingIds.push(bookingId);
@@ -936,8 +919,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 message: "Failed to fetch order for ledger cleanup",
                 orderId: orderId.substring(0, 12) + "...",
                 error: error instanceof Error ? error.message : String(error),
-              })
-            )
+              }),
+            ),
           );
         }
       }
@@ -952,8 +935,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "No bookingId resolved for ledger cleanup (orders/cancelled)",
               orderId: orderId.substring(0, 12) + "...",
               shop,
-            })
-          )
+            }),
+          ),
         );
         logEvent(
           "webhook.orders_cancelled",
@@ -966,7 +949,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             poolKey: null,
             action: "noop",
           },
-          { correlationId, shop, severity: "info" }
+          { correlationId, shop, severity: "info" },
         );
       } else {
         for (const bookingId of new Set(bookingIds)) {
@@ -974,10 +957,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             orderId,
             groupKey: groupKeyByBookingId.get(bookingId),
             cleanupOrphans: true,
-            afterProjection: async removed => {
+            afterProjection: async (removed) => {
               const groupKey = removed?.groupKey || groupKeyByBookingId.get(bookingId);
-              if (groupKey) await store.removeConfirmedBookingByGroupKey(groupKey, { shop, orderId });
-              else if (durableBookings) throw new Error("Booking capacity identity unavailable");
+              if (groupKey) {
+                await store.removeConfirmedBookingByGroupKey(groupKey, { shop, orderId });
+              } else if (durableBookings) {
+                throw new Error("Booking capacity identity unavailable");
+              }
             },
           });
           const groupKey = record?.groupKey || groupKeyByBookingId.get(bookingId);
@@ -997,7 +983,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               ...recordContext,
               action: "delete",
             },
-            { correlationId, shop, severity: "info" }
+            { correlationId, shop, severity: "info" },
           );
         }
       }
@@ -1006,7 +992,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // 6. 성공 응답 (200)
     if (process.env.DEPLOYMENT_MODE?.trim() === "multi-node" && eventResult?.saved) {
       if (processingIncomplete) {
-        await updateWebhookEventStatus(eventResult.eventKey, "FAILED", "Business processing requires reconciliation");
+        await updateWebhookEventStatus(
+          eventResult.eventKey,
+          "FAILED",
+          "Business processing requires reconciliation",
+        );
         return new Response("Webhook processing requires reconciliation", { status: 503 });
       }
       await updateWebhookEventStatus(eventResult.eventKey, "PROCESSED");
@@ -1019,8 +1009,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         maskPII({
           message: "Orders cancelled webhook processing error",
           error: error instanceof Error ? error.message : String(error),
-        })
-      )
+        }),
+      ),
     );
 
     // 500 반환 (Shopify 재시도 유도)

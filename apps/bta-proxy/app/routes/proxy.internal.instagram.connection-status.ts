@@ -2,13 +2,17 @@ import type { LoaderFunctionArgs } from "react-router";
 import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { getInstagramConnection, getInstagramSyncDebug } from "~/lib/instagram/store";
+import { getInstagramConnection, getInstagramSyncDebug } from "~/domains/marketing/instagram/store";
 import { normalizeShopDomain } from "~/lib/shopifySession";
 
 function normalizeShop(shopRaw: string): string | null {
   const normalized = normalizeShopDomain(shopRaw);
-  if (!normalized) return null;
-  if (normalized.includes(".")) return normalized;
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.includes(".")) {
+    return normalized;
+  }
   return `${normalized}.myshopify.com`;
 }
 
@@ -19,7 +23,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
 
   const authResponse = await verifyInternal(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   const url = new URL(request.url);
   const shop = normalizeShop(url.searchParams.get("shop") || "");
@@ -29,7 +35,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -48,7 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         updatedAt: null,
         debug,
       },
-      { correlationId }
+      { correlationId },
     );
   }
 
@@ -65,6 +71,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       lastErrorAt: connection.lastErrorAt,
       debug,
     },
-    { correlationId }
+    { correlationId },
   );
 };

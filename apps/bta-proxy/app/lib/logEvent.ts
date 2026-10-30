@@ -9,7 +9,7 @@ export function logEvent(
     correlationId?: string;
     shop?: string;
     severity?: LogSeverity;
-  }
+  },
 ): void {
   const severity = options?.severity || "info";
 

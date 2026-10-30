@@ -2,18 +2,22 @@ import type { ActionFunctionArgs } from "react-router";
 import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { getInstagramConnection, setInstagramSyncDebug } from "~/lib/instagram/store";
+import { getInstagramConnection, setInstagramSyncDebug } from "~/domains/marketing/instagram/store";
 import {
   markInstagramConnectionError,
   refreshInstagramConnectionTokenIfNeeded,
-} from "~/lib/instagram/service";
-import { InstagramClientError } from "~/lib/instagram/client";
+} from "~/domains/marketing/instagram/service";
+import { InstagramClientError } from "~/domains/marketing/instagram/client";
 import { normalizeShopDomain } from "~/lib/shopifySession";
 
 function normalizeShop(shopRaw: string): string | null {
   const normalized = normalizeShopDomain(shopRaw);
-  if (!normalized) return null;
-  if (normalized.includes(".")) return normalized;
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.includes(".")) {
+    return normalized;
+  }
   return `${normalized}.myshopify.com`;
 }
 
@@ -25,7 +29,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   let shop: string | null = null;
 
   const authResponse = await verifyInternal(request);
-  if (authResponse) return authResponse;
+  if (authResponse) {
+    return authResponse;
+  }
 
   try {
     const body = await request.json();
@@ -37,21 +43,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const existing = await getInstagramConnection(shop);
-    if (
-      !existing ||
-      (existing.status !== "connected" && existing.status !== "error")
-    ) {
+    if (!existing || (existing.status !== "connected" && existing.status !== "error")) {
       return respond.fail(
         ErrorCode.INSTAGRAM_DISCONNECTED,
         getErrorMessage(ErrorCode.INSTAGRAM_DISCONNECTED),
         undefined,
         getErrorStatus(ErrorCode.INSTAGRAM_DISCONNECTED),
-        correlationId
+        correlationId,
       );
     }
 
@@ -74,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         tokenExpiresAt: refreshed?.tokenExpiresAt || null,
         username: refreshed?.instagramUsername || existing.instagramUsername,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error instanceof InstagramClientError) {
@@ -96,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(error.code, error.message),
         error.details,
         error.status || getErrorStatus(error.code),
-        correlationId
+        correlationId,
       );
     }
 
@@ -106,7 +109,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "잘못된 JSON 형식입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -115,7 +118,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

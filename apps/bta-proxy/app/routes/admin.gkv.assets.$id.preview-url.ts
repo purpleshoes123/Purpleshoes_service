@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { buildGkvSignedUrl } from "~/lib/gkv/signedUrl";
+import { buildGkvSignedUrl } from "~/domains/guide-viewer/signedUrl";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
@@ -19,7 +19,9 @@ function logPreviewEvent(payload: Record<string, unknown>) {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
@@ -29,7 +31,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "asset id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -46,7 +48,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "asset을 찾을 수 없습니다."),
       undefined,
       404,
-      correlationId
+      correlationId,
     );
   }
 
@@ -63,7 +65,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "PDF/VIDEO asset만 열람할 수 있습니다."),
       undefined,
       422,
-      correlationId
+      correlationId,
     );
   }
 
@@ -81,7 +83,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "READY 상태 파일만 열람할 수 있습니다."),
       undefined,
       422,
-      correlationId
+      correlationId,
     );
   }
 
@@ -100,7 +102,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "활성 파일만 열람할 수 있습니다."),
       undefined,
       422,
-      correlationId
+      correlationId,
     );
   }
 
@@ -130,6 +132,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       expiresAt: signed.expiresAt,
       ttlSec: signed.ttlSec,
     },
-    { correlationId }
+    { correlationId },
   );
 };

@@ -2,16 +2,12 @@ import type { LoaderFunctionArgs } from "react-router";
 import { verifyMemberAppProxy as verifyAppProxy } from "~/middleware/verifyMemberAppProxy";
 import { enforceRateLimit } from "~/middleware/rateLimit";
 import { memberRespond as respond } from "~/middleware/verifyMemberAppProxy";
-import {
-  availabilitySchema,
-  parseQueryParams,
-  type AvailabilityInput,
-} from "~/lib/validation";
+import { availabilitySchema, parseQueryParams, type AvailabilityInput } from "~/lib/validation";
 import { ErrorCode, getErrorStatus, getErrorMessage } from "~/lib/errors";
-import { checkEligibility, normalizeBookingInput } from "~/lib/bookingEligibility";
+import { checkEligibility, normalizeBookingInput } from "~/domains/bookings/bookingEligibility";
 import { extractShopFromRequest } from "~/lib/shopifyAdmin";
 import { maskPII } from "~/lib/masking";
-import { resolveBookingProductId } from "~/lib/bookingContext.server";
+import { resolveBookingProductId } from "~/domains/bookings/bookingContext.server.ts";
 
 /**
  * SSOT 2.1: GET /proxy/bta/availability
@@ -21,11 +17,15 @@ import { resolveBookingProductId } from "~/lib/bookingContext.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // 1. 레이트 리밋 검증
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   // 2. App Proxy 서명 검증
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   // 3. correlationId 추출/생성
   const correlationId = respond.getCorrelationId(request);
@@ -46,13 +46,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop 파라미터가 필요합니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
     const productId = await resolveBookingProductId(validatedInput.productId, shop);
     if (!productId) {
-      return respond.fail(ErrorCode.VALIDATION_ERROR, "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.", undefined, 400, correlationId);
+      return respond.fail(
+        ErrorCode.VALIDATION_ERROR,
+        "예약 세션이 만료되었습니다. 페이지를 새로고침해 주세요.",
+        undefined,
+        400,
+        correlationId,
+      );
     }
 
     // 6. 공통 정규화/Eligibility 체크
@@ -94,8 +100,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
               message: eligibility.message,
               details: eligibility.details,
             },
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -112,15 +118,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Zod 검증 에러
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -144,21 +148,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
               : error.cause
                 ? { cause: error.cause }
                 : {}),
-          })
-        )
+          }),
+        ),
       );
 
       // 타임아웃 에러
-      if (
-        error.message.includes("timeout") ||
-        error.name === "TimeoutError"
-      ) {
+      if (error.message.includes("timeout") || error.name === "TimeoutError") {
         return respond.fail(
           ErrorCode.BOOKING_STORE_TIMEOUT,
           getErrorMessage(ErrorCode.BOOKING_STORE_TIMEOUT),
           undefined,
           getErrorStatus(ErrorCode.BOOKING_STORE_TIMEOUT),
-          correlationId
+          correlationId,
         );
       }
 
@@ -168,7 +169,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         getErrorMessage(ErrorCode.BOOKING_STORE_ERROR),
         undefined,
         getErrorStatus(ErrorCode.BOOKING_STORE_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -180,8 +181,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           message: "Availability 엔드포인트 오류",
           error: error instanceof Error ? error.message : String(error),
           ...(error instanceof Error && error.cause && { cause: error.cause }),
-        })
-      )
+        }),
+      ),
     );
 
     return respond.fail(
@@ -189,7 +190,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

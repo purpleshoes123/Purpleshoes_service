@@ -1,24 +1,16 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { useLoaderData, useLocation } from "react-router";
-import {
-  BlockStack,
-  Button,
-  Card,
-  DataTable,
-  InlineStack,
-  Page,
-  Text,
-} from "@shopify/polaris";
+import { BlockStack, Button, Card, DataTable, InlineStack, Page, Text } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import db from "~/db.server";
 import {
   MAILER_ATTACHMENT_MODE_VALUES,
   MAILER_ROUTE_PATHS,
   MAILER_TEMPLATE_VARIABLES,
-} from "~/lib/mailer/contracts";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
-import { listTemplateSummaries } from "~/lib/mailer/templateStore.server";
+} from "~/domains/mail/contracts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
+import { listTemplateSummaries } from "~/domains/mail/templateStore.server.ts";
 import { authenticate } from "~/shopify.server";
 
 const SAMPLE_TEMPLATE_ID = "guide-request";
@@ -80,9 +72,7 @@ export default function MailTemplatesIndexPage() {
               Template variables: {MAILER_TEMPLATE_VARIABLES.join(", ")}
             </Text>
             <InlineStack gap="200">
-              <Button
-                url={toInApp(MAILER_ROUTE_PATHS.adminTemplateDetail(sampleId))}
-              >
+              <Button url={toInApp(MAILER_ROUTE_PATHS.adminTemplateDetail(sampleId))}>
                 Open Detail Route
               </Button>
             </InlineStack>

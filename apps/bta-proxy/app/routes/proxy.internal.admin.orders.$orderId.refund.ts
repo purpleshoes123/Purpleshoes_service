@@ -4,9 +4,9 @@ import { verifyInternal } from "~/middleware/verifyInternal";
 import { respond } from "~/lib/respond";
 import { adminRefundSchema } from "~/lib/validation";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { getOrderRefundInfo } from "~/lib/adminOrderService";
+import { getOrderRefundInfo } from "~/domains/bookings/adminOrderService";
 import { createRefundGraphQL, getAdminApiClient } from "~/lib/shopifyAdmin";
-import { getRedisBookingClient } from "~/lib/bookingStore";
+import { getRedisBookingClient } from "~/domains/bookings/bookingStore";
 import { logEvent } from "~/lib/logEvent";
 
 const ATTEMPT_TTL_MS = 60 * 60 * 1000;
@@ -20,10 +20,7 @@ async function resolveAdminClient(shop: string) {
   return admin;
 }
 
-async function isDuplicateAttempt(
-  redisClient: any | null,
-  key: string
-): Promise<boolean> {
+async function isDuplicateAttempt(redisClient: any | null, key: string): Promise<boolean> {
   if (redisClient) {
     const exists = await redisClient.get(key);
     return Boolean(exists);
@@ -36,10 +33,7 @@ async function isDuplicateAttempt(
   return false;
 }
 
-async function markAttempt(
-  redisClient: any | null,
-  key: string
-): Promise<void> {
+async function markAttempt(redisClient: any | null, key: string): Promise<void> {
   if (redisClient) {
     await redisClient.set(key, "1", "PX", ATTEMPT_TTL_MS);
     return;
@@ -57,7 +51,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "orderId는 필수입니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -71,7 +65,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     if (token) {
       const authResponse = await verifyInternal(request);
-      if (authResponse) return authResponse;
+      if (authResponse) {
+        return authResponse;
+      }
 
       const url = new URL(request.url);
       shop = url.searchParams.get("shop");
@@ -81,7 +77,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "shop은 필수입니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
 
@@ -101,7 +97,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
             getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
             undefined,
             getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-            correlationId
+            correlationId,
           );
         }
         throw error;
@@ -113,11 +109,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ErrorCode.SHOPIFY_ADMIN_API_ERROR,
         getErrorMessage(
           ErrorCode.SHOPIFY_ADMIN_API_ERROR,
-          "Shopify Admin API 세션을 찾을 수 없습니다."
+          "Shopify Admin API 세션을 찾을 수 없습니다.",
         ),
         undefined,
         getErrorStatus(ErrorCode.SHOPIFY_ADMIN_API_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -129,7 +125,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           status: "duplicate",
           mode: validatedInput.mode,
         },
-        { correlationId }
+        { correlationId },
       );
     }
 
@@ -144,13 +140,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "orderId를 찾을 수 없습니다."),
         undefined,
         404,
-        correlationId
+        correlationId,
       );
     }
 
-    const lineItemMap = new Map(
-      refundInfo.lineItems.map((item) => [item.lineItemId, item])
-    );
+    const lineItemMap = new Map(refundInfo.lineItems.map((item) => [item.lineItemId, item]));
 
     let refundLineItems: Array<{ lineItemId: string; quantity: number }> = [];
     if (validatedInput.mode === "full") {
@@ -171,7 +165,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "환불 대상이 없습니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -183,19 +177,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           getErrorMessage(ErrorCode.VALIDATION_ERROR, "lineItemId가 유효하지 않습니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
       if (item.quantity > purchased.quantity) {
         return respond.fail(
           ErrorCode.VALIDATION_ERROR,
-          getErrorMessage(
-            ErrorCode.VALIDATION_ERROR,
-            "환불 수량이 구매 수량을 초과했습니다."
-          ),
+          getErrorMessage(ErrorCode.VALIDATION_ERROR, "환불 수량이 구매 수량을 초과했습니다."),
           undefined,
           getErrorStatus(ErrorCode.VALIDATION_ERROR),
-          correlationId
+          correlationId,
         );
       }
     }
@@ -210,13 +201,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     if (refundResult.userErrors.length > 0) {
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
-        getErrorMessage(
-          ErrorCode.VALIDATION_ERROR,
-          refundResult.userErrors.join(", ")
-        ),
+        getErrorMessage(ErrorCode.VALIDATION_ERROR, refundResult.userErrors.join(", ")),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -229,7 +217,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         mode: validatedInput.mode,
         lineItemCount: refundLineItems.length,
       },
-      { correlationId, shop, severity: "info" }
+      { correlationId, shop, severity: "info" },
     );
 
     return respond.ok(
@@ -238,20 +226,18 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         refundId: refundResult.refundId,
         mode: validatedInput.mode,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ message: string }> };
-      const errorMessage = zodError.issues
-        .map((issue) => issue.message)
-        .join(", ");
+      const errorMessage = zodError.issues.map((issue) => issue.message).join(", ");
       return respond.fail(
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(ErrorCode.VALIDATION_ERROR, errorMessage),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -260,7 +246,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

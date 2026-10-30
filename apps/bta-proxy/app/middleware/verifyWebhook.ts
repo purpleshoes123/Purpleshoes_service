@@ -1,7 +1,7 @@
 /**
  * Shopify Webhook HMAC 검증
  * Phase 5-4: X-Shopify-Hmac-Sha256 헤더 기반 raw body 검증
- * 
+ *
  * SSOT 15.2: Webhook은 raw body를 그대로 사용하여 HMAC-SHA256 계산
  */
 
@@ -13,13 +13,9 @@ import { createHmac, timingSafeEqual } from "crypto";
  * @returns { verified: true, rawBody: string } 또는 { verified: false, response: Response }
  */
 export async function verifyWebhook(
-  request: Request
-): Promise<
-  | { verified: true; rawBody: string }
-  | { verified: false; response: Response }
-> {
-  const appSecret =
-    process.env.SHOPIFY_API_SECRET || process.env.SHOPIFY_APP_SECRET;
+  request: Request,
+): Promise<{ verified: true; rawBody: string } | { verified: false; response: Response }> {
+  const appSecret = process.env.SHOPIFY_API_SECRET || process.env.SHOPIFY_APP_SECRET;
 
   if (!appSecret) {
     return {
@@ -48,9 +44,7 @@ export async function verifyWebhook(
   const rawBody = await clonedRequest.text();
 
   // HMAC-SHA256 계산
-  const computedHmac = createHmac("sha256", appSecret)
-    .update(rawBody, "utf8")
-    .digest("base64");
+  const computedHmac = createHmac("sha256", appSecret).update(rawBody, "utf8").digest("base64");
 
   // Base64 비교 (상수시간)
   const providedBuffer = Buffer.from(providedHmac, "base64");
@@ -69,4 +63,3 @@ export async function verifyWebhook(
   // 검증 성공
   return { verified: true, rawBody };
 }
-

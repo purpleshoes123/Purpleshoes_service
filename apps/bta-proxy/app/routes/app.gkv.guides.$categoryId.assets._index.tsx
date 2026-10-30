@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { Link, useFetcher, useLoaderData, useLocation } from "react-router";
@@ -17,8 +17,8 @@ import {
   Text,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 
 type AssetKind = "PDF" | "VIDEO";
 
@@ -72,21 +72,35 @@ type ActionData = {
 
 function formatDate(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
   return date.toISOString().slice(0, 10);
 }
 
 function formatSize(sizeBytes: number | null): string {
-  if (sizeBytes === null) return "-";
-  if (sizeBytes < 1024) return `${sizeBytes} B`;
-  if (sizeBytes < 1024 * 1024) return `${Math.round(sizeBytes / 1024)} KB`;
+  if (sizeBytes === null) {
+    return "-";
+  }
+  if (sizeBytes < 1024) {
+    return `${sizeBytes} B`;
+  }
+  if (sizeBytes < 1024 * 1024) {
+    return `${Math.round(sizeBytes / 1024)} KB`;
+  }
   return `${(sizeBytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function statusBadge(asset: Pick<AssetUsageItem, "status" | "isActive">) {
-  if (!asset.isActive) return <Badge tone="critical">INACTIVE</Badge>;
-  if (asset.status === "READY") return <Badge tone="success">READY</Badge>;
-  if (asset.status === "FAILED") return <Badge tone="critical">FAILED</Badge>;
+  if (!asset.isActive) {
+    return <Badge tone="critical">INACTIVE</Badge>;
+  }
+  if (asset.status === "READY") {
+    return <Badge tone="success">READY</Badge>;
+  }
+  if (asset.status === "FAILED") {
+    return <Badge tone="critical">FAILED</Badge>;
+  }
   return <Badge tone="attention">UPLOADING</Badge>;
 }
 
@@ -99,15 +113,25 @@ function currentBadge(asset: AssetUsageItem) {
 }
 
 function usageLabel(asset: AssetUsageItem): string {
-  if (asset.usageCategoryCount === 0) return "미연결";
-  if (asset.usageCategoryCount === 1) return "이 카테고리만";
+  if (asset.usageCategoryCount === 0) {
+    return "미연결";
+  }
+  if (asset.usageCategoryCount === 1) {
+    return "이 카테고리만";
+  }
   return `${asset.usageCategoryCount}개 카테고리`;
 }
 
 function previewDisabledReason(asset: AssetUsageItem): string | null {
-  if (asset.status !== "READY") return "READY 상태 파일만 열 수 있습니다.";
-  if (!asset.isActive) return "비활성 파일은 열 수 없습니다.";
-  if (asset.kind !== "PDF" && asset.kind !== "VIDEO") return "PDF/VIDEO 파일만 열 수 있습니다.";
+  if (asset.status !== "READY") {
+    return "READY 상태 파일만 열 수 있습니다.";
+  }
+  if (!asset.isActive) {
+    return "비활성 파일은 열 수 없습니다.";
+  }
+  if (asset.kind !== "PDF" && asset.kind !== "VIDEO") {
+    return "PDF/VIDEO 파일만 열 수 있습니다.";
+  }
   return null;
 }
 
@@ -117,11 +141,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   try {
     const data = await callGkvAdminApi<Omit<LoaderData, "error">>(
       request,
-      `/admin/gkv/categories/${encodeURIComponent(categoryId)}/assets`
+      `/admin/gkv/categories/${encodeURIComponent(categoryId)}/assets`,
     );
     return json<LoaderData>(data);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "카테고리 파일 정보를 불러오지 못했습니다.";
+    const message =
+      error instanceof Error ? error.message : "카테고리 파일 정보를 불러오지 못했습니다.";
     return json<LoaderData>(
       {
         category: {
@@ -139,7 +164,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         availableAssets: [],
         error: message,
       },
-      { status: error instanceof GkvAdminApiError ? error.status : 500 }
+      { status: error instanceof GkvAdminApiError ? error.status : 500 },
     );
   }
 };
@@ -165,7 +190,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           assetId,
           force: String(formData.get("force") || "").toLowerCase() === "true",
         }),
-      }
+      },
     );
 
     const messageByIntent: Record<string, string> = {
@@ -195,11 +220,14 @@ export default function GkvGuideCategoryAssetsPage() {
   const location = useLocation();
   const toInApp = (path: string) => withEmbeddedSearch(path, location.search);
   const [selectedExistingAssetId, setSelectedExistingAssetId] = useState(
-    availableAssets[0]?.id ?? ""
+    availableAssets[0]?.id ?? "",
   );
 
   useEffect(() => {
-    if (selectedExistingAssetId && availableAssets.some((asset) => asset.id === selectedExistingAssetId)) {
+    if (
+      selectedExistingAssetId &&
+      availableAssets.some((asset) => asset.id === selectedExistingAssetId)
+    ) {
       return;
     }
     setSelectedExistingAssetId(availableAssets[0]?.id ?? "");
@@ -213,13 +241,17 @@ export default function GkvGuideCategoryAssetsPage() {
         label: `[${asset.kind}] ${asset.title} (${formatSize(asset.sizeBytes)})`,
         value: asset.id,
       })),
-    [availableAssets]
+    [availableAssets],
   );
 
   function renderPreviewButton(asset: AssetUsageItem, size?: "micro") {
     const disabledReason = previewDisabledReason(asset);
     const button = (
-      <Button size={size} disabled={Boolean(disabledReason)} accessibilityLabel={disabledReason ?? `${asset.title} 파일 열기`}>
+      <Button
+        size={size}
+        disabled={Boolean(disabledReason)}
+        accessibilityLabel={disabledReason ?? `${asset.title} 파일 열기`}
+      >
         파일 열기
       </Button>
     );
@@ -259,7 +291,8 @@ export default function GkvGuideCategoryAssetsPage() {
                 {asset.s3Key}
               </Text>
               <Text as="p" variant="bodySm" tone="subdued">
-                {formatSize(asset.sizeBytes)} · updated {formatDate(asset.updatedAt)} · {usageLabel(asset)}
+                {formatSize(asset.sizeBytes)} · updated {formatDate(asset.updatedAt)} ·{" "}
+                {usageLabel(asset)}
               </Text>
             </BlockStack>
           ) : (
@@ -375,8 +408,9 @@ export default function GkvGuideCategoryAssetsPage() {
       <BlockStack gap="400">
         <Banner tone="info" title={category.path}>
           <Text as="p" variant="bodyMd">
-            고객 화면은 이 카테고리에 연결된 READY/ACTIVE 파일 중 가장 최근 업데이트된 PDF와 VIDEO를 사용합니다.
-            기존 파일을 안전하게 현재 후보로 올리려면 이 카테고리에만 연결된 파일에서 `현재로 지정`을 사용하세요.
+            고객 화면은 이 카테고리에 연결된 READY/ACTIVE 파일 중 가장 최근 업데이트된 PDF와 VIDEO를
+            사용합니다. 기존 파일을 안전하게 현재 후보로 올리려면 이 카테고리에만 연결된 파일에서
+            `현재로 지정`을 사용하세요.
           </Text>
         </Banner>
 
@@ -424,7 +458,8 @@ export default function GkvGuideCategoryAssetsPage() {
               기존 미연결 asset 연결
             </Text>
             <Text as="p" variant="bodySm" tone="subdued">
-              READY/ACTIVE 상태이며 다른 카테고리에 연결되지 않은 asset만 표시됩니다. 연결하면 이 카테고리의 현재 후보로 올라갑니다.
+              READY/ACTIVE 상태이며 다른 카테고리에 연결되지 않은 asset만 표시됩니다. 연결하면 이
+              카테고리의 현재 후보로 올라갑니다.
             </Text>
             <fetcher.Form method="post">
               <BlockStack gap="200">

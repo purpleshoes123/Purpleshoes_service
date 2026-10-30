@@ -4,15 +4,20 @@ import { ErrorCode, getErrorMessage } from "~/lib/errors";
 import {
   listRestaurantCategories,
   upsertRestaurantCategory,
-} from "~/lib/gkv/adminRestaurant.server";
-import { parseQueryBoolean, toValidationFailResponse } from "~/lib/gkv/adminUiResponses";
-import { restaurantCategoryUpsertSchema } from "~/lib/gkv/adminUiSchemas";
+} from "~/domains/guide-viewer/adminRestaurant.server.ts";
+import {
+  parseQueryBoolean,
+  toValidationFailResponse,
+} from "~/domains/guide-viewer/adminUiResponses";
+import { restaurantCategoryUpsertSchema } from "~/domains/guide-viewer/adminUiSchemas";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const url = new URL(request.url);
@@ -23,7 +28,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   if (request.method !== "POST") {
@@ -32,7 +39,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       405,
-      correlationId
+      correlationId,
     );
   }
 
@@ -57,7 +64,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "동일 slug가 이미 존재합니다."),
         { fieldErrors: { slug: "이미 사용 중인 slug입니다." } },
         422,
-        correlationId
+        correlationId,
       );
     }
 
@@ -66,7 +73,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       500,
-      correlationId
+      correlationId,
     );
   }
 };

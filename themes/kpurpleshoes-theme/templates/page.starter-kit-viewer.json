@@ -27,7 +27,5 @@
       }
     }
   },
-  "order": [
-    "starter_kit_viewer"
-  ]
+  "order": ["starter_kit_viewer"]
 }

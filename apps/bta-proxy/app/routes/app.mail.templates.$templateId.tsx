@@ -26,29 +26,29 @@ import {
   parseMailTemplateExternalAttachmentForm,
   parseMailTemplateReuseAttachmentForm,
   parseMailTemplateTestSendForm,
-} from "~/lib/mailer/adminForms.server";
+} from "~/domains/mail/adminForms.server.ts";
 import {
   assertCanAppendTemplateAttachment,
   assertNoDuplicateTemplateAttachment,
   buildMovedTemplateAttachmentIds,
   buildNextTemplateAttachmentSortOrder,
   inspectExternalMailAttachment,
-} from "~/lib/mailer/adminAttachments.server";
+} from "~/domains/mail/adminAttachments.server.ts";
 import {
   MAILER_ATTACHMENT_MODE_VALUES,
   MAILER_ROUTE_PATHS,
   MAILER_TEMPLATE_VARIABLES,
-} from "~/lib/mailer/contracts";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
-import { getMailerEnvSummary } from "~/lib/mailer/env";
-import { renderMailTemplate } from "~/lib/mailer/render";
-import { sendAdminTemplateTestMail } from "~/lib/mailer/service.server";
+} from "~/domains/mail/contracts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
+import { getMailerEnvSummary } from "~/domains/mail/env";
+import { renderMailTemplate } from "~/domains/mail/render";
+import { sendAdminTemplateTestMail } from "~/domains/mail/service.server.ts";
 import {
   getReusableMailerFileById,
   inferMailerMimeTypeFromFileName,
   listReusableMailerFiles,
   uploadMailerAttachmentToShopifyFiles,
-} from "~/lib/mailer/shopifyFiles.server";
+} from "~/domains/mail/shopifyFiles.server.ts";
 import {
   createTemplateAttachment,
   deleteTemplateAttachment,
@@ -56,8 +56,8 @@ import {
   isTemplateSlugTaken,
   reorderTemplateAttachments,
   updateTemplate,
-} from "~/lib/mailer/templateStore.server";
-import { listSendRequests } from "~/lib/mailer/sendRequestStore.server";
+} from "~/domains/mail/templateStore.server.ts";
+import { listSendRequests } from "~/domains/mail/sendRequestStore.server.ts";
 import { authenticate } from "~/shopify.server";
 
 type ActionIntent =
@@ -90,7 +90,8 @@ function extractFieldErrors(error: unknown) {
     return {};
   }
 
-  const issues = (error as { issues: Array<{ path?: Array<string | number>; message: string }> }).issues;
+  const issues = (error as { issues: Array<{ path?: Array<string | number>; message: string }> })
+    .issues;
   const fieldErrors: Record<string, string> = {};
 
   for (const issue of issues) {
@@ -155,9 +156,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }));
   } catch (error) {
     reusableFilesError =
-      error instanceof Error
-        ? error.message
-        : "Shopify Files 목록을 불러오지 못했습니다.";
+      error instanceof Error ? error.message : "Shopify Files 목록을 불러오지 못했습니다.";
   }
 
   return json({
@@ -274,15 +273,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
       const fileName = String(fileValue.name || "").trim();
       const mimeType =
-        String(fileValue.type || "").trim().toLowerCase() ||
+        String(fileValue.type || "")
+          .trim()
+          .toLowerCase() ||
         inferMailerMimeTypeFromFileName(fileName) ||
         "";
 
-      assertCanAppendTemplateAttachment(
-        template.attachments,
-        fileValue.size,
-        attachmentPolicy
-      );
+      assertCanAppendTemplateAttachment(template.attachments, fileValue.size, attachmentPolicy);
 
       const uploadedFile = await uploadMailerAttachmentToShopifyFiles(
         auth.admin,
@@ -294,7 +291,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         },
         {
           maxAttachmentBytes: attachmentPolicy.maxAttachmentBytes,
-        }
+        },
       );
 
       assertNoDuplicateTemplateAttachment(template.attachments, {
@@ -325,7 +322,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const selectedFile = await getReusableMailerFileById(
         auth.admin,
         input.shopifyFileId,
-        attachmentPolicy.maxAttachmentBytes
+        attachmentPolicy.maxAttachmentBytes,
       );
 
       if (!selectedFile) {
@@ -342,7 +339,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       assertCanAppendTemplateAttachment(
         template.attachments,
         selectedFile.sizeBytes,
-        attachmentPolicy
+        attachmentPolicy,
       );
       assertNoDuplicateTemplateAttachment(template.attachments, {
         shopifyFileId: selectedFile.shopifyFileId,
@@ -378,7 +375,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       assertCanAppendTemplateAttachment(
         template.attachments,
         inspectedAttachment.fileSizeBytes,
-        attachmentPolicy
+        attachmentPolicy,
       );
       assertNoDuplicateTemplateAttachment(template.attachments, inspectedAttachment);
 
@@ -427,11 +424,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const reorderedAttachmentIds = buildMovedTemplateAttachmentIds(
         template.attachments,
         input.attachmentId,
-        input.direction
+        input.direction,
       );
 
       if (
-        reorderedAttachmentIds.some((attachmentId, index) => attachmentId !== currentAttachmentIds[index])
+        reorderedAttachmentIds.some(
+          (attachmentId, index) => attachmentId !== currentAttachmentIds[index],
+        )
       ) {
         await reorderTemplateAttachments(db, template.id, reorderedAttachmentIds);
       }
@@ -461,8 +460,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         intent === "move_attachment"
           ? intent
           : "unknown",
-      errorMessage:
-        error instanceof Error ? error.message : "요청 처리 중 오류가 발생했습니다.",
+      errorMessage: error instanceof Error ? error.message : "요청 처리 중 오류가 발생했습니다.",
       fieldErrors: extractFieldErrors(error),
     });
   }
@@ -475,7 +473,7 @@ export default function MailTemplateDetailPage() {
   const location = useLocation();
   const toInApp = (path: string) => withEmbeddedSearch(path, location.search);
   const templateLogsPath = `${MAILER_ROUTE_PATHS.adminLogs}?templateId=${encodeURIComponent(
-    data.template.id
+    data.template.id,
   )}`;
 
   const [name, setName] = useState(data.template.name);
@@ -490,7 +488,7 @@ export default function MailTemplateDetailPage() {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [selectedReusableFileId, setSelectedReusableFileId] = useState(
-    data.reusableFiles[0]?.shopifyFileId || ""
+    data.reusableFiles[0]?.shopifyFileId || "",
   );
   const [externalFileUrl, setExternalFileUrl] = useState("");
   const [externalFileName, setExternalFileName] = useState("");
@@ -508,13 +506,11 @@ export default function MailTemplateDetailPage() {
       fileName: item.fileName,
       fileUrl: item.fileUrl,
     })),
-    includeAttachmentLinks:
-      attachmentMode === "LINK_ONLY" || attachmentMode === "MIXED",
+    includeAttachmentLinks: attachmentMode === "LINK_ONLY" || attachmentMode === "MIXED",
   });
 
   const fieldErrors = actionData?.ok ? {} : actionData?.fieldErrors || {};
-  const lastTestSend =
-    actionData?.ok && actionData.intent === "test_send" ? actionData : null;
+  const lastTestSend = actionData?.ok && actionData.intent === "test_send" ? actionData : null;
   const submittingIntent = navigation.formData
     ? String(navigation.formData.get("intent") || "")
     : "";
@@ -531,12 +527,8 @@ export default function MailTemplateDetailPage() {
       <BlockStack gap="400">
         <InlineStack align="space-between" blockAlign="center">
           <InlineStack gap="200">
-            <Button url={toInApp(MAILER_ROUTE_PATHS.adminTemplates)}>
-              템플릿 목록으로
-            </Button>
-            <Button url={toInApp(templateLogsPath)}>
-              이 템플릿 전체 로그 보기
-            </Button>
+            <Button url={toInApp(MAILER_ROUTE_PATHS.adminTemplates)}>템플릿 목록으로</Button>
+            <Button url={toInApp(templateLogsPath)}>이 템플릿 전체 로그 보기</Button>
           </InlineStack>
           <Badge tone={data.template.isActive ? "success" : "attention"}>
             {data.template.isActive ? "활성" : "비활성"}
@@ -654,11 +646,7 @@ export default function MailTemplateDetailPage() {
                 Supported variables: {MAILER_TEMPLATE_VARIABLES.join(", ")}
               </Text>
 
-              <Button
-                submit
-                variant="primary"
-                loading={submittingIntent === "update_template"}
-              >
+              <Button submit variant="primary" loading={submittingIntent === "update_template"}>
                 Save Template
               </Button>
             </BlockStack>
@@ -714,8 +702,8 @@ export default function MailTemplateDetailPage() {
               Attachments
             </Text>
             <Text as="p" variant="bodyMd">
-              정책: 템플릿당 최대 {data.attachmentPolicy.maxTemplateAttachmentCount}개,
-              파일당 {data.attachmentPolicy.maxAttachmentBytes} bytes, 총{" "}
+              정책: 템플릿당 최대 {data.attachmentPolicy.maxTemplateAttachmentCount}개, 파일당{" "}
+              {data.attachmentPolicy.maxAttachmentBytes} bytes, 총{" "}
               {data.attachmentPolicy.maxTotalAttachmentBytes} bytes
             </Text>
             {data.template.attachments.length > 0 ? (
@@ -823,10 +811,7 @@ export default function MailTemplateDetailPage() {
                         {fieldErrors.attachmentFile}
                       </Text>
                     ) : null}
-                    <Button
-                      submit
-                      loading={submittingIntent === "upload_attachment"}
-                    >
+                    <Button submit loading={submittingIntent === "upload_attachment"}>
                       Upload and Attach
                     </Button>
                   </BlockStack>
@@ -854,10 +839,7 @@ export default function MailTemplateDetailPage() {
                         onChange={setSelectedReusableFileId}
                         error={fieldErrors.shopifyFileId}
                       />
-                      <Button
-                        submit
-                        loading={submittingIntent === "attach_shopify_file"}
-                      >
+                      <Button submit loading={submittingIntent === "attach_shopify_file"}>
                         Attach Selected File
                       </Button>
                     </BlockStack>
@@ -896,10 +878,7 @@ export default function MailTemplateDetailPage() {
                       error={fieldErrors.fileName}
                     />
                   </FormLayout>
-                  <Button
-                    submit
-                    loading={submittingIntent === "attach_external_url"}
-                  >
+                  <Button submit loading={submittingIntent === "attach_external_url"}>
                     Attach External File
                   </Button>
                 </Form>
@@ -916,8 +895,8 @@ export default function MailTemplateDetailPage() {
                 Test Send
               </Text>
               <Text as="p" variant="bodyMd">
-                비활성 템플릿도 테스트 발송할 수 있습니다. 현재 템플릿 본문과 현재
-                첨부 설정을 기준으로 발송됩니다.
+                비활성 템플릿도 테스트 발송할 수 있습니다. 현재 템플릿 본문과 현재 첨부 설정을
+                기준으로 발송됩니다.
               </Text>
               <FormLayout>
                 <TextField

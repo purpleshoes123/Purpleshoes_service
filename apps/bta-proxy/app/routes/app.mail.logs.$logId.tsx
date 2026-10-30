@@ -14,13 +14,11 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import db from "~/db.server";
-import { MAILER_ROUTE_PATHS } from "~/lib/mailer/contracts";
-import {
-  getSendRequestDetail,
-} from "~/lib/mailer/sendRequestStore.server";
-import { resendFailedMailRequest } from "~/lib/mailer/service.server";
-import { getTemplateById } from "~/lib/mailer/templateStore.server";
-import { withEmbeddedSearch } from "~/lib/gkv/embeddedPath";
+import { MAILER_ROUTE_PATHS } from "~/domains/mail/contracts";
+import { getSendRequestDetail } from "~/domains/mail/sendRequestStore.server.ts";
+import { resendFailedMailRequest } from "~/domains/mail/service.server.ts";
+import { getTemplateById } from "~/domains/mail/templateStore.server.ts";
+import { withEmbeddedSearch } from "~/domains/guide-viewer/embeddedPath";
 import { authenticate } from "~/shopify.server";
 
 type ActionData =
@@ -60,10 +58,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       createdAt: detail.createdAt.toISOString(),
       sentAt: detail.sentAt?.toISOString() || null,
       recaptchaAction: detail.recaptchaAction || "",
-      recaptchaScore:
-        detail.recaptchaScore === null ? null : String(detail.recaptchaScore),
-      recaptchaSuccess:
-        detail.recaptchaSuccess === null ? null : String(detail.recaptchaSuccess),
+      recaptchaScore: detail.recaptchaScore === null ? null : String(detail.recaptchaScore),
+      recaptchaSuccess: detail.recaptchaSuccess === null ? null : String(detail.recaptchaSuccess),
       failureCode: detail.failureCode || "",
       failureReason: detail.failureReason || "",
       emailProvider: detail.emailProvider,
@@ -77,9 +73,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       fromNameSnapshot: detail.fromNameSnapshot || "",
       replyToSnapshot: detail.replyToSnapshot || "",
       hasHistoricalSnapshot: Boolean(
-        detail.subjectSnapshot &&
-          detail.htmlBodySnapshot &&
-          detail.attachmentModeSnapshot
+        detail.subjectSnapshot && detail.htmlBodySnapshot && detail.attachmentModeSnapshot,
       ),
       attachments: detail.attachments.map((item) => ({
         id: item.id,
@@ -89,15 +83,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         fileUrl: item.resolvedFileUrl,
       })),
     },
-    template: template && template.shopDomain === auth.session.shop
-      ? {
-          id: template.id,
-          name: template.name,
-          slug: template.slug,
-          isActive: template.isActive,
-          deletedAt: template.deletedAt?.toISOString() || null,
-        }
-      : null,
+    template:
+      template && template.shopDomain === auth.session.shop
+        ? {
+            id: template.id,
+            name: template.name,
+            slug: template.slug,
+            isActive: template.isActive,
+            deletedAt: template.deletedAt?.toISOString() || null,
+          }
+        : null,
   });
 };
 
@@ -130,8 +125,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   } catch (error) {
     return json<ActionData>({
       ok: false,
-      errorMessage:
-        error instanceof Error ? error.message : "재발송 중 오류가 발생했습니다.",
+      errorMessage: error instanceof Error ? error.message : "재발송 중 오류가 발생했습니다.",
     });
   }
 };
@@ -209,8 +203,7 @@ export default function MailLogDetailPage() {
             </Text>
             <Text as="p" variant="bodyMd">
               reCAPTCHA: action {data.log.recaptchaAction || "-"} / score{" "}
-              {data.log.recaptchaScore || "-"} / success{" "}
-              {data.log.recaptchaSuccess || "-"}
+              {data.log.recaptchaScore || "-"} / success {data.log.recaptchaSuccess || "-"}
             </Text>
             <Text as="p" variant="bodyMd">
               Failure: {data.log.failureCode || "-"} / {data.log.failureReason || "-"}
@@ -262,8 +255,7 @@ export default function MailLogDetailPage() {
                     borderRadius: "12px",
                     background: "var(--p-color-bg-surface-secondary)",
                     border: "1px solid var(--p-color-border-secondary)",
-                    fontFamily:
-                      "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                   }}
                 >
                   {data.log.textBodySnapshot}
@@ -291,9 +283,7 @@ export default function MailLogDetailPage() {
                   Active: {data.template.isActive ? "Yes" : "No"} / deletedAt:{" "}
                   {data.template.deletedAt || "-"}
                 </Text>
-                <Button
-                  url={toInApp(MAILER_ROUTE_PATHS.adminTemplateDetail(data.template.id))}
-                >
+                <Button url={toInApp(MAILER_ROUTE_PATHS.adminTemplateDetail(data.template.id))}>
                   Open Template
                 </Button>
               </BlockStack>
@@ -334,9 +324,9 @@ export default function MailLogDetailPage() {
                 Resend
               </Text>
               <Text as="p" variant="bodyMd">
-                현재 구현은 `FAILED` 로그만 재발송할 수 있습니다. historical
-                snapshot이 있으면 해당 subject/body/attachment snapshot을 우선
-                사용하고, legacy 로그는 현재 템플릿 기준으로 fallback 합니다.
+                현재 구현은 `FAILED` 로그만 재발송할 수 있습니다. historical snapshot이 있으면 해당
+                subject/body/attachment snapshot을 우선 사용하고, legacy 로그는 현재 템플릿 기준으로
+                fallback 합니다.
               </Text>
               <Button submit disabled={!resendAllowed} loading={isSubmitting}>
                 Resend Failed Mail

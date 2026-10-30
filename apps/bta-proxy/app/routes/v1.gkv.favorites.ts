@@ -1,25 +1,25 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { requireGkvCustomerId } from "~/lib/gkv/customerAuth";
+import { requireGkvCustomerId } from "~/domains/guide-viewer/customerAuth";
 import {
   FavoriteRequestError,
   listFavorites,
   parseFavoriteTypeQuery,
   parseIncludeDeletedQuery,
-} from "~/lib/gkv/favorites.server";
+} from "~/domains/guide-viewer/favorites.server.ts";
 import { respond } from "~/lib/respond";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const auth = await requireGkvCustomerId(request);
-  if (auth instanceof Response) return respond.withNoStore(auth);
+  if (auth instanceof Response) {
+    return respond.withNoStore(auth);
+  }
   const correlationId = respond.getCorrelationId(request);
 
   try {
     const url = new URL(request.url);
     const type = parseFavoriteTypeQuery(url.searchParams.get("type"));
-    const includeDeleted = parseIncludeDeletedQuery(
-      url.searchParams.get("includeDeleted"),
-    );
+    const includeDeleted = parseIncludeDeletedQuery(url.searchParams.get("includeDeleted"));
     const data = await listFavorites({
       customerId: auth.customerId,
       type,

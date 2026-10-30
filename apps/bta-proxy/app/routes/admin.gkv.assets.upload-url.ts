@@ -1,13 +1,15 @@
 import type { ActionFunctionArgs } from "react-router";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
-import { assetUploadUrlSchema } from "~/lib/gkv/adminSchemas";
-import { buildAssetUploadUrl } from "~/lib/gkv/uploadUrl.server";
+import { assetUploadUrlSchema } from "~/domains/guide-viewer/adminSchemas";
+import { buildAssetUploadUrl } from "~/domains/guide-viewer/uploadUrl.server.ts";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   try {
@@ -25,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         s3Key: upload.s3Key,
         mode: upload.mode,
       },
-      { correlationId }
+      { correlationId },
     );
   } catch (error) {
     if (error && typeof error === "object" && "issues" in error) {
@@ -34,11 +36,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -46,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

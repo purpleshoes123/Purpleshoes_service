@@ -163,7 +163,5 @@
       ]
     }
   },
-  "order": [
-    "help_center"
-  ]
+  "order": ["help_center"]
 }

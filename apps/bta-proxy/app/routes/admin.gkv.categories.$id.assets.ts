@@ -7,7 +7,7 @@ import {
   detachAssetFromCategory,
   getCategoryAssetManagement,
   promoteCategoryAsset,
-} from "~/lib/gkv/adminAssetUsage.server";
+} from "~/domains/guide-viewer/adminAssetUsage.server.ts";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
@@ -19,7 +19,9 @@ const actionSchema = z.object({
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
@@ -29,7 +31,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "category id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -40,7 +42,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "카테고리를 찾을 수 없습니다."),
       undefined,
       404,
-      correlationId
+      correlationId,
     );
   }
 
@@ -49,7 +51,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const id = params.id;
@@ -59,7 +63,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "category id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -69,7 +73,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       405,
-      correlationId
+      correlationId,
     );
   }
 
@@ -87,11 +91,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           ErrorCode.VALIDATION_ERROR,
           getErrorMessage(
             ErrorCode.VALIDATION_ERROR,
-            "다른 카테고리에도 연결된 asset입니다. 먼저 연결 범위를 확인하세요."
+            "다른 카테고리에도 연결된 asset입니다. 먼저 연결 범위를 확인하세요.",
           ),
           { assetId: result.assetId, otherCategoryIds: result.otherCategoryIds },
           409,
-          correlationId
+          correlationId,
         );
       }
       return respond.ok(result, { correlationId });
@@ -110,11 +114,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          error.issues.map((issue) => issue.message).join(", ")
+          error.issues.map((issue) => issue.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -124,7 +128,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, error.message),
         undefined,
         422,
-        correlationId
+        correlationId,
       );
     }
 
@@ -133,7 +137,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

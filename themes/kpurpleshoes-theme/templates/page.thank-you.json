@@ -23,7 +23,5 @@
       }
     }
   },
-  "order": [
-    "signup_thank_you"
-  ]
+  "order": ["signup_thank_you"]
 }

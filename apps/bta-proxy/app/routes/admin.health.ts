@@ -1,12 +1,14 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { respond } from "~/lib/respond";
-import { getGkvEnv } from "~/lib/gkv/env";
+import { getGkvEnv } from "~/domains/guide-viewer/env";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 import prisma from "~/db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
 
   const correlationId = respond.getCorrelationId(request);
   const env = getGkvEnv();
@@ -21,6 +23,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       strictMode: env.strictMode,
       db: "ok",
     },
-    { correlationId }
+    { correlationId },
   );
 };

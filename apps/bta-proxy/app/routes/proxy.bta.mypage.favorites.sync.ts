@@ -4,9 +4,9 @@ import {
   FavoriteRequestError,
   parseSyncRequestBody,
   syncFavoriteChanges,
-} from "~/lib/gkv/favorites.server";
+} from "~/domains/guide-viewer/favorites.server.ts";
 import { respond } from "~/lib/respond";
-import { requireStorefrontCustomerProxyContext } from "~/lib/storefront/customerProxy.server";
+import { requireStorefrontCustomerProxyContext } from "~/domains/storefront/customerProxy.server.ts";
 
 async function readJsonBody(request: Request): Promise<unknown> {
   try {
@@ -24,7 +24,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     rateLimitPolicy: "customer",
     rateLimitBucket: "mypage-write",
   });
-  if (context instanceof Response) return respond.withNoStore(context);
+  if (context instanceof Response) {
+    return respond.withNoStore(context);
+  }
 
   try {
     const body = await readJsonBody(request);
@@ -34,9 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       deviceId: parsed.deviceId,
       changes: parsed.changes,
     });
-    return respond.withNoStore(
-      respond.ok(data, { correlationId: context.correlationId }),
-    );
+    return respond.withNoStore(respond.ok(data, { correlationId: context.correlationId }));
   } catch (error) {
     if (error instanceof FavoriteRequestError) {
       return respond.withNoStore(

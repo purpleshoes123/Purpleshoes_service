@@ -24,24 +24,24 @@ export default function App() {
   return (
     <AppProvider embedded apiKey={apiKey}>
       <PolarisProvider i18n={polarisEnglish} linkComponent={AdminLink}>
-      <NavMenu>
-        <Link to="/app/bookings" rel="home">
-          Home
-        </Link>
-        <Link to="/app/bookings">Bookings</Link>
-        <Link to="/app/blackouts">Global blackout</Link>
-        <Link to="/app/products/upsert">Products</Link>
-        <Link to="/app/reviews">Reviews</Link>
-        <Link to="/app/coupons">Coupons</Link>
-        <Link to="/app/mail">Mail</Link>
-        <Link to="/app/gkv/guides">GKV Guides</Link>
-        <Link to="/app/gkv/categories">GKV Categories</Link>
-        <Link to="/app/gkv/restaurants">GKV Restaurants</Link>
-        <Link to="/app/gkv/entitlements">GKV Entitlements</Link>
-        <Link to="/app/gkv/sessions">GKV Sessions</Link>
-        <Link to="/app/gkv/settings">GKV Settings</Link>
-      </NavMenu>
-      <Outlet />
+        <NavMenu>
+          <Link to="/app/bookings" rel="home">
+            Home
+          </Link>
+          <Link to="/app/bookings">Bookings</Link>
+          <Link to="/app/blackouts">Global blackout</Link>
+          <Link to="/app/products/upsert">Products</Link>
+          <Link to="/app/reviews">Reviews</Link>
+          <Link to="/app/coupons">Coupons</Link>
+          <Link to="/app/mail">Mail</Link>
+          <Link to="/app/gkv/guides">GKV Guides</Link>
+          <Link to="/app/gkv/categories">GKV Categories</Link>
+          <Link to="/app/gkv/restaurants">GKV Restaurants</Link>
+          <Link to="/app/gkv/entitlements">GKV Entitlements</Link>
+          <Link to="/app/gkv/sessions">GKV Sessions</Link>
+          <Link to="/app/gkv/settings">GKV Settings</Link>
+        </NavMenu>
+        <Outlet />
       </PolarisProvider>
     </AppProvider>
   );

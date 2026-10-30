@@ -1,4 +1,4 @@
-import { requireGkvAdmin } from "~/lib/gkv/adminRequest.server";
+import { requireGkvAdmin } from "~/domains/guide-viewer/adminRequest.server.ts";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { json } from "~/lib/httpJson";
 import { randomUUID } from "crypto";
@@ -16,12 +16,12 @@ import {
   TextField,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { callGkvAdminApi, GkvAdminApiError } from "~/lib/gkv/adminApi.server";
+import { callGkvAdminApi, GkvAdminApiError } from "~/domains/guide-viewer/adminApi.server.ts";
 import {
   processAndUploadRestaurantPhoto,
   RestaurantPhotoUploadError,
-} from "~/lib/gkv/restaurantPhotoUpload.server";
-import type { RestaurantPhotoMeta } from "~/lib/gkv/restaurantPhotoUrls.server";
+} from "~/domains/guide-viewer/restaurantPhotoUpload.server.ts";
+import type { RestaurantPhotoMeta } from "~/domains/guide-viewer/restaurantPhotoUrls.server.ts";
 import { respond } from "~/lib/respond";
 
 type RestaurantListItem = {
@@ -92,8 +92,12 @@ function getFileName(value: Blob): string | null {
 
 function getCauseMessage(error: unknown): string | undefined {
   if (error instanceof RestaurantPhotoUploadError) {
-    if (error.cause instanceof Error) return error.cause.message;
-    if (error.cause) return String(error.cause);
+    if (error.cause instanceof Error) {
+      return error.cause.message;
+    }
+    if (error.cause) {
+      return String(error.cause);
+    }
   }
   return undefined;
 }
@@ -117,7 +121,7 @@ function logActionError(request: Request, context: ActionLogContext, error: unkn
       errorName,
       errorMessage,
       causeMessage: getCauseMessage(error),
-    })
+    }),
   );
 }
 
@@ -137,7 +141,9 @@ function parseFloatSafe(value: FormDataEntryValue | null): number {
 
 function parseCsv(value: FormDataEntryValue | null): string[] {
   const text = String(value || "").trim();
-  if (!text) return [];
+  if (!text) {
+    return [];
+  }
   return text
     .split(",")
     .map((token) => token.trim())
@@ -149,7 +155,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   try {
     const listsRes = await callGkvAdminApi<{ items: RestaurantListItem[] }>(
       request,
-      "/admin/gkv/restaurant-lists"
+      "/admin/gkv/restaurant-lists",
     );
     const url = new URL(request.url);
     const selectedFromQuery = url.searchParams.get("listId");
@@ -164,7 +170,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     const itemsRes = await callGkvAdminApi<{ items: RestaurantItem[] }>(
       request,
-      `/admin/gkv/restaurant-lists/${selectedListId}/items`
+      `/admin/gkv/restaurant-lists/${selectedListId}/items`,
     );
     return json<LoaderData>({
       lists: listsRes.items,
@@ -172,7 +178,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       items: itemsRes.items,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "식당 리스트 데이터를 불러오지 못했습니다.";
+    const message =
+      error instanceof Error ? error.message : "식당 리스트 데이터를 불러오지 못했습니다.";
     return json<LoaderData>({ lists: [], selectedListId: null, items: [], error: message });
   }
 };
@@ -207,7 +214,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await callGkvAdminApi<{ id: string; deleted: boolean }>(
         request,
         `/admin/gkv/restaurant-lists/${id}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       return json<ActionData>({ ok: true, message: "식당 리스트를 삭제했습니다." });
     }
@@ -224,7 +231,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           body: JSON.stringify({
             isActive: parseBool(formData.get("nextActive")),
           }),
-        }
+        },
       );
       return json<ActionData>({ ok: true, message: "리스트 활성 상태를 변경했습니다." });
     }
@@ -254,30 +261,34 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               file: photoValue,
             })
           : undefined;
-      await callGkvAdminApi<{ id: string }>(request, `/admin/gkv/restaurant-lists/${listId}/items`, {
-        method: "POST",
-        body: JSON.stringify({
-          id: itemId,
-          name: String(formData.get("name") || ""),
-          category: String(formData.get("category") || "") || undefined,
-          address: String(formData.get("address") || "") || undefined,
-          lat: parseFloatSafe(formData.get("lat")),
-          lng: parseFloatSafe(formData.get("lng")),
-          tags: parseCsv(formData.get("tags")),
-          memo: String(formData.get("memo") || "") || undefined,
-          priority: parseIntSafe(formData.get("priority"), 0),
-          mapUrl: String(formData.get("mapUrl") || "") || undefined,
-          dietary: {
-            isVeganOnly: parseBool(formData.get("isVeganOnly")),
-            hasVeganOptions: parseBool(formData.get("hasVeganOptions")),
-            veganLevel: String(formData.get("veganLevel") || "UNKNOWN"),
-            meatTypes: [meatType],
-            halalLevel: String(formData.get("halalLevel") || "UNKNOWN"),
-            notes: String(formData.get("dietaryNotes") || "") || undefined,
-          },
-          photo,
-        }),
-      });
+      await callGkvAdminApi<{ id: string }>(
+        request,
+        `/admin/gkv/restaurant-lists/${listId}/items`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            id: itemId,
+            name: String(formData.get("name") || ""),
+            category: String(formData.get("category") || "") || undefined,
+            address: String(formData.get("address") || "") || undefined,
+            lat: parseFloatSafe(formData.get("lat")),
+            lng: parseFloatSafe(formData.get("lng")),
+            tags: parseCsv(formData.get("tags")),
+            memo: String(formData.get("memo") || "") || undefined,
+            priority: parseIntSafe(formData.get("priority"), 0),
+            mapUrl: String(formData.get("mapUrl") || "") || undefined,
+            dietary: {
+              isVeganOnly: parseBool(formData.get("isVeganOnly")),
+              hasVeganOptions: parseBool(formData.get("hasVeganOptions")),
+              veganLevel: String(formData.get("veganLevel") || "UNKNOWN"),
+              meatTypes: [meatType],
+              halalLevel: String(formData.get("halalLevel") || "UNKNOWN"),
+              notes: String(formData.get("dietaryNotes") || "") || undefined,
+            },
+            photo,
+          }),
+        },
+      );
       return json<ActionData>({ ok: true, message: "식당 아이템을 생성했습니다." });
     }
 
@@ -289,7 +300,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await callGkvAdminApi<{ id: string; deleted: boolean }>(
         request,
         `/admin/gkv/restaurant-items/${itemId}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       return json<ActionData>({ ok: true, message: "식당 아이템을 삭제했습니다." });
     }
@@ -329,10 +340,7 @@ export default function GkvRestaurantListsPage() {
           {item.isActive ? "비활성화" : "활성화"}
         </Button>
       </fetcher.Form>
-      <Button
-        url={`/app/gkv/restaurant-lists?listId=${encodeURIComponent(item.id)}`}
-        size="micro"
-      >
+      <Button url={`/app/gkv/restaurant-lists?listId=${encodeURIComponent(item.id)}`} size="micro">
         아이템 보기
       </Button>
       <fetcher.Form method="post">
@@ -523,8 +531,26 @@ export default function GkvRestaurantListsPage() {
               {selectedListId ? `아이템 목록 (${selectedListId})` : "아이템 목록"}
             </Text>
             <DataTable
-              columnContentTypes={["text", "text", "text", "text", "text", "text", "numeric", "text"]}
-              headings={["Photo", "Name", "Category", "Lat/Lng", "Vegan", "Halal", "Priority", "Actions"]}
+              columnContentTypes={[
+                "text",
+                "text",
+                "text",
+                "text",
+                "text",
+                "text",
+                "numeric",
+                "text",
+              ]}
+              headings={[
+                "Photo",
+                "Name",
+                "Category",
+                "Lat/Lng",
+                "Vegan",
+                "Halal",
+                "Priority",
+                "Actions",
+              ]}
               rows={itemRows}
             />
           </BlockStack>

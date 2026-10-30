@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { respond } from "~/lib/respond";
-import { verifyGkvWebhookSignature } from "~/lib/gkv/webhookAuth";
+import { verifyGkvWebhookSignature } from "~/domains/guide-viewer/webhookAuth";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const correlationId = respond.getCorrelationId(request);
@@ -14,7 +14,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_AUTH_INVALID),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_AUTH_INVALID),
-      correlationId
+      correlationId,
     );
   }
 
@@ -27,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "웹훅 payload JSON 파싱 실패"),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
   if (!payload.customerId || !payload.guideId) {
@@ -36,7 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "customerId/guideId가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 

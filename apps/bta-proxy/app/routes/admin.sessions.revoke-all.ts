@@ -2,14 +2,16 @@ import type { ActionFunctionArgs } from "react-router";
 import { ZodError } from "zod";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage } from "~/lib/errors";
-import { toValidationFailResponse } from "~/lib/gkv/adminUiResponses";
-import { sessionRevokeAllSchema } from "~/lib/gkv/adminUiSchemas";
+import { toValidationFailResponse } from "~/domains/guide-viewer/adminUiResponses";
+import { sessionRevokeAllSchema } from "~/domains/guide-viewer/adminUiSchemas";
 import { respond } from "~/lib/respond";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
 
   if (request.method !== "POST") {
@@ -18,7 +20,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
       undefined,
       405,
-      correlationId
+      correlationId,
     );
   }
 
@@ -45,7 +47,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       500,
-      correlationId
+      correlationId,
     );
   }
 };

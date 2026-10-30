@@ -4,9 +4,7 @@ import { useLoaderData } from "react-router";
 
 import previewStyles from "~/styles/local-preview.css?url";
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: previewStyles },
-];
+export const links: LinksFunction = () => [{ rel: "stylesheet", href: previewStyles }];
 
 export const meta: MetaFunction = () => [
   { title: "BTA Proxy · Local UI Preview" },
@@ -42,7 +40,9 @@ export default function LocalPreview() {
           <h1>BTA Proxy</h1>
         </div>
         <nav>
-          <a className="is-active" href="#overview">Overview</a>
+          <a className="is-active" href="#overview">
+            Overview
+          </a>
           <a href="#workbench">UI workbench</a>
           <a href="#safety">Safety</a>
         </nav>
@@ -65,7 +65,8 @@ export default function LocalPreview() {
             <p className="preview-overline">SAFE BY DEFAULT</p>
             <h3>운영과 분리된 UI 작업 공간</h3>
             <p>
-              이 화면에서 레이아웃, 카피, 컬러, 컴포넌트를 먼저 다듬은 뒤 실제 Embedded Admin 화면으로 옮길 수 있습니다.
+              이 화면에서 레이아웃, 카피, 컬러, 컴포넌트를 먼저 다듬은 뒤 실제 Embedded Admin
+              화면으로 옮길 수 있습니다.
             </p>
           </div>
           <div className="preview-hero-stat">
@@ -84,9 +85,27 @@ export default function LocalPreview() {
               <span className="preview-badge">Hot reload</span>
             </div>
             <ol className="preview-steps">
-              <li><span>01</span><div><strong>UI 코드 수정</strong><p>`app/` 아래 React route와 style을 저장합니다.</p></div></li>
-              <li><span>02</span><div><strong>브라우저 새로고침</strong><p>Vite가 변경을 감지해 preview를 갱신합니다.</p></div></li>
-              <li><span>03</span><div><strong>승인된 변경만 이식</strong><p>실제 Shopify 연동 화면에는 검토 후 반영합니다.</p></div></li>
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>UI 코드 수정</strong>
+                  <p>`app/` 아래 React route와 style을 저장합니다.</p>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>브라우저 새로고침</strong>
+                  <p>Vite가 변경을 감지해 preview를 갱신합니다.</p>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>승인된 변경만 이식</strong>
+                  <p>실제 Shopify 연동 화면에는 검토 후 반영합니다.</p>
+                </div>
+              </li>
             </ol>
           </article>
 
@@ -97,7 +116,10 @@ export default function LocalPreview() {
               {checklist.map(([label, detail, state]) => (
                 <li key={label}>
                   <span className={`preview-dot ${state}`} aria-hidden="true" />
-                  <div><strong>{label}</strong><small>{detail}</small></div>
+                  <div>
+                    <strong>{label}</strong>
+                    <small>{detail}</small>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -2,13 +2,15 @@ import type { ActionFunctionArgs } from "react-router";
 import prisma from "~/db.server";
 import { ErrorCode, getErrorMessage, getErrorStatus } from "~/lib/errors";
 import { respond } from "~/lib/respond";
-import { restaurantItemUpdateSchema } from "~/lib/gkv/adminSchemas";
-import { toRestaurantPhotoData } from "~/lib/gkv/restaurantPhotoUrls.server";
+import { restaurantItemUpdateSchema } from "~/domains/guide-viewer/adminSchemas";
+import { toRestaurantPhotoData } from "~/domains/guide-viewer/restaurantPhotoUrls.server.ts";
 import { verifyGkvAdmin } from "~/middleware/verifyGkvAdmin";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const authFail = await verifyGkvAdmin(request);
-  if (authFail) return authFail;
+  if (authFail) {
+    return authFail;
+  }
   const correlationId = respond.getCorrelationId(request);
   const itemId = params.itemId;
 
@@ -18,7 +20,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.VALIDATION_ERROR, "restaurant item id가 필요합니다."),
       undefined,
       getErrorStatus(ErrorCode.VALIDATION_ERROR),
-      correlationId
+      correlationId,
     );
   }
 
@@ -37,7 +39,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         getErrorMessage(ErrorCode.VALIDATION_ERROR, "지원하지 않는 메서드입니다."),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
 
@@ -90,11 +92,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ErrorCode.VALIDATION_ERROR,
         getErrorMessage(
           ErrorCode.VALIDATION_ERROR,
-          zodError.issues.map((i) => i.message).join(", ")
+          zodError.issues.map((i) => i.message).join(", "),
         ),
         undefined,
         getErrorStatus(ErrorCode.VALIDATION_ERROR),
-        correlationId
+        correlationId,
       );
     }
     return respond.fail(
@@ -102,7 +104,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       getErrorMessage(ErrorCode.INTERNAL_ERROR),
       undefined,
       getErrorStatus(ErrorCode.INTERNAL_ERROR),
-      correlationId
+      correlationId,
     );
   }
 };

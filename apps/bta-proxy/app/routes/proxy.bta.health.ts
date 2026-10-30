@@ -10,11 +10,15 @@ import { respond } from "~/lib/respond";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   // 1. 레이트 리밋 검증
   const rateLimitResponse = await enforceRateLimit(request);
-  if (rateLimitResponse) return rateLimitResponse;
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
 
   // 2. App Proxy 서명 검증
   const verifyResponse = await verifyAppProxy(request);
-  if (verifyResponse) return verifyResponse;
+  if (verifyResponse) {
+    return verifyResponse;
+  }
 
   // 3. correlationId 추출/생성
   const correlationId = respond.getCorrelationId(request);
@@ -28,4 +32,3 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return respond.ok(data, { correlationId });
 };
-
