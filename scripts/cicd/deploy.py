@@ -43,12 +43,35 @@ def canonical(name, raw):
         return hashlib.sha256(raw).hexdigest()
     text = raw.decode("utf-8-sig").replace("\r\n", "\n")
     if name.endswith(".json"):
-        return json.dumps(
-            json.loads(re.sub(r"^\s*/\*[\s\S]*?\*/", "", text)),
-            sort_keys=True,
-            separators=(",", ":"),
-        )
+        value = json.loads(re.sub(r"^\s*/\*[\s\S]*?\*/", "", text))
+        if name in ("templates/page.json", "templates/page.signinstep1.json"):
+            # Shopify removes these retired settings, absent from main-coupons' schema and UI.
+            for section in value.get("sections", {}).values():
+                if section.get("type") == "main-coupons":
+                    for key in ("tab_orders", "tab_coupons", "tab_help"):
+                        section.get("settings", {}).pop(key, None)
+        return json.dumps(value, sort_keys=True, separators=(",", ":"))
     return text
+
+
+def theme_changes(previous, current):
+    paths = changes(previous, current, THEME + "/")
+    selected = []
+    for path in paths:
+        original = subprocess.run(["git", "show", f"{previous}:{path}"], capture_output=True)
+        name = path[len(THEME) + 1 :]
+        if (
+            original.returncode == 0
+            and Path(path).is_file()
+            and canonical(name, original.stdout) == canonical(name, Path(path).read_bytes())
+        ):
+            continue
+        selected.append(path)
+    print(
+        f"Theme deployment plan: {len(selected)} changed files; {len(paths) - len(selected)} equivalent files skipped",
+        flush=True,
+    )
+    return selected
 
 
 def replace_exact(source, old, new):
@@ -386,7 +409,7 @@ def deploy():
     sha = os.environ["GITHUB_SHA"]
     assert re.fullmatch(r"[a-f0-9]{40}", sha)
     backend_changed = changes(state["backendCommit"], sha, "apps/bta-proxy/")
-    theme_changed = changes(state["themeCommit"], sha, THEME + "/")
+    theme_changed = theme_changes(state["themeCommit"], sha)
     app_changed = changes(state["appCommit"], sha, APP + "/")
     if any(
         path.endswith("/prisma/schema.prisma") or "/prisma/migrations/" in path
@@ -568,6 +591,10 @@ def deploy():
         )
     except Exception as error:
         reason = str(error) if isinstance(error, RuntimeError) else type(error).__name__
+        print(
+            "Deployment stopped; restoring prior state. Reason: " + safe_diagnostic(reason),
+            flush=True,
+        )
         rollback_errors = []
         if theme_started:
             try:

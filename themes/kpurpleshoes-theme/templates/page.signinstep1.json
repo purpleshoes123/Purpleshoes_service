@@ -21,9 +21,6 @@
       "type": "main-coupons",
       "name": "Coupon Dashboard",
       "settings": {
-        "tab_orders": "Orders & Bookings",
-        "tab_coupons": "My Coupons",
-        "tab_help": "Help Center",
         "coupons_heading": "My Coupons"
       }
     }

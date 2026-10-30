@@ -43,6 +43,58 @@ assert manifest["sourceManifestSha256"] == "{old_source}"
 
 
 class DeploymentGuards(unittest.TestCase):
+    def test_retired_coupon_settings_match_shopify_without_hiding_real_ui_changes(self):
+        schema_text = Path(deploy.THEME, "sections/main-coupons.liquid").read_text(encoding="utf-8")
+        schema = json.loads(schema_text.split("{% schema %}", 1)[1].split("{% endschema %}", 1)[0])
+        setting_ids = {item["id"] for item in schema["settings"] if "id" in item}
+        retired = {"tab_orders": "Orders", "tab_coupons": "Coupons", "tab_help": "Help"}
+        self.assertTrue(setting_ids.isdisjoint(retired))
+        original = {
+            "sections": {
+                "coupons": {
+                    "type": "main-coupons",
+                    "settings": {**retired, "coupons_heading": "My Coupons"},
+                }
+            },
+            "order": ["coupons"],
+        }
+        live = copy.deepcopy(original)
+        for key in retired:
+            live["sections"]["coupons"]["settings"].pop(key)
+        for name in ("templates/page.json", "templates/page.signinstep1.json"):
+            with self.subTest(name=name):
+                self.assertEqual(
+                    deploy.canonical(name, json.dumps(original).encode()),
+                    deploy.canonical(name, json.dumps(live).encode()),
+                )
+        live["sections"]["coupons"]["settings"]["coupons_heading"] = "Changed heading"
+        self.assertNotEqual(
+            deploy.canonical("templates/page.json", json.dumps(original).encode()),
+            deploy.canonical("templates/page.json", json.dumps(live).encode()),
+        )
+
+    def test_theme_plan_skips_equivalent_json_but_keeps_changes_new_files_and_deletions(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            same, changed, new, removed = [
+                str(root / name) for name in ("same.json", "changed.json", "new.js", "removed.css")
+            ]
+            Path(same).write_text('{"b":2,"a":1}')
+            Path(changed).write_text('{"a":2}')
+            Path(new).write_text("void 0;")
+            old = [
+                SimpleNamespace(returncode=0, stdout=b'{"a":1,"b":2}'),
+                SimpleNamespace(returncode=0, stdout=b'{"a":1}'),
+                SimpleNamespace(returncode=1, stdout=b""),
+                SimpleNamespace(returncode=0, stdout=b"old"),
+            ]
+            with (
+                patch.object(deploy, "THEME", folder),
+                patch.object(deploy, "changes", return_value=[same, changed, new, removed]),
+                patch.object(deploy.subprocess, "run", side_effect=old),
+            ):
+                self.assertEqual(deploy.theme_changes("a" * 40, "b" * 40), [changed, new, removed])
+
     def test_theme_download_explicitly_confirms_the_new_local_directory(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(deploy, "cli") as cli:
             root = Path(folder) / "new-backup"
