@@ -72,6 +72,14 @@ class DeploymentGuards(unittest.TestCase):
             self.assertNotIn('SHOPIFY_CLI_THEME_TOKEN',run.call_args.kwargs['env'])
             self.assertEqual(run.call_args.kwargs['env']['SHOPIFY_SERVICE_ACCOUNT_TOKEN'],'fixture-app')
 
+    def test_cli_errors_keep_useful_reason_without_credentials_or_account_links(self):
+        secret = 'fixture-credential-value'
+        with patch.dict(os.environ, {'SHOPIFY_CLI_THEME_TOKEN': secret}):
+            result = deploy.safe_diagnostic(f'Upload failed assets/demo.mp4: {secret} https://store.example/?token=unknown a@example.com opaqueTokenABCDEFGHIJKLMNOPQRSTUVWXYZ123456')
+        self.assertIn('Upload failed assets/demo.mp4', result)
+        for value in [secret, 'https://', 'a@example.com', 'opaqueToken']:
+            self.assertNotIn(value, result)
+
     def test_numeric_template_required_for_rollback(self):
         class ASG:
             def describe_auto_scaling_groups(self, **kwargs):

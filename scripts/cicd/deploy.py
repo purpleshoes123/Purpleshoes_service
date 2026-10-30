@@ -75,13 +75,25 @@ def update_bootstrap(raw, meta, artifact_key, release_name):
     return json.dumps(bundle, separators=(',', ':')).encode(), old_source
 
 
+def safe_diagnostic(raw):
+    text = raw.decode('utf-8', errors='replace') if isinstance(raw, bytes) else str(raw)
+    text = re.sub(r'\x1b\[[0-9;]*m', '', text)
+    for name, value in os.environ.items():
+        if value and re.search(r'TOKEN|SECRET|PASSWORD|KEY|ACCOUNT_ID|STORE|THEME_ID|ASG_NAME|BUCKET|URL|ARN', name):
+            text = text.replace(value, '[redacted]')
+    text = re.sub(r'https?://[^\s"<>]+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|[A-Za-z0-9_+/-]{32,}={0,2}', '[redacted]', text)
+    return ' '.join(text.split())[:1200]
+
+
 def cli(args, cwd=None):
     env = dict(os.environ)
     env.pop('SHOPIFY_SERVICE_ACCOUNT_TOKEN' if args[0] == 'theme' else 'SHOPIFY_CLI_THEME_TOKEN', None)
-    result = subprocess.run(['shopify', *args], cwd=cwd, env=env, capture_output=True)
+    command = ['shopify', *args]
+    if args[0] == 'theme' and '--json' not in args:
+        command.append('--json')
+    result = subprocess.run(command, cwd=cwd, env=env, capture_output=True)
     if result.returncode:
-        # A CLI failure can contain account information; keep it out of public logs.
-        raise RuntimeError('Shopify command failed: ' + ' '.join(args[:2]) + '; sensitive output suppressed')
+        raise RuntimeError('Shopify command failed: ' + ' '.join(args[:2]) + '; ' + safe_diagnostic(result.stdout + result.stderr))
     return result.stdout
 
 
@@ -210,7 +222,8 @@ def deploy():
     try:
         if theme_changed:
             backup.mkdir(parents=True, exist_ok=True)
-            cli(['theme', 'pull', *theme_args, '--path', str(backup), *selected])
+            # A rollback upload must be a valid theme directory (config, layout, templates).
+            cli(['theme', 'pull', *theme_args, '--path', str(backup)])
             for path in theme_changed:
                 name = path[len(THEME) + 1:]
                 original = subprocess.run(['git', 'show', f'{state["themeCommit"]}:{path}'], capture_output=True)
@@ -218,7 +231,7 @@ def deploy():
                 if original.returncode == 0:
                     if not live.exists() or canonical(name, live.read_bytes()) != canonical(name, original.stdout):
                         raise RuntimeError('Live theme drift detected; deployment stopped before changes: ' + name)
-                elif live.exists():
+                elif live.exists() and canonical(name, live.read_bytes()) != canonical(name, Path(path).read_bytes()):
                     raise RuntimeError('A new repository file conflicts with an existing live theme file: ' + name)
                 if live.exists():
                     put_object(s3, prefix + '/theme-backup/' + name, live.read_bytes())
@@ -276,7 +289,9 @@ def deploy():
             cli(['theme', 'pull', *theme_args, '--path', str(verify), *selected])
             for path in theme_changed:
                 name = path[len(THEME) + 1:]
-                assert canonical(name, Path(path).read_bytes()) == canonical(name, (verify / name).read_bytes()), 'Shopify readback mismatch'
+                remote = verify / name
+                if not remote.exists() or canonical(name, Path(path).read_bytes()) != canonical(name, remote.read_bytes()):
+                    raise RuntimeError('Shopify readback mismatch: ' + name)
             print('Verified Shopify live-file readback', flush=True)
         public_health()
         next_state = {**state, 'backendCommit': sha, 'themeCommit': sha, 'appCommit': sha,
@@ -291,6 +306,13 @@ def deploy():
             try:
                 # Restore prior referenced files; newly uploaded, unreferenced assets remain for inspection.
                 cli(['theme', 'push', *theme_args, '--path', str(backup), '--allow-live', '--nodelete', *selected])
+                restored = OUT / 'theme-restored'
+                restored.mkdir(parents=True, exist_ok=True)
+                cli(['theme', 'pull', *theme_args, '--path', str(restored), *selected])
+                for path in theme_changed:
+                    name = path[len(THEME) + 1:]
+                    if (backup / name).exists() and (not (restored / name).exists() or canonical(name, (backup / name).read_bytes()) != canonical(name, (restored / name).read_bytes())):
+                        raise RuntimeError('Shopify restored-file readback mismatch: ' + name)
             except Exception:
                 rollback_errors.append('Shopify theme restore requires attention')
         if old_app_version:
