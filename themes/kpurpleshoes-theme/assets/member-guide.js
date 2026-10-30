@@ -102,10 +102,6 @@
       pendingChoice = { plan: p, useExtra: p.extraAvailable, requestId: ids[kind], bundleRequestId: ids.BUNDLE };
       popup(); dialog.showModal();
     }
-    function row(container, label, value, total) {
-      var line = element('div', '', total ? 'kgd__total' : '');
-      line.append(element('span', label), element(total ? 'strong' : 'span', value)); container.append(line);
-    }
     function deadline() {
       var offer = summary && summary.coupons && summary.coupons.guide50;
       var offset = summary && summary.serverTime && Number.isFinite(summary.serverTime.nowMs) ? summary.serverTime.nowMs - Date.now() : 0;
@@ -122,17 +118,29 @@
       var card = find('[data-plan-kind="BUNDLE"] [data-plan-purchase]');
       if (owned) {
         var block = element('div', '', 'kgd__extension-card');
-        block.append(element('span', copy.extend_badge, 'kgd__pill'), element('p', copy.extend_copy, 'kgd__muted'), element('strong', copy.extension_price, 'kgd__amount'), element('p', copy.pay_once, 'kgd__muted'));
+        var intro = element('div', '', 'kgd__extension-intro');
+        intro.append(element('span', copy.extend_badge, 'kgd__offer-badge'), element('p', copy.extend_copy));
+        var terms = element('div', '', 'kgd__extension-terms');
+        terms.append(element('strong', copy.extension_price, 'kgd__amount'), element('p', copy.pay_once));
+        var action = element('div', '', 'kgd__extension-action');
         var extendButton = button(copy.extend, function () { extend('BUNDLE'); }, !eligibleTypes().includes('BUNDLE'));
         extendButton.dataset.ineligible = String(!eligibleTypes().includes('BUNDLE'));
-        block.append(extendButton, element('p', eligibleTypes().includes('BUNDLE') ? copy.extend_contents : copy.not_owned, 'kgd__muted')); card.append(block);
+        action.append(extendButton);
+        if (!eligibleTypes().includes('BUNDLE')) action.append(element('p', copy.not_owned, 'kgd__checkout-note'));
+        block.append(intro, terms, action); card.append(block);
       } else {
         var active = deadline();
-        card.append(element('p', copy.eyebrow, 'kgd__eyebrow'), element('h3', active ? copy.welcome_offer : copy.current_offer), element('strong', money(kitPrice(bundle)), 'kgd__amount'));
-        if (kitPrice(bundle) < bundle.priceCents) card.append(element('p', copy.regular + ' ' + money(bundle.priceCents), 'kgd__muted'));
+        var offer = element('div', '', 'kgd__member-offer');
+        var price = element('div', '', 'kgd__member-price');
+        var actions = element('div', '', 'kgd__member-actions');
+        price.append(element('h3', active ? copy.welcome_offer : copy.current_offer), element('strong', money(kitPrice(bundle)), 'kgd__amount'));
+        if (kitPrice(bundle) < bundle.priceCents) {
+          var regular = element('p', '', 'kgd__regular');
+          regular.append(document.createTextNode(copy.regular + ' '), element('s', money(bundle.priceCents))); price.append(regular);
+        }
         if (active) {
           var countdown = element('div', '', 'kgd__timer'), timerText = element('strong');
-          countdown.append(element('span', copy.timer), timerText); card.append(countdown);
+          countdown.append(element('span', copy.timer), timerText); price.append(countdown);
           function tick() {
             if (!root.isConnected) { clearInterval(countdownInterval); return; }
             var remaining = Math.max(0, Math.ceil((active.end - Date.now() - active.offset) / 1000));
@@ -143,15 +151,12 @@
             }
           }
           countdownInterval = setInterval(tick, 1000); tick();
-        } else if (summary && summary.coupons && summary.coupons.guide50 && !summary.coupons.guide50.available) card.append(element('p', copy.expired, 'kgd__expired'));
-        var lines = element('div', '', 'kgd__breakdown'); row(lines, copy.regular_line, money(bundle.priceCents));
-        if (bundle.memberPriceCents < bundle.priceCents) row(lines, copy.welcome_line, '− ' + money(bundle.priceCents - bundle.memberPriceCents));
-        if (bundle.extraAvailable) row(lines, copy.extra_line, '− ' + money(bundle.memberPriceCents - bundle.extraPriceCents));
-        row(lines, copy.total, money(kitPrice(bundle)), true); card.append(lines);
+        } else if (summary && summary.coupons && summary.coupons.guide50 && !summary.coupons.guide50.available) price.append(element('p', copy.expired, 'kgd__expired'));
         var referral = element('div', '', 'kgd__referral');
         referral.append(element('strong', bundle.extraAvailable ? copy.applied : copy.referral_title), element('p', copy.referral_copy));
-        var share = button(bundle.extraAvailable ? copy.referral_share : copy.referral_get, shareOffer); share.classList.add('kgd__button--outline'); share.dataset.kitShare = ''; referral.append(share); card.append(referral);
-        card.append(button(copy.get_kit, function () { choose('BUNDLE'); }), element('p', copy.confirm, 'kgd__checkout-note'));
+        var share = button(bundle.extraAvailable ? copy.referral_share : copy.referral_get, shareOffer); share.classList.add('kgd__button--outline'); share.dataset.kitShare = ''; referral.append(share); actions.append(referral);
+        actions.append(button(copy.get_kit, function () { choose('BUNDLE'); }), element('p', copy.confirm, 'kgd__checkout-note'));
+        offer.append(price, actions); card.append(offer);
       }
       ['PDF', 'VIDEO'].forEach(function (kind) {
         var p = planFor(kind), item = find('[data-plan-kind="' + kind + '"]');
@@ -165,6 +170,7 @@
         item.querySelector('[data-plan-purchase]').append(action);
       });
       find('[data-kit-new-only]').hidden = owned;
+      set('[data-kit-access]', copy[owned ? 'kit_devices' : 'access']);
       set('[data-kit-steps-heading]', copy[owned ? 'extend_steps_title' : 'steps_title']);
       var steps = owned ? ['extend_step1', 'extend_step2', 'extend_step3'] : ['member_step', 'purchase_step', 'open_step'];
       steps.forEach(function (key, i) { set('[data-kit-step' + (i + 1) + ']', copy[key]); set('[data-kit-step' + (i + 1) + '-copy]', copy[key + '_copy']); });
