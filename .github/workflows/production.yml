@@ -16,7 +16,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      theme: ${{ steps.changes.outputs.theme }}
+      app: ${{ steps.changes.outputs.app }}
+      deploy: ${{ steps.changes.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.23.3"
+      - name: Compare deployment sources with the last successful main revision
+        id: changes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/cicd/plan-changes.mjs
+
   verify:
+    needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
@@ -56,30 +82,36 @@ jobs:
       - name: Scan tracked source for credentials
         run: python3 scripts/cicd/scan-secrets.py
       - name: Install backend dependencies from lockfile
+        if: needs.plan.outputs.backend == 'true'
         working-directory: apps/bta-proxy
         run: npm ci --workspaces=false --ignore-scripts --no-fund
       - name: Generate Prisma client and run regression tests
+        if: needs.plan.outputs.backend == 'true'
         working-directory: apps/bta-proxy
         run: |
           node node_modules/prisma/build/index.js generate
           npm run test:run
           node --test scripts/*.test.mjs
       - name: Check production dependency advisories
+        if: needs.plan.outputs.backend == 'true'
         working-directory: apps/bta-proxy
         run: npm audit --omit=dev --audit-level=critical
       - name: Build and package Linux runtime
+        if: needs.plan.outputs.backend == 'true'
         run: bash scripts/cicd/package-runtime.sh
       - name: Validate Shopify theme
+        if: needs.plan.outputs.theme == 'true'
         run: |
           npm install --global @shopify/cli@5.0.0 --ignore-scripts --no-fund
           node scripts/cicd/check-theme.mjs
       - name: Build Shopify app extensions
+        if: needs.plan.outputs.app == 'true'
         working-directory: shopify/bta-proxy
         run: |
           npm ci --ignore-scripts --no-fund
           node ../../scripts/cicd/build-extensions.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.plan.outputs.backend == 'true'
         with:
           name: runtime-${{ github.sha }}
           path: |
@@ -89,8 +121,8 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    needs: verify
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [plan, verify]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.plan.outputs.deploy == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 110
     permissions:
@@ -133,6 +165,7 @@ jobs:
           role-duration-seconds: 7200
           mask-aws-account-id: true
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: needs.plan.outputs.backend == 'true'
         with:
           name: runtime-${{ github.sha }}
           path: output/cicd
@@ -140,8 +173,11 @@ jobs:
         run: |
           python3 -m venv /tmp/ps-deploy
           /tmp/ps-deploy/bin/pip install 'boto3==1.40.59'
-          npm install --global @shopify/cli@5.0.0 --ignore-scripts --no-fund
+      - name: Install Shopify deployment CLI
+        if: needs.plan.outputs.theme == 'true' || needs.plan.outputs.app == 'true'
+        run: npm install --global @shopify/cli@5.0.0 --ignore-scripts --no-fund
       - name: Install locked Shopify extension dependencies
+        if: needs.plan.outputs.app == 'true'
         working-directory: shopify/bta-proxy
         run: npm ci --ignore-scripts --no-fund
       - name: Deploy changed components and verify

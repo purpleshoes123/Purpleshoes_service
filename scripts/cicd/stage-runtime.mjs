@@ -2,21 +2,13 @@ import { mkdirSync, copyFileSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { createHash } from "node:crypto";
 import { tracked } from "./verify-source.mjs";
+import { runtimeSourcePath } from "./plan-changes.mjs";
 
 const root = "output/cicd/runtime";
 const prefix = "apps/bta-proxy/";
 const files = {};
-for (const file of tracked()
-  .filter((f) => f.startsWith(prefix))
-  .sort()) {
+for (const file of tracked().filter(runtimeSourcePath).sort()) {
   const name = file.slice(prefix.length);
-  if (
-    !/^(app\/|public\/|prisma\/|scripts\/|mail-templates\/|certs\/|package(?:-lock)?\.json$|vite\.config\.ts$|react-router\.config\.ts$|tsconfig\.json$|env\.d\.ts$)/.test(
-      name,
-    )
-  ) {
-    continue;
-  }
   if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(name) || name.startsWith("prisma/migrations/")) {
     continue;
   }

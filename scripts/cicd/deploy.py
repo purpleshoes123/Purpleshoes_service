@@ -32,10 +32,21 @@ def git(*args):
     return subprocess.check_output(["git", *args])
 
 
-def changes(previous, current, prefix):
-    assert re.fullmatch(r"[a-f0-9]{40}", previous) and re.fullmatch(r"[a-f0-9]{40}", current)
-    paths = git("diff", "--name-only", "-z", previous, current, "--", prefix).decode().split("\0")
-    return [path for path in paths if path]
+def source_changes(previous, current, component):
+    return json.loads(
+        subprocess.check_output(
+            [
+                "node",
+                "scripts/cicd/plan-changes.mjs",
+                "--base",
+                previous,
+                "--head",
+                current,
+                "--component",
+                component,
+            ]
+        )
+    )
 
 
 def canonical(name, raw):
@@ -55,7 +66,7 @@ def canonical(name, raw):
 
 
 def theme_changes(previous, current):
-    paths = changes(previous, current, THEME + "/")
+    paths = source_changes(previous, current, "theme")
     selected = []
     for path in paths:
         original = subprocess.run(["git", "show", f"{previous}:{path}"], capture_output=True)
@@ -408,9 +419,15 @@ def deploy():
     )  # Missing baseline is a stop, never a full-store overwrite.
     sha = os.environ["GITHUB_SHA"]
     assert re.fullmatch(r"[a-f0-9]{40}", sha)
-    backend_changed = changes(state["backendCommit"], sha, "apps/bta-proxy/")
+    backend_changed = source_changes(state["backendCommit"], sha, "backend")
     theme_changed = theme_changes(state["themeCommit"], sha)
-    app_changed = changes(state["appCommit"], sha, APP + "/")
+    app_changed = source_changes(state["appCommit"], sha, "app")
+    if not (backend_changed or theme_changed or app_changed):
+        print("No deployment source changes; production left unchanged", flush=True)
+        (OUT / "summary.md").write_text(
+            "No deployment source changes; production left unchanged.\n", encoding="utf-8"
+        )
+        return
     if any(
         path.endswith("/prisma/schema.prisma") or "/prisma/migrations/" in path
         for path in backend_changed

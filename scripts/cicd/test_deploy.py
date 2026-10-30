@@ -43,6 +43,31 @@ assert manifest["sourceManifestSha256"] == "{old_source}"
 
 
 class DeploymentGuards(unittest.TestCase):
+    def test_no_source_changes_do_not_touch_the_fleet_or_deployment_state(self):
+        clients = {name: Mock() for name in ("s3", "autoscaling", "ec2", "elbv2", "ssm", "sts")}
+        clients["sts"].get_caller_identity.return_value = {"Account": "123456789012"}
+        boto = SimpleNamespace(client=lambda name, **kwargs: clients[name])
+        state = {"backendCommit": "a" * 40, "themeCommit": "a" * 40, "appCommit": "a" * 40}
+        with (
+            tempfile.TemporaryDirectory() as folder,
+            patch.dict(
+                sys.modules, {"boto3": boto, "botocore.config": SimpleNamespace(Config=Mock())}
+            ),
+            patch.dict(os.environ, {"AWS_ACCOUNT_ID": "123456789012", "GITHUB_SHA": "b" * 40}),
+            patch.object(deploy, "OUT", Path(folder)),
+            patch.object(deploy, "get_object", return_value=json.dumps(state).encode()),
+            patch.object(deploy, "source_changes", return_value=[]),
+            patch.object(deploy, "put_object") as put,
+            patch.object(deploy, "fleet") as fleet,
+            patch.object(deploy, "cli") as cli,
+        ):
+            deploy.deploy()
+            fleet.assert_not_called()
+            put.assert_not_called()
+            cli.assert_not_called()
+            clients["ec2"].create_launch_template_version.assert_not_called()
+            clients["ssm"].send_command.assert_not_called()
+
     def test_retired_coupon_settings_match_shopify_without_hiding_real_ui_changes(self):
         schema_text = Path(deploy.THEME, "sections/main-coupons.liquid").read_text(encoding="utf-8")
         schema = json.loads(schema_text.split("{% schema %}", 1)[1].split("{% endschema %}", 1)[0])
@@ -90,7 +115,7 @@ class DeploymentGuards(unittest.TestCase):
             ]
             with (
                 patch.object(deploy, "THEME", folder),
-                patch.object(deploy, "changes", return_value=[same, changed, new, removed]),
+                patch.object(deploy, "source_changes", return_value=[same, changed, new, removed]),
                 patch.object(deploy.subprocess, "run", side_effect=old),
             ):
                 self.assertEqual(deploy.theme_changes("a" * 40, "b" * 40), [changed, new, removed])
@@ -165,9 +190,9 @@ class DeploymentGuards(unittest.TestCase):
             patch.object(deploy, "put_object"),
             patch.object(
                 deploy,
-                "changes",
-                side_effect=lambda previous, current, prefix: (
-                    [] if prefix == deploy.THEME + "/" else [prefix + "changed"]
+                "source_changes",
+                side_effect=lambda previous, current, component: (
+                    [] if component == "theme" else [component + "/changed"]
                 ),
             ),
             patch.object(deploy, "fleet", return_value={"LaunchTemplate": {"Version": "18"}}),
