@@ -108,8 +108,14 @@ def fleet(asg):
 
 def wait_refresh(asg, refresh_id, seconds=2400):
     deadline = time.monotonic() + seconds
+    last = None
     while time.monotonic() < deadline:
-        status = asg.describe_instance_refreshes(AutoScalingGroupName=os.environ['ASG_NAME'], InstanceRefreshIds=[refresh_id])['InstanceRefreshes'][0]['Status']
+        refresh = asg.describe_instance_refreshes(AutoScalingGroupName=os.environ['ASG_NAME'], InstanceRefreshIds=[refresh_id])['InstanceRefreshes'][0]
+        status = refresh['Status']
+        progress = (status, refresh.get('PercentageComplete', 0))
+        if progress != last:
+            print(f'ASG refresh: {status}, {progress[1]}% complete', flush=True)
+            last = progress
         if status == 'Successful':
             return
         if status not in ('Pending', 'InProgress', 'Baking'):
@@ -216,6 +222,7 @@ def deploy():
                     raise RuntimeError('A new repository file conflicts with an existing live theme file: ' + name)
                 if live.exists():
                     put_object(s3, prefix + '/theme-backup/' + name, live.read_bytes())
+            print('Verified private theme backup and live-file consistency', flush=True)
         if backend_changed:
             previous = ec2.describe_launch_template_versions(LaunchTemplateId=os.environ['LAUNCH_TEMPLATE_ID'], Versions=[group['LaunchTemplate']['Version']])['LaunchTemplateVersions'][0]['LaunchTemplateData']
             userdata = base64.b64decode(previous['UserData']).decode()
@@ -243,12 +250,14 @@ def deploy():
             new_version = ec2.create_launch_template_version(LaunchTemplateId=os.environ['LAUNCH_TEMPLATE_ID'],
                 SourceVersion=group['LaunchTemplate']['Version'], VersionDescription='github-' + sha[:12],
                 LaunchTemplateData={'UserData': base64.b64encode(userdata.encode()).decode()})['LaunchTemplateVersion']['VersionNumber']
+            print('Uploaded verified immutable release; starting rolling replacement', flush=True)
             wait_refresh(asg, start_refresh(asg, new_version))
             instances = verify_nodes(asg, elb, ssm, new_version, meta['sourceManifestSha256'])
             worker_gate(ssm, instances[0], prior_digest, meta['sourceManifestSha256'])
             public_health()
             # Check the actual mail-worker child, not merely systemd's waiting wrapper.
             ssm_run(ssm, instances, ["set -eu\nfor i in $(seq 1 24); do if pgrep -u purpleshoes -f '^/opt/purpleshoes/runtime/.*/bin/node --import tsx scripts/purchase-email-worker.ts --watch$' >/dev/null; then exit 0; fi; sleep 5; done\nexit 1"])
+            print('Verified replacement instances, load-balancer health and purchase workers', flush=True)
         if app_changed:
             cli(['app', 'config', 'validate', '--json', '--no-input'], cwd=APP)
             versions = json.loads(cli(['app', 'versions', 'list', '--json'], cwd=APP))
@@ -268,6 +277,7 @@ def deploy():
             for path in theme_changed:
                 name = path[len(THEME) + 1:]
                 assert canonical(name, Path(path).read_bytes()) == canonical(name, (verify / name).read_bytes()), 'Shopify readback mismatch'
+            print('Verified Shopify live-file readback', flush=True)
         public_health()
         next_state = {**state, 'backendCommit': sha, 'themeCommit': sha, 'appCommit': sha,
                       'backendDigest': meta['sourceManifestSha256'] if meta else state['backendDigest'],
@@ -293,7 +303,7 @@ def deploy():
                 # A completed refresh cannot be rolled back via RollbackInstanceRefresh; refresh to the previous numeric version.
                 active = asg.describe_instance_refreshes(AutoScalingGroupName=os.environ['ASG_NAME'])['InstanceRefreshes']
                 if active and active[0]['Status'] in ('Pending', 'InProgress', 'Baking'):
-                    asg.cancel_instance_refresh(AutoScalingGroupName=os.environ['ASG_NAME'], ShouldWaitForTransitioningInstances=True)
+                    asg.cancel_instance_refresh(AutoScalingGroupName=os.environ['ASG_NAME'], WaitForTransitioningInstances=True)
                     deadline = time.monotonic() + 600
                     while time.monotonic() < deadline:
                         status = asg.describe_instance_refreshes(AutoScalingGroupName=os.environ['ASG_NAME'])['InstanceRefreshes'][0]['Status']

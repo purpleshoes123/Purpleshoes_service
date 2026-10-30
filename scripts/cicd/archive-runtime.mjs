@@ -21,7 +21,17 @@ function walk(dir, prefix = '') {
 walk(root);
 members.sort();
 writeFileSync('output/cicd/runtime.members', members.join('\n') + '\n');
-execFileSync('tar', ['--format=gnu', '--mtime=@0', '--owner=0', '--group=0', '--numeric-owner', '--no-recursion', '-czf', resolve('output/cicd/runtime.tgz'), '-C', root, '-T', resolve('output/cicd/runtime.members')]);
+execFileSync('tar', ['--format=gnu', '--mtime=@0', '--owner=0', '--group=0', '--numeric-owner',
+  '--mode=u+rwX,go+rX,go-w', '--no-recursion', '-czf', resolve('output/cicd/runtime.tgz'), '-C', root, '-T', resolve('output/cicd/runtime.members')]);
+// The service runs as purpleshoes, not as the CI runner or root. Private build umasks must not survive packaging.
+execFileSync('python3', ['-c', `
+import tarfile
+with tarfile.open('output/cicd/runtime.tgz') as archive:
+ for member in archive:
+  if member.isfile():
+   assert member.mode & 0o444 == 0o444, 'Runtime file is unreadable to the service account'
+   assert member.mode & 0o022 == 0, 'Runtime file is writable by a non-owner'
+`]);
 const hash = createHash('sha256');
 for await (const chunk of createReadStream('output/cicd/runtime.tgz')) hash.update(chunk);
 const manifest = JSON.parse(readFileSync(`${root}/FLEET-RELEASE-MANIFEST.json`));
