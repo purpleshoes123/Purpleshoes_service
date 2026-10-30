@@ -274,6 +274,13 @@ def wait_refresh(asg, refresh_id, seconds=2400):
 
 
 def start_refresh(asg, version):
+    group = fleet(asg)
+    # Prepare both replacements together only when the existing capacity limit has room.
+    max_healthy = 200 if group["MaxSize"] >= 2 * group["DesiredCapacity"] else 150
+    print(
+        f"Rolling replacement: minimum healthy 100%, maximum {max_healthy}%, warmup 300s",
+        flush=True,
+    )
     return asg.start_instance_refresh(
         AutoScalingGroupName=os.environ["ASG_NAME"],
         Strategy="Rolling",
@@ -285,7 +292,7 @@ def start_refresh(asg, version):
         },
         Preferences={
             "MinHealthyPercentage": 100,
-            "MaxHealthyPercentage": 150,
+            "MaxHealthyPercentage": max_healthy,
             "InstanceWarmup": 300,
             "SkipMatching": True,
             "AutoRollback": True,
@@ -341,6 +348,21 @@ def worker_gate(ssm, instance, prior, next_digest):
 def public_health():
     with urllib.request.urlopen(os.environ["PUBLIC_HEALTH_URL"], timeout=20) as response:
         assert response.status == 200
+
+
+def app_preflight():
+    cli(["app", "config", "validate", "--json", "--no-input"], cwd=APP)
+    versions = json.loads(cli(["app", "versions", "list", "--json", "--no-input"], cwd=APP))
+    # Fail before server changes if the active app cannot be restored safely.
+    rows = versions if isinstance(versions, list) else versions.get("versions", [])
+    active = [v for v in rows if v.get("active") or v.get("status") == "active"]
+    assert len(active) == 1, "Cannot determine active Shopify app version"
+    version = active[0].get("versionTag")
+    assert isinstance(version, str) and version, "The active Shopify app has no rollback tag"
+    print(
+        "Verified Shopify app configuration and rollback version before server changes", flush=True
+    )
+    return version
 
 
 def deploy():
@@ -401,7 +423,10 @@ def deploy():
     meta = None
     theme_started = False
     old_app_version = None
+    app_started = False
     try:
+        if app_changed:
+            old_app_version = app_preflight()
         if theme_changed:
             backup.mkdir(parents=True, exist_ok=True)
             # A rollback upload must be a valid theme directory (config, layout, templates).
@@ -490,17 +515,19 @@ def deploy():
                 flush=True,
             )
         if app_changed:
-            cli(["app", "config", "validate", "--json", "--no-input"], cwd=APP)
-            versions = json.loads(cli(["app", "versions", "list", "--json"], cwd=APP))
-            # Fail closed on an unknown CLI response instead of releasing without rollback information.
-            rows = versions if isinstance(versions, list) else versions.get("versions", [])
-            active = [v for v in rows if v.get("active") or v.get("status") == "active"]
-            assert len(active) == 1, "Cannot determine active Shopify app version"
-            old_app_version = active[0].get("versionTag")
-            assert (
-                isinstance(old_app_version, str) and old_app_version
-            ), "The active Shopify app has no rollback tag"
-            cli(["app", "deploy", "--force", "--version", "github-" + sha[:12]], cwd=APP)
+            app_started = True
+            cli(
+                [
+                    "app",
+                    "deploy",
+                    "--allow-updates",
+                    "--no-input",
+                    "--version",
+                    "github-" + sha[:12],
+                ],
+                cwd=APP,
+            )
+            print("Verified Shopify app deployment", flush=True)
         if theme_changed:
             theme_started = True
             push_theme(
@@ -561,9 +588,19 @@ def deploy():
                         raise RuntimeError("Shopify restored-file readback mismatch: " + name)
             except Exception:
                 rollback_errors.append("Shopify theme restore requires attention")
-        if old_app_version:
+        if app_started and old_app_version:
             try:
-                cli(["app", "release", "--force", "--version", old_app_version], cwd=APP)
+                cli(
+                    [
+                        "app",
+                        "release",
+                        "--allow-updates",
+                        "--no-input",
+                        "--version",
+                        old_app_version,
+                    ],
+                    cwd=APP,
+                )
             except Exception:
                 rollback_errors.append("Shopify app restore requires attention")
         if new_version:

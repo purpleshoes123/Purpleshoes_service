@@ -2,6 +2,7 @@ import copy
 import importlib.util
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 import unittest
@@ -42,6 +43,92 @@ assert manifest["sourceManifestSha256"] == "{old_source}"
 
 
 class DeploymentGuards(unittest.TestCase):
+    def test_app_preflight_checks_configuration_and_records_the_active_version(self):
+        with patch.object(
+            deploy, "cli", side_effect=["{}", '[{"status":"active","versionTag":"previous"}]']
+        ) as cli:
+            self.assertEqual(deploy.app_preflight(), "previous")
+        self.assertEqual(
+            cli.call_args_list[0].args[0], ["app", "config", "validate", "--json", "--no-input"]
+        )
+        self.assertEqual(
+            cli.call_args_list[1].args[0], ["app", "versions", "list", "--json", "--no-input"]
+        )
+
+    def test_app_preflight_rejects_an_unknown_or_unrestorable_active_version(self):
+        for versions in [[], [{"status": "draft", "versionTag": "old"}], [{"status": "active"}]]:
+            with (
+                self.subTest(versions=versions),
+                patch.object(deploy, "cli", side_effect=["{}", json.dumps(versions)]),
+                self.assertRaises(AssertionError),
+            ):
+                deploy.app_preflight()
+
+    def test_invalid_app_configuration_never_starts_a_server_replacement(self):
+        clients = {name: Mock() for name in ("s3", "autoscaling", "ec2", "elbv2", "ssm", "sts")}
+        clients["sts"].get_caller_identity.return_value = {"Account": "123456789012"}
+        clients["autoscaling"].describe_instance_refreshes.return_value = {"InstanceRefreshes": []}
+        boto = SimpleNamespace(client=lambda name, **kwargs: clients[name])
+        state = {"backendCommit": "a" * 40, "themeCommit": "a" * 40, "appCommit": "a" * 40}
+        env = {
+            "AWS_ACCOUNT_ID": "123456789012",
+            "ASG_NAME": "fixture",
+            "GITHUB_SHA": "b" * 40,
+            "GITHUB_RUN_ID": "1",
+            "SHOPIFY_SERVICE_ACCOUNT_TOKEN": "fixture-only",
+            "SHOPIFY_FLAG_STORE": "fixture.myshopify.com",
+            "SHOPIFY_THEME_ID": "1",
+        }
+        with (
+            tempfile.TemporaryDirectory() as folder,
+            patch.dict(
+                sys.modules, {"boto3": boto, "botocore.config": SimpleNamespace(Config=Mock())}
+            ),
+            patch.dict(os.environ, env),
+            patch.object(deploy, "OUT", Path(folder)),
+            patch.object(deploy, "get_object", return_value=json.dumps(state).encode()),
+            patch.object(deploy, "put_object"),
+            patch.object(
+                deploy,
+                "changes",
+                side_effect=lambda previous, current, prefix: (
+                    [] if prefix == deploy.THEME + "/" else [prefix + "changed"]
+                ),
+            ),
+            patch.object(deploy, "fleet", return_value={"LaunchTemplate": {"Version": "18"}}),
+            patch.object(
+                deploy, "cli", side_effect=RuntimeError("fixture schema validation failed")
+            ),
+            patch.object(deploy, "start_refresh") as refresh,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "fixture schema validation failed"):
+                deploy.deploy()
+            refresh.assert_not_called()
+            clients["ec2"].create_launch_template_version.assert_not_called()
+            clients["ssm"].send_command.assert_not_called()
+
+    def test_parallel_replacements_need_capacity_and_keep_the_health_guards(self):
+        for desired, maximum, percentage in [(2, 4, 200), (3, 4, 150), (4, 4, 150)]:
+            asg = Mock()
+            asg.start_instance_refresh.return_value = {"InstanceRefreshId": "fixture-refresh"}
+            group = {"MaxSize": maximum, "DesiredCapacity": desired}
+            with (
+                self.subTest(desired=desired),
+                patch.object(deploy, "fleet", return_value=group),
+                patch.dict(os.environ, {"ASG_NAME": "fixture", "LAUNCH_TEMPLATE_ID": "lt-fixture"}),
+            ):
+                self.assertEqual(deploy.start_refresh(asg, "19"), "fixture-refresh")
+            self.assertEqual(
+                asg.start_instance_refresh.call_args.kwargs["Preferences"],
+                {
+                    "MinHealthyPercentage": 100,
+                    "MaxHealthyPercentage": percentage,
+                    "InstanceWarmup": 300,
+                    "SkipMatching": True,
+                    "AutoRollback": True,
+                },
+            )
+
     def test_bootstrap_updates_all_pins_and_can_be_reused(self):
         meta = dict(sha256="c" * 64, sourceManifestSha256="d" * 64, bytes=123, members=12)
         raw, prior = deploy.update_bootstrap(fixture(), meta, "releases/ci/runtime.tgz", "ci-new")
