@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('deploy', Path(__file__).with_name('deploy.py'))
@@ -55,6 +56,21 @@ class DeploymentGuards(unittest.TestCase):
     def test_missing_credentials_stop_before_external_operations(self):
         with patch.dict(os.environ, {}, clear=True), self.assertRaisesRegex(RuntimeError, 'TOKEN'):
             deploy.require_env(['TOKEN'])
+
+    def test_theme_media_is_compared_as_binary_without_utf8_conversion(self):
+        media = b'\x00\xff\x89\x00'
+        self.assertEqual(deploy.canonical('assets/movie.mp4', media), deploy.canonical('assets/movie.mp4', media))
+        self.assertNotEqual(deploy.canonical('assets/movie.mp4', media), deploy.canonical('assets/movie.mp4', media+b'\x00'))
+
+    def test_each_shopify_command_receives_only_its_dedicated_credential(self):
+        env = {'SHOPIFY_SERVICE_ACCOUNT_TOKEN':'fixture-app','SHOPIFY_CLI_THEME_TOKEN':'fixture-theme'}
+        with patch.dict(os.environ, env), patch.object(deploy.subprocess,'run',return_value=SimpleNamespace(returncode=0,stdout=b'')) as run:
+            deploy.cli(['theme','pull'])
+            self.assertNotIn('SHOPIFY_SERVICE_ACCOUNT_TOKEN',run.call_args.kwargs['env'])
+            self.assertEqual(run.call_args.kwargs['env']['SHOPIFY_CLI_THEME_TOKEN'],'fixture-theme')
+            deploy.cli(['app','deploy'])
+            self.assertNotIn('SHOPIFY_CLI_THEME_TOKEN',run.call_args.kwargs['env'])
+            self.assertEqual(run.call_args.kwargs['env']['SHOPIFY_SERVICE_ACCOUNT_TOKEN'],'fixture-app')
 
     def test_numeric_template_required_for_rollback(self):
         class ASG:

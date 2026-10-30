@@ -37,7 +37,9 @@ def changes(previous, current, prefix):
 
 
 def canonical(name, raw):
-    text = raw.decode('utf-8').replace('\r\n', '\n')
+    if not name.endswith(('.json', '.liquid', '.js', '.mjs', '.css', '.svg', '.txt', '.map')):
+        return hashlib.sha256(raw).hexdigest()
+    text = raw.decode('utf-8-sig').replace('\r\n', '\n')
     if name.endswith('.json'):
         return json.dumps(json.loads(re.sub(r'^\s*/\*[\s\S]*?\*/', '', text)), sort_keys=True, separators=(',', ':'))
     return text
@@ -74,7 +76,9 @@ def update_bootstrap(raw, meta, artifact_key, release_name):
 
 
 def cli(args, cwd=None):
-    result = subprocess.run(['shopify', *args], cwd=cwd, capture_output=True)
+    env = dict(os.environ)
+    env.pop('SHOPIFY_SERVICE_ACCOUNT_TOKEN' if args[0] == 'theme' else 'SHOPIFY_CLI_THEME_TOKEN', None)
+    result = subprocess.run(['shopify', *args], cwd=cwd, env=env, capture_output=True)
     if result.returncode:
         # A CLI failure can contain account information; keep it out of public logs.
         raise RuntimeError('Shopify command failed: ' + ' '.join(args[:2]) + '; sensitive output suppressed')
@@ -199,6 +203,7 @@ def deploy():
     old_app_version = None
     try:
         if theme_changed:
+            backup.mkdir(parents=True, exist_ok=True)
             cli(['theme', 'pull', *theme_args, '--path', str(backup), *selected])
             for path in theme_changed:
                 name = path[len(THEME) + 1:]
@@ -258,6 +263,7 @@ def deploy():
             theme_started = True
             cli(['theme', 'push', *theme_args, '--path', THEME, '--allow-live', '--nodelete', *selected])
             verify = OUT / 'theme-verify'
+            verify.mkdir(parents=True, exist_ok=True)
             cli(['theme', 'pull', *theme_args, '--path', str(verify), *selected])
             for path in theme_changed:
                 name = path[len(THEME) + 1:]
