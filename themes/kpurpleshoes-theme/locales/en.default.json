@@ -137,9 +137,12 @@
     "free_cta": "Open My Free Starter Kit",
     "kit_name": "KOREA GUIDE KIT",
     "map_label": "Purple Map",
+    "map_tagline": "Local picks. Find your way.",
     "guidebook_label": "Guidebook",
+    "guidebook_tagline": "Local know-how. Less guesswork.",
     "video_label": "Video Guide",
-    "map_alt": "Purple Map showing Gyeongbokgung Palace, place details, and Naver Map attribution.",
+    "video_tagline": "See Korea before you go.",
+    "map_alt": "Purple Map showing Gyeongbokgung Palace and local place details.",
     "guidebook_alt": "Purple Shoes guidebook with Korean BBQ and Samgyeopsal guidance.",
     "video_alt": "Purple Shoes themed video guide showing Sanbangsan Mountain on Jeju.",
     "regular_price": "Regular price",
@@ -154,7 +157,7 @@
     "trust_copy": "Handpicked from our own travels and recommendations from people we trust.",
     "closing": "Ready to explore more of Korea?",
     "welcome_offer": "Your 50% welcome offer",
-    "validity": "Valid for 24 hours from offer issuance."
+    "validity": "Valid for 24 hours from issuance."
   },
   "starter_kit_viewer": {
     "cta_label": "Explore the Full Korea Guide Kit",

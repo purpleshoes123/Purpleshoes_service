@@ -30,36 +30,32 @@
     </div>
 
     <div class="sgty__showcase">
-      <figure class="sgty__screen sgty__screen--map">
+      <figure class="sgty__screen">
         <figcaption>{{ 'signup_thankyou.map_label' | t }}</figcaption>
-        <img src="{{ 'signup-preview-map.png' | asset_url }}" alt="{{ 'signup_thankyou.map_alt' | t | escape }}" width="1912" height="910" loading="eager" fetchpriority="high">
+        <div class="sgty__image"><img src="{{ 'signup-component-map.png' | asset_url }}" alt="{{ 'signup_thankyou.map_alt' | t | escape }}" width="583" height="538" loading="eager" fetchpriority="high"></div>
+        <p class="sgty__tagline">{{ 'signup_thankyou.map_tagline' | t }}</p>
       </figure>
-
-      <div class="sgty__offer" data-sgty-offer-card>
-        <p class="sgty__offer-badge">{{ 'signup_thankyou.welcome_offer' | t }}</p>
-        <div class="sgty__price"><span class="sgty__currency">USD</span><strong>75</strong></div>
-        <p class="sgty__regular">{{ 'signup_thankyou.regular_price' | t }} <s>USD 150</s></p>
-        <div class="sgty__facts">
-          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="16" cy="17" r="12"/><path d="M16 9v9l6 4M5 3 1 7m26-4 4 4"/></svg><span>{{ 'signup_thankyou.validity' | t }}</span></p>
-          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 23V5h21v10M1 26h18"/><rect x="21" y="15" width="9" height="15" rx="2"/></svg><span>{{ 'signup_thankyou.access' | t }}</span></p>
-        </div>
-        <a class="sgty__cta" href="{{ section.settings.cta_url | default: '/pages/guide-plans#member-purchase' | escape }}"><span>{{ section.settings.cta_label | escape }}</span>{% render 'starter-kit-icon', name: 'arrow' %}</a>
-      </div>
-
       <figure class="sgty__screen sgty__screen--book">
         <figcaption>{{ 'signup_thankyou.guidebook_label' | t }}</figcaption>
-        <img src="{{ 'signup-preview-guidebook.png' | asset_url }}" alt="{{ 'signup_thankyou.guidebook_alt' | t | escape }}" width="1903" height="832" loading="lazy">
+        <div class="sgty__image"><img src="{{ 'signup-component-guidebook.png' | asset_url }}" alt="{{ 'signup_thankyou.guidebook_alt' | t | escape }}" width="478" height="538" loading="eager"></div>
+        <p class="sgty__tagline">{{ 'signup_thankyou.guidebook_tagline' | t }}</p>
       </figure>
-      <figure class="sgty__screen sgty__screen--video">
+      <figure class="sgty__screen">
         <figcaption>{{ 'signup_thankyou.video_label' | t }}</figcaption>
-        <img src="{{ 'signup-preview-video.png' | asset_url }}" alt="{{ 'signup_thankyou.video_alt' | t | escape }}" width="1914" height="909" loading="lazy">
+        <div class="sgty__image"><img src="{{ 'signup-component-video.png' | asset_url }}" alt="{{ 'signup_thankyou.video_alt' | t | escape }}" width="506" height="538" loading="eager"></div>
+        <p class="sgty__tagline">{{ 'signup_thankyou.video_tagline' | t }}</p>
       </figure>
     </div>
 
-    <div class="sgty__benefits">
-      <div class="sgty__benefit"><span class="sgty__benefit-icon">{% render 'starter-kit-icon', name: 'pin' %}</span><div><h3>{{ 'signup_thankyou.places_title' | t }}</h3><p>{{ 'signup_thankyou.places_copy' | t }}</p></div></div>
-      <div class="sgty__benefit"><span class="sgty__benefit-icon">{% render 'starter-kit-icon', name: 'clipboard' %}</span><div><h3>{{ 'signup_thankyou.guide_title' | t }}</h3><p>{{ 'signup_thankyou.guide_copy' | t }}</p></div></div>
-      <div class="sgty__benefit"><span class="sgty__benefit-icon">{% render 'starter-kit-icon', name: 'play' %}</span><div><h3>{{ 'signup_thankyou.video_title' | t }}</h3><p>{{ 'signup_thankyou.video_copy' | t }}</p></div></div>
+    <div class="sgty__offer" data-sgty-offer-card>
+      <div class="sgty__offer-price"><p class="sgty__offer-badge">{{ 'signup_thankyou.welcome_offer' | t }}</p>
+        <div class="sgty__price"><span class="sgty__currency">USD</span><strong>75</strong></div>
+        <p class="sgty__regular">{{ 'signup_thankyou.regular_price' | t }} <s>USD 150</s></p></div>
+      <div class="sgty__offer-action"><a class="sgty__cta" href="{{ section.settings.cta_url | default: '/pages/guide-plans#member-purchase' | escape }}"><span>{{ section.settings.cta_label | escape }}</span>{% render 'starter-kit-icon', name: 'arrow' %}</a>
+        <div class="sgty__facts">
+          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="16" cy="17" r="12"/><path d="M16 9v9l6 4M5 3 1 7m26-4 4 4"/></svg><span>{{ 'signup_thankyou.validity' | t }}</span></p>
+          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 23V5h21v10M1 26h18"/><rect x="21" y="15" width="9" height="15" rx="2"/></svg><span>{{ 'signup_thankyou.access' | t }}</span></p>
+        </div></div>
     </div>
 
     <div class="sgty__trust">{% render 'starter-kit-icon', name: 'heart' %}<p>{{ 'signup_thankyou.trust_heading' | t }}<span>{{ 'signup_thankyou.trust_copy' | t }}</span></p></div>
