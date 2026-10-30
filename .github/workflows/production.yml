@@ -24,6 +24,7 @@ jobs:
       actions: read
     outputs:
       backend: ${{ steps.changes.outputs.backend }}
+      backend_verify: ${{ steps.changes.outputs.backend_verify }}
       theme: ${{ steps.changes.outputs.theme }}
       app: ${{ steps.changes.outputs.app }}
       deploy: ${{ steps.changes.outputs.deploy }}
@@ -82,11 +83,11 @@ jobs:
       - name: Scan tracked source for credentials
         run: python3 scripts/cicd/scan-secrets.py
       - name: Install backend dependencies from lockfile
-        if: needs.plan.outputs.backend == 'true'
+        if: needs.plan.outputs.backend_verify == 'true'
         working-directory: apps/bta-proxy
         run: npm ci --workspaces=false --ignore-scripts --no-fund
       - name: Generate Prisma client and run regression tests
-        if: needs.plan.outputs.backend == 'true'
+        if: needs.plan.outputs.backend_verify == 'true'
         working-directory: apps/bta-proxy
         run: |
           node node_modules/prisma/build/index.js generate

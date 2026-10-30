@@ -9,6 +9,7 @@ import {
   componentChanges,
   runtimeSourcePath,
   successfulBaseline,
+  executionPlan,
 } from "./plan-changes.mjs";
 
 test("documents, tests and CI verification do not trigger an application deployment", () => {
@@ -27,6 +28,23 @@ test("documents, tests and CI verification do not trigger an application deploym
     ]),
     { backend: [], theme: [], app: [] },
   );
+});
+
+test("backend tests still run when only tests changed, without building or deploying runtime", () => {
+  assert.deepEqual(executionPlan(["apps/bta-proxy/app/domains/checkout/price.test.ts"]), {
+    backend: false,
+    theme: false,
+    app: false,
+    backend_verify: true,
+    deploy: false,
+  });
+  assert.deepEqual(executionPlan(["docs/maintenance/OPERATIONS.md"]), {
+    backend: false,
+    theme: false,
+    app: false,
+    backend_verify: false,
+    deploy: false,
+  });
 });
 
 test("each production source is routed only to its corresponding component", () => {

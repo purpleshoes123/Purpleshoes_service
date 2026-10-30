@@ -54,15 +54,32 @@ function revision(value) {
   return value;
 }
 
-export function componentChanges(base, head, cwd) {
-  const files = execFileSync(
+function changedPaths(base, head, cwd) {
+  return execFileSync(
     "git",
     ["diff", "--no-renames", "--name-only", "-z", revision(base), revision(head), "--"],
     { encoding: "utf8", cwd },
   )
     .split("\0")
     .filter(Boolean);
-  return classifyChanges(files);
+}
+
+export function componentChanges(base, head, cwd) {
+  return classifyChanges(changedPaths(base, head, cwd));
+}
+
+export function executionPlan(paths) {
+  const components = classifyChanges(paths);
+  const flags = Object.fromEntries(
+    Object.entries(components).map(([key, files]) => [key, files.length > 0]),
+  );
+  const deploy = Object.values(flags).some(Boolean);
+  return {
+    ...flags,
+    backend_verify:
+      flags.backend || paths.some((file) => file.startsWith(backendPrefix) && testPath.test(file)),
+    deploy,
+  };
 }
 
 export function successfulBaseline(runs, currentRunId) {
@@ -114,7 +131,8 @@ async function main() {
   const argument = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
   const base = argument("--base") || (await workflowBaseline());
   const head = argument("--head") || process.env.GITHUB_SHA;
-  const result = componentChanges(base, head);
+  const paths = changedPaths(base, head);
+  const result = classifyChanges(paths);
   const component = argument("--component");
   if (component) {
     if (!["backend", "theme", "app"].includes(component)) {
@@ -123,10 +141,7 @@ async function main() {
     process.stdout.write(JSON.stringify(result[component]));
     return;
   }
-  const flags = Object.fromEntries(
-    Object.entries(result).map(([key, files]) => [key, files.length > 0]),
-  );
-  flags.deploy = Object.values(flags).some(Boolean);
+  const flags = executionPlan(paths);
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(
       process.env.GITHUB_OUTPUT,
