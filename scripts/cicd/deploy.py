@@ -159,6 +159,12 @@ def theme_graphql(query, variables):
         ) from None
 
 
+def pull_theme(root, theme_args, selected=()):
+    root.mkdir(parents=True, exist_ok=True)
+    # A fresh local backup/readback folder is intentionally empty. This flag confirms only that.
+    cli(["theme", "pull", *theme_args, "--path", str(root), "--force", *selected])
+
+
 def push_theme(s3, prefix, root, names, theme_args):
     small = []
     for name in names:
@@ -428,9 +434,8 @@ def deploy():
         if app_changed:
             old_app_version = app_preflight()
         if theme_changed:
-            backup.mkdir(parents=True, exist_ok=True)
             # A rollback upload must be a valid theme directory (config, layout, templates).
-            cli(["theme", "pull", *theme_args, "--path", str(backup)])
+            pull_theme(backup, theme_args)
             for path in theme_changed:
                 name = path[len(THEME) + 1 :]
                 original = subprocess.run(
@@ -538,8 +543,7 @@ def deploy():
                 theme_args,
             )
             verify = OUT / "theme-verify"
-            verify.mkdir(parents=True, exist_ok=True)
-            cli(["theme", "pull", *theme_args, "--path", str(verify), *selected])
+            pull_theme(verify, theme_args, selected)
             for path in theme_changed:
                 name = path[len(THEME) + 1 :]
                 remote = verify / name
@@ -576,8 +580,7 @@ def deploy():
                     theme_args,
                 )
                 restored = OUT / "theme-restored"
-                restored.mkdir(parents=True, exist_ok=True)
-                cli(["theme", "pull", *theme_args, "--path", str(restored), *selected])
+                pull_theme(restored, theme_args, selected)
                 for path in theme_changed:
                     name = path[len(THEME) + 1 :]
                     if (backup / name).exists() and (

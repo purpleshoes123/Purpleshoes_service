@@ -43,6 +43,29 @@ assert manifest["sourceManifestSha256"] == "{old_source}"
 
 
 class DeploymentGuards(unittest.TestCase):
+    def test_theme_download_explicitly_confirms_the_new_local_directory(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(deploy, "cli") as cli:
+            root = Path(folder) / "new-backup"
+            deploy.pull_theme(
+                root, ["--no-input", "--theme", "fixture"], ["--only", "assets/test.js"]
+            )
+            self.assertTrue(root.is_dir())
+            self.assertEqual(
+                cli.call_args.args[0],
+                [
+                    "theme",
+                    "pull",
+                    "--no-input",
+                    "--theme",
+                    "fixture",
+                    "--path",
+                    str(root),
+                    "--force",
+                    "--only",
+                    "assets/test.js",
+                ],
+            )
+
     def test_app_preflight_checks_configuration_and_records_the_active_version(self):
         with patch.object(
             deploy, "cli", side_effect=["{}", '[{"status":"active","versionTag":"previous"}]']
