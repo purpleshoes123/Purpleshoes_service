@@ -8,6 +8,23 @@
  * ------------------------------------------------------------
  */
 {
+  "price_intro": {
+    "guest_label": "Best eligible Kit price",
+    "guest_condition": "With a 50% welcome offer + USD 10 sharing coupon.",
+    "guest_regular": "Regular Kit price: USD 58",
+    "guest_welcome": "50% welcome offer: USD 29",
+    "guest_extra": "Extra sharing coupon: -USD 10",
+    "validity": "Welcome offer valid for 24h from issue.",
+    "guest_cta": "Sign In to Unlock My Offer",
+    "guest_cta_note": "Sign in, then get USD 10 off & share.",
+    "guest_eligibility": "USD 19 requires both valid offers. Claim the sharing coupon after signing in.",
+    "signup_label": "Unlock your best Kit price",
+    "signup_condition": "With your valid 50% welcome offer + USD 10 sharing coupon.",
+    "signup_regular": "Regular price: USD 58",
+    "signup_welcome": "Your welcome price: USD 29.",
+    "signup_extra": "Get an extra USD 10 off & share our free Starter Kit.",
+    "signup_claim": "Claim the sharing coupon on the next page."
+  },
   "kit_detail": {
     "kit_devices": "App & web · Up to 3 devices",
     "map_tagline": "Local picks. Find your way.",
