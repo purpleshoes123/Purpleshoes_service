@@ -47,13 +47,17 @@
       </figure>
     </div>
 
-    <div class="sgty__offer" data-sgty-offer-card>
-      <div class="sgty__offer-price"><p class="sgty__offer-badge">{{ 'signup_thankyou.welcome_offer' | t }}</p>
-        <div class="sgty__price"><span class="sgty__currency">USD</span><strong>29</strong></div>
-        <p class="sgty__regular">{{ 'signup_thankyou.regular_price' | t }} <s>USD 58</s></p></div>
+    <div class="sgty__offer sgty__offer--intro" data-sgty-offer-card>
+      <div class="sgty__offer-price"><p class="sgty__offer-badge">{{ 'price_intro.signup_label' | t }}</p>
+        <div class="sgty__price"><span class="sgty__currency">USD</span><strong>19</strong></div>
+        <p class="sgty__offer-condition">{{ 'price_intro.signup_condition' | t }}</p>
+        <p class="sgty__regular">{{ 'price_intro.signup_regular' | t }}</p></div>
       <div class="sgty__offer-action"><a class="sgty__cta" href="{{ section.settings.cta_url | default: '/pages/guide-plans#member-purchase' | escape }}"><span>{{ section.settings.cta_label | escape }}</span>{% render 'starter-kit-icon', name: 'arrow' %}</a>
         <div class="sgty__facts">
-          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="16" cy="17" r="12"/><path d="M16 9v9l6 4M5 3 1 7m26-4 4 4"/></svg><span>{{ 'signup_thankyou.validity' | t }}</span></p>
+          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 14-14h12v12L15 29Z"/><circle cx="23" cy="9" r="2"/></svg><span>{{ 'price_intro.signup_welcome' | t }}</span></p>
+          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M3 28v-4a9 9 0 0 1 18 0v4M22 5a4 4 0 0 1 0 8m3 5a8 8 0 0 1 4 7v3"/></svg><span>{{ 'price_intro.signup_extra' | t }}</span></p>
+          <p>{% render 'starter-kit-icon', name: 'clipboard' %}<span>{{ 'price_intro.signup_claim' | t }}</span></p>
+          <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="16" cy="17" r="12"/><path d="M16 9v9l6 4M5 3 1 7m26-4 4 4"/></svg><span>{{ 'price_intro.validity' | t }}</span></p>
           <p><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 23V5h21v10M1 26h18"/><rect x="21" y="15" width="9" height="15" rx="2"/></svg><span>{{ 'signup_thankyou.access' | t }}</span></p>
         </div></div>
     </div>

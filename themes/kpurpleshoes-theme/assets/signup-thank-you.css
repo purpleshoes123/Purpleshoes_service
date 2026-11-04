@@ -345,6 +345,41 @@
   min-height: 60px;
   font-size: 21px;
 }
+.sgty__offer--intro .sgty__offer-price {
+  min-width: 0;
+}
+.sgty__offer--intro .sgty__offer-badge {
+  max-width: 100%;
+  padding: 8px 22px;
+  font-size: 18px;
+}
+.sgty__offer--intro .sgty__price {
+  font-size: clamp(72px, 8vw, 108px);
+}
+.sgty__offer-condition {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: 19px;
+  line-height: 1.4;
+}
+.sgty__offer--intro .sgty__regular {
+  margin-top: 10px;
+  font-size: 18px;
+  color: #e3d8ff;
+}
+.sgty__offer--intro .sgty__facts {
+  gap: 8px;
+  margin-top: 18px;
+}
+.sgty__offer--intro .sgty__facts p {
+  gap: 12px;
+  font-size: 16px;
+}
+.sgty__offer--intro .sgty__facts svg {
+  width: 26px;
+  height: 26px;
+  flex-basis: 26px;
+}
 @media (max-width: 1100px) {
   .sgty__ready {
     grid-template-columns: 1fr;
